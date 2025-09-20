@@ -1,0 +1,7 @@
+﻿<!--
+Usar o perfil presidência
+-->
+<testdata>
+	<vars classe="MI" processo="830" /> <!-- qualquer não ARE -->
+	<vars classe="ARE" processo="633464" /> <!-- qualquer ARE -->
+</testdata>

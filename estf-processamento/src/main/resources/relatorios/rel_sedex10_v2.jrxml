@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="pac" columnCount="2" printOrder="Horizontal" pageWidth="612" pageHeight="792" columnWidth="301" leftMargin="5" rightMargin="5" topMargin="8" bottomMargin="8">
+	<property name="ireport.zoom" value="1.2418426461183114"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="NUMERO_CONTRATO" class="java.lang.String"/>
+	<parameter name="CARTAO_POSTAGEM" class="java.lang.String"/>
+	<parameter name="UNIDADE_CORREIOS" class="java.lang.String"/>
+	<parameter name="LOGO" class="java.lang.String">
+		<defaultValueExpression><![CDATA["sedex10_v2.png"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="REMETENTE" class="java.lang.String"/>
+	<parameter name="LOGO_REMETENTE" class="java.lang.String">
+		<defaultValueExpression><![CDATA["\\logo_supremo.png"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="Pedido" class="java.lang.String"/>
+	<queryString>
+		<![CDATA[]]>
+	</queryString>
+	<field name="ar" class="java.lang.Boolean">
+		<fieldDescription><![CDATA[ar]]></fieldDescription>
+	</field>
+	<field name="codigoRastreio" class="java.lang.String">
+		<fieldDescription><![CDATA[codigoRastreio]]></fieldDescription>
+	</field>
+	<field name="dataPostagem" class="java.lang.String">
+		<fieldDescription><![CDATA[dataPostagem]]></fieldDescription>
+	</field>
+	<field name="destinatario" class="java.lang.String">
+		<fieldDescription><![CDATA[destinatario]]></fieldDescription>
+	</field>
+	<field name="endereco" class="java.lang.String">
+		<fieldDescription><![CDATA[endereco]]></fieldDescription>
+	</field>
+	<field name="peso" class="java.lang.String">
+		<fieldDescription><![CDATA[peso]]></fieldDescription>
+	</field>
+	<field name="registrado" class="java.lang.Boolean">
+		<fieldDescription><![CDATA[registrado]]></fieldDescription>
+	</field>
+	<field name="observacao" class="java.lang.String"/>
+	<field name="numVolume" class="java.lang.String"/>
+	<field name="cepSemFormatacao" class="java.lang.String"/>
+	<field name="exibe" class="java.lang.Boolean"/>
+	<field name="maoPropriaNacional" class="java.lang.Boolean"/>
+	<field name="dataMatrix" class="java.lang.String"/>
+	<detail>
+		<band height="382">
+			<textField>
+				<reportElement x="160" y="78" width="48" height="12">
+					<printWhenExpression><![CDATA[$F{exibe}==true]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="Arial" size="9" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{NUMERO_CONTRATO}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="218" y="77" width="40" height="12">
+					<printWhenExpression><![CDATA[$F{exibe}==true]]></printWhenExpression>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font fontName="Arial" size="9" isBold="false"/>
+				</textElement>
+				<text><![CDATA[Volume:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="142" y="246" width="153" height="41">
+					<printWhenExpression><![CDATA[$F{exibe}==true]]></printWhenExpression>
+				</reportElement>
+				<textElement>
+					<font fontName="Arial" size="10" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{observacao}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="258" y="77" width="27" height="12">
+					<printWhenExpression><![CDATA[$F{exibe}==true]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="Arial" size="9" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{numVolume}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="218" y="89" width="40" height="12">
+					<printWhenExpression><![CDATA[$F{exibe}==true]]></printWhenExpression>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font fontName="Arial" size="9" isBold="false"/>
+				</textElement>
+				<text><![CDATA[Peso (g):]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="258" y="89" width="27" height="12">
+					<printWhenExpression><![CDATA[$F{exibe}==true]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="Arial" size="9" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{peso}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="263" y="104" width="22" height="15">
+					<printWhenExpression><![CDATA[$F{ar}==true && $F{exibe}==true]]></printWhenExpression>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font fontName="Arial" size="11" isBold="true"/>
+				</textElement>
+				<text><![CDATA[AR]]></text>
+			</staticText>
+			<componentElement>
+				<reportElement positionType="Float" x="23" y="104" width="226" height="47">
+					<printWhenExpression><![CDATA[$F{exibe}==true]]></printWhenExpression>
+				</reportElement>
+				<jr:Code128 xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd" moduleWidth="1.8" textPosition="top">
+					<jr:codeExpression><![CDATA[$F{codigoRastreio}]]></jr:codeExpression>
+				</jr:Code128>
+			</componentElement>
+			<staticText>
+				<reportElement mode="Opaque" x="23" y="185" width="85" height="15" forecolor="#FFFFFF" backcolor="#000000">
+					<printWhenExpression><![CDATA[$F{exibe}==true]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="Arial" size="11" isBold="true"/>
+				</textElement>
+				<text><![CDATA[DESTINATÁRIO]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="22" y="201" width="273" height="10">
+					<printWhenExpression><![CDATA[$F{exibe}==true]]></printWhenExpression>
+				</reportElement>
+				<textElement>
+					<font fontName="Arial" size="8" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{destinatario}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="22" y="211" width="273" height="34">
+					<printWhenExpression><![CDATA[$F{exibe}==true]]></printWhenExpression>
+				</reportElement>
+				<textElement>
+					<font fontName="Arial" size="8" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{endereco}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="22" y="297" width="104" height="12">
+					<printWhenExpression><![CDATA[$F{exibe}==true]]></printWhenExpression>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font fontName="Arial" size="10" isBold="true"/>
+				</textElement>
+				<text><![CDATA[REMETENTE:]]></text>
+			</staticText>
+			<componentElement>
+				<reportElement x="23" y="247" width="113" height="50">
+					<printWhenExpression><![CDATA[$F{exibe}==true]]></printWhenExpression>
+				</reportElement>
+				<jr:Code128 xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd" moduleWidth="1.3" textPosition="none">
+					<jr:codeExpression><![CDATA[$F{cepSemFormatacao}]]></jr:codeExpression>
+				</jr:Code128>
+			</componentElement>
+			<textField isBlankWhenNull="true">
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="23" y="310" width="272" height="49">
+					<printWhenExpression><![CDATA[$F{exibe}==true]]></printWhenExpression>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font fontName="Arial" size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{REMETENTE}]]></textFieldExpression>
+			</textField>
+			<componentElement>
+				<reportElement x="127" y="6" width="71" height="71"/>
+				<jr:DataMatrix xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd" textPosition="bottom">
+					<jr:codeExpression><![CDATA[$F{dataMatrix}]]></jr:codeExpression>
+				</jr:DataMatrix>
+			</componentElement>
+			<image>
+				<reportElement x="224" y="1" width="71" height="71"/>
+				<imageExpression><![CDATA[$P{LOGO}]]></imageExpression>
+			</image>
+			<image vAlign="Middle">
+				<reportElement x="22" y="6" width="71" height="71"/>
+				<imageExpression><![CDATA[$P{LOGO_REMETENTE}]]></imageExpression>
+			</image>
+			<staticText>
+				<reportElement x="22" y="88" width="71" height="12">
+					<printWhenExpression><![CDATA[$F{exibe}==true]]></printWhenExpression>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font fontName="Arial" size="9" isBold="false"/>
+				</textElement>
+				<text><![CDATA[Pedido:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="119" y="78" width="41" height="12">
+					<printWhenExpression><![CDATA[$F{exibe}==true]]></printWhenExpression>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font fontName="Arial" size="9" isBold="false"/>
+				</textElement>
+				<text><![CDATA[Contrato:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="23" y="77" width="71" height="12">
+					<printWhenExpression><![CDATA[$F{exibe}==true]]></printWhenExpression>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font fontName="Arial" size="9" isBold="false"/>
+				</textElement>
+				<text><![CDATA[NF:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="23" y="152" width="272" height="12">
+					<printWhenExpression><![CDATA[$F{exibe}==true]]></printWhenExpression>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Recebedor: _______________________________________________________]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="23" y="166" width="272" height="12">
+					<printWhenExpression><![CDATA[$F{exibe}==true]]></printWhenExpression>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Assinatura: _______________________ Documento:_____________________]]></text>
+			</staticText>
+		</band>
+	</detail>
+</jasperReport>

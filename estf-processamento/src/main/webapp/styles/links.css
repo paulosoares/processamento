@@ -1,0 +1,54 @@
+/* links */
+a:link {
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+    font-size: 7.5pt;
+    font-weight: bold;    
+	background:transparent;	
+	margin: 0px;
+	padding: 0px;
+	border:none;
+	color: #336699;
+	/* cursor: hand; */
+	text-decoration: none;
+    text-align: center;
+}
+a:visited {
+	font-family: Tahoma, Verdana;	
+	background:transparent;	
+	font-size: 10px;
+	margin: 0px;
+	padding: 0px;
+	border:none;
+	color: #336699;
+	/* cursor: hand; */
+	text-decoration: underline;
+    text-align: center;
+}
+a:active {
+	font-family: Tahoma, Verdana;	
+	background:transparent;	
+	font-size: 9pt;
+	margin: 0px;
+	padding: 0px;
+	border:none;
+	color: #336699;
+	/* cursor: hand; */
+	text-decoration: underline;
+    text-align: center;
+}
+a:hover {
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+    font-size: 7.5pt;
+    font-weight: bold;    
+	background:transparent;	
+	margin: 0px;
+	padding: 0px;
+	border:none;
+	color: #3366FF;
+	/* cursor: hand; */
+	text-decoration: underline;
+    text-align: center;
+}
+TR:hover{	
+	background-color: #FFFFFF; 
+}

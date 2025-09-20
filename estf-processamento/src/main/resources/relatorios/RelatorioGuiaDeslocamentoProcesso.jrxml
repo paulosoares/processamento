@@ -1,0 +1,461 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="RelatorioGuiaDeslocamentoProcesso" language="groovy" printOrder="Horizontal" pageWidth="595" pageHeight="842" columnWidth="525" leftMargin="50" rightMargin="20" topMargin="20" bottomMargin="20" isTitleNewPage="true">
+	<property name="ireport.zoom" value="1.5"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="695"/>
+	<style name="Texto" isDefault="true" fontName="Times New Roman" fontSize="10" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
+	<style name="Rotulo" fontName="Times New Roman" fontSize="13" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false">
+		<paragraph lineSpacing="1_1_2"/>
+	</style>
+	<style name="AlinhadoDireita" style="Texto" hAlign="Right" fontName="Times New Roman" fontSize="12" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
+	<style name="RotuloCentralizado" style="Rotulo" hAlign="Center"/>
+	<parameter name="imprimePostal" class="java.lang.String">
+		<defaultValueExpression><![CDATA["N"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="pathLogo" class="java.lang.String"/>
+	<parameter name="seta" class="java.lang.String"/>
+	<queryString>
+		<![CDATA[]]>
+	</queryString>
+	<field name="anoDaGuia" class="java.lang.Short">
+		<fieldDescription><![CDATA[anoDaGuia]]></fieldDescription>
+	</field>
+	<field name="bairro" class="java.lang.String">
+		<fieldDescription><![CDATA[bairro]]></fieldDescription>
+	</field>
+	<field name="cepOrgaoDestino" class="java.lang.String">
+		<fieldDescription><![CDATA[cepOrgaoDestino]]></fieldDescription>
+	</field>
+	<field name="class" class="java.lang.Class">
+		<fieldDescription><![CDATA[class]]></fieldDescription>
+	</field>
+	<field name="codigoDestinatario" class="java.lang.Long">
+		<fieldDescription><![CDATA[codigoDestinatario]]></fieldDescription>
+	</field>
+	<field name="codigoOrgaoDestino" class="java.lang.Long">
+		<fieldDescription><![CDATA[codigoOrgaoDestino]]></fieldDescription>
+	</field>
+	<field name="codigoOrgaoOrigem" class="java.lang.Long">
+		<fieldDescription><![CDATA[codigoOrgaoOrigem]]></fieldDescription>
+	</field>
+	<field name="complemento" class="java.lang.String">
+		<fieldDescription><![CDATA[complemento]]></fieldDescription>
+	</field>
+	<field name="dataRecebimento" class="java.util.Date">
+		<fieldDescription><![CDATA[dataRecebimento]]></fieldDescription>
+	</field>
+	<field name="dataRemessa" class="java.util.Date">
+		<fieldDescription><![CDATA[dataRemessa]]></fieldDescription>
+	</field>
+	<field name="descricaoOrgaoDestino" class="java.lang.String">
+		<fieldDescription><![CDATA[descricaoOrgaoDestino]]></fieldDescription>
+	</field>
+	<field name="descricaoOrgaoOrigem" class="java.lang.String">
+		<fieldDescription><![CDATA[descricaoOrgaoOrigem]]></fieldDescription>
+	</field>
+	<field name="destinatario" class="java.lang.String">
+		<fieldDescription><![CDATA[destinatario]]></fieldDescription>
+	</field>
+	<field name="enderecoOrgaoDestino" class="java.lang.String">
+		<fieldDescription><![CDATA[enderecoOrgaoDestino]]></fieldDescription>
+	</field>
+	<field name="municipioOrgaoDestino" class="java.lang.String">
+		<fieldDescription><![CDATA[municipioOrgaoDestino]]></fieldDescription>
+	</field>
+	<field name="numLocalizacao" class="java.lang.String">
+		<fieldDescription><![CDATA[numLocalizacao]]></fieldDescription>
+	</field>
+	<field name="numeroDaGuia" class="java.lang.Long">
+		<fieldDescription><![CDATA[numeroDaGuia]]></fieldDescription>
+	</field>
+	<field name="numeroProcesso" class="java.lang.Long">
+		<fieldDescription><![CDATA[numeroProcesso]]></fieldDescription>
+	</field>
+	<field name="observacao" class="java.lang.String">
+		<fieldDescription><![CDATA[observacao]]></fieldDescription>
+	</field>
+	<field name="quantidadeApensos" class="java.lang.Integer">
+		<fieldDescription><![CDATA[quantidadeApensos]]></fieldDescription>
+	</field>
+	<field name="quantidadeJuntadaLinha" class="java.lang.Integer">
+		<fieldDescription><![CDATA[quantidadeJuntadaLinha]]></fieldDescription>
+	</field>
+	<field name="quantidadeVinculo" class="java.lang.Integer">
+		<fieldDescription><![CDATA[quantidadeVinculo]]></fieldDescription>
+	</field>
+	<field name="quantidadeVolumes" class="java.lang.Integer">
+		<fieldDescription><![CDATA[quantidadeVolumes]]></fieldDescription>
+	</field>
+	<field name="siglaClasseProcesso" class="java.lang.String">
+		<fieldDescription><![CDATA[siglaClasseProcesso]]></fieldDescription>
+	</field>
+	<field name="tipoMeio" class="java.lang.String">
+		<fieldDescription><![CDATA[tipoMeio]]></fieldDescription>
+	</field>
+	<field name="ufOrgaoDestino" class="java.lang.String">
+		<fieldDescription><![CDATA[ufOrgaoDestino]]></fieldDescription>
+	</field>
+	<field name="vinculado" class="java.lang.Integer">
+		<fieldDescription><![CDATA[vinculado]]></fieldDescription>
+	</field>
+	<variable name="totalProcesso" class="java.lang.Long" resetType="Group" resetGroup="agrupamentoGuia" calculation="Sum">
+		<variableExpression><![CDATA[($F{numeroProcesso}!=null ? 1:1)]]></variableExpression>
+		<initialValueExpression><![CDATA[0]]></initialValueExpression>
+	</variable>
+	<variable name="destinoDetalhado" class="java.lang.String">
+		<variableExpression><![CDATA[$F{codigoOrgaoDestino} + " - " + $F{descricaoOrgaoDestino}
++ " / " + $F{destinatario}]]></variableExpression>
+	</variable>
+	<variable name="expressaoGrupo" class="java.lang.String">
+		<variableExpression><![CDATA[$F{numeroDaGuia}.toString()+$F{anoDaGuia}.toString()
+ +$F{codigoOrgaoOrigem}.toString()]]></variableExpression>
+	</variable>
+	<group name="agrupamentoGuia" isStartNewPage="true" isResetPageNumber="true" isReprintHeaderOnEachPage="true">
+		<groupExpression><![CDATA[$V{expressaoGrupo}]]></groupExpression>
+		<groupHeader>
+			<band height="4">
+				<staticText>
+					<reportElement style="Rotulo" x="3" y="-10" width="109" height="12"/>
+					<textElement>
+						<font fontName="SansSerif" size="8"/>
+					</textElement>
+					<text><![CDATA[Processos Remetidos]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="140" y="-11" width="59" height="12"/>
+					<textElement>
+						<font fontName="SansSerif" size="8" isBold="true"/>
+					</textElement>
+					<text><![CDATA[Qtde Volumes]]></text>
+				</staticText>
+				<line>
+					<reportElement x="2" y="0" width="521" height="1"/>
+				</line>
+			</band>
+		</groupHeader>
+		<groupFooter>
+			<band height="182">
+				<line>
+					<reportElement x="2" y="97" width="521" height="1"/>
+				</line>
+				<staticText>
+					<reportElement x="3" y="1" width="72" height="12" printWhenGroupChanges="agrupamentoGuia">
+						<printWhenExpression><![CDATA[$F{observacao} != null && $F{observacao}.trim().equals("") == false]]></printWhenExpression>
+					</reportElement>
+					<textElement>
+						<font fontName="SansSerif" size="9" isBold="true"/>
+					</textElement>
+					<text><![CDATA[Observação:]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="true">
+					<reportElement stretchType="RelativeToTallestObject" x="3" y="13" width="517" height="84" isRemoveLineWhenBlank="true" isPrintWhenDetailOverflows="true" printWhenGroupChanges="agrupamentoGuia"/>
+					<textElement>
+						<font fontName="SansSerif" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{observacao}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement x="0" y="112" width="100" height="15"/>
+					<textElement/>
+					<text><![CDATA[Total de Processos:]]></text>
+				</staticText>
+				<textField>
+					<reportElement x="110" y="112" width="100" height="15" printWhenGroupChanges="agrupamentoGuia"/>
+					<textElement/>
+					<textFieldExpression><![CDATA[$V{totalProcesso}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement x="0" y="129" width="210" height="15"/>
+					<textElement/>
+					<text><![CDATA[AUTENTICAÇÃO NA ORIGEM - REMESSA]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="0" y="145" width="71" height="15"/>
+					<textElement/>
+					<text><![CDATA[DATA/HORA:]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="0" y="162" width="210" height="12"/>
+					<textElement/>
+					<text><![CDATA[RUBRICA:]]></text>
+				</staticText>
+				<textField pattern="dd/MM/yyyy HH:mm:ss">
+					<reportElement style="Texto" x="69" y="145" width="141" height="20" printWhenGroupChanges="agrupamentoGuia"/>
+					<textElement/>
+					<textFieldExpression><![CDATA[$F{dataRemessa}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement x="264" y="129" width="227" height="15" isPrintWhenDetailOverflows="true"/>
+					<textElement/>
+					<text><![CDATA[AUTENTICAÇÃO NO DESTINO - RECEBIMENTO]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="264" y="145" width="227" height="15"/>
+					<textElement/>
+					<text><![CDATA[DATA/HORA:]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="264" y="162" width="227" height="12"/>
+					<textElement/>
+					<text><![CDATA[RUBRICA:]]></text>
+				</staticText>
+				<textField pattern="dd/MM/yyyy HH:mm:ss">
+					<reportElement style="Texto" x="334" y="145" width="100" height="20"/>
+					<textElement/>
+					<textFieldExpression><![CDATA[($F{dataRecebimento} == null ? "" : $F{dataRecebimento})]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupFooter>
+	</group>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="424" splitType="Stretch">
+			<printWhenExpression><![CDATA[$P{imprimePostal}.equals( "S" )]]></printWhenExpression>
+			<staticText>
+				<reportElement style="Rotulo" x="6" y="37" width="100" height="20"/>
+				<textElement/>
+				<text><![CDATA[Destinatário:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="7" y="57" width="431" height="15"/>
+				<textElement/>
+				<textFieldExpression><![CDATA[($F{destinatario} == null || $F{destinatario}.equals( "" ))?
+$F{codigoOrgaoDestino} + " - " + $F{descricaoOrgaoDestino}:
+$F{destinatario}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement style="Rotulo" x="6" y="305" width="100" height="20"/>
+				<textElement/>
+				<text><![CDATA[Remetente:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Texto" x="7" y="325" width="431" height="20"/>
+				<textElement/>
+				<text><![CDATA[SUPREMO TRIBUNAL FEDERAL]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Texto" x="6" y="345" width="432" height="20"/>
+				<textElement/>
+				<text><![CDATA[PRAÇA DOS TRÊS PODERES]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Texto" x="6" y="365" width="100" height="20"/>
+				<textElement/>
+				<text><![CDATA[BRASILIA - DF]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Texto" x="7" y="385" width="100" height="20"/>
+				<textElement/>
+				<text><![CDATA[CEP 70.175-900]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="7" y="87" width="431" height="15"/>
+				<textElement/>
+				<textFieldExpression><![CDATA[$F{bairro} + "  " + $F{complemento}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="7" y="73" width="432" height="15"/>
+				<textElement/>
+				<textFieldExpression><![CDATA[$F{enderecoOrgaoDestino} + "  " + $F{numLocalizacao}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="1" y="8" width="523" height="20"/>
+				<textElement textAlignment="Center"/>
+				<textFieldExpression><![CDATA["Guia: " + $F{numeroDaGuia} + "/" + $F{anoDaGuia}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Texto" x="7" y="115" width="431" height="15"/>
+				<textElement/>
+				<textFieldExpression><![CDATA["CEP " + $F{cepOrgaoDestino}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Texto" x="7" y="101" width="432" height="15"/>
+				<textElement/>
+				<textFieldExpression><![CDATA[$F{municipioOrgaoDestino} + " - " + $F{ufOrgaoDestino}]]></textFieldExpression>
+			</textField>
+		</band>
+	</title>
+	<pageHeader>
+		<band height="130" splitType="Stretch">
+			<staticText>
+				<reportElement style="Rotulo" x="96" y="0" width="244" height="20"/>
+				<textElement>
+					<font fontName="SansSerif" size="12" isBold="false"/>
+				</textElement>
+				<text><![CDATA[Supremo Tribunal Federal]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Rotulo" x="96" y="20" width="244" height="20"/>
+				<textElement>
+					<font fontName="SansSerif" size="9"/>
+				</textElement>
+				<text><![CDATA[eSTF-Processamento]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Rotulo" x="401" y="2" width="33" height="15"/>
+				<textElement>
+					<font size="9"/>
+				</textElement>
+				<text><![CDATA[Página:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Rotulo" x="409" y="18" width="33" height="20"/>
+				<textElement>
+					<font size="9"/>
+				</textElement>
+				<text><![CDATA[Data:]]></text>
+			</staticText>
+			<textField>
+				<reportElement style="AlinhadoDireita" x="437" y="2" width="83" height="15"/>
+				<textElement>
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[($P{imprimePostal}.equals( "S" ) ? $V{PAGE_NUMBER}-1 : $V{PAGE_NUMBER})]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report" pattern="dd/MM/yyyy HH:mm:ss">
+				<reportElement style="AlinhadoDireita" x="434" y="18" width="85" height="20"/>
+				<textElement>
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement style="Rotulo" x="3" y="90" width="41" height="12"/>
+				<textElement>
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<text><![CDATA[Origem:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Rotulo" x="3" y="105" width="41" height="12"/>
+				<textElement>
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<text><![CDATA[Destino:]]></text>
+			</staticText>
+			<textField>
+				<reportElement style="Texto" x="41" y="89" width="483" height="12"/>
+				<textElement>
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{codigoOrgaoOrigem} + " - " + $F{descricaoOrgaoOrigem}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Texto" x="41" y="105" width="482" height="12"/>
+				<textElement>
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{codigoOrgaoDestino} + " - " + $F{descricaoOrgaoDestino} +
+(($F{destinatario} == null || $F{destinatario}.trim().equals( "" ))?
+  "":" / "+$F{codigoDestinatario}+" - "+$F{destinatario})]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Texto" x="3" y="66" width="521" height="22"/>
+				<textElement textAlignment="Center">
+					<font fontName="Times New Roman" size="12" isBold="true" isUnderline="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{numeroDaGuia} + " / " + $F{anoDaGuia}]]></textFieldExpression>
+			</textField>
+			<image isUsingCache="true">
+				<reportElement x="-9" y="-12" width="208" height="57"/>
+				<imageExpression><![CDATA[$P{pathLogo}]]></imageExpression>
+			</image>
+			<line>
+				<reportElement x="0" y="37" width="524" height="1"/>
+				<graphicElement>
+					<pen lineStyle="Dotted"/>
+				</graphicElement>
+			</line>
+			<textField>
+				<reportElement style="RotuloCentralizado" x="1" y="46" width="523" height="20"/>
+				<textElement/>
+				<textFieldExpression><![CDATA[($F{tipoMeio}.equals( "F" ) ?
+    "Guia de Deslocamento de Processos Físicos" :
+    "Guia de Deslocamento de Processos Eletrônicos"
+)]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="252" y="118" width="59" height="12"/>
+				<textElement>
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Qtde Apensos]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="345" y="118" width="59" height="12"/>
+				<textElement>
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Qtde Juntada]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="434" y="117" width="86" height="12"/>
+				<textElement>
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Qtde Vinculados]]></text>
+			</staticText>
+		</band>
+	</pageHeader>
+	<detail>
+		<band height="15" splitType="Stretch">
+			<textField>
+				<reportElement style="Texto" x="3" y="0" width="120" height="15">
+					<printWhenExpression><![CDATA[$F{vinculado}.equals( 0 )]]></printWhenExpression>
+				</reportElement>
+				<textElement>
+					<font fontName="SansSerif" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{siglaClasseProcesso} + " " + $F{numeroProcesso}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Texto" x="140" y="0" width="102" height="12"/>
+				<textElement>
+					<font fontName="SansSerif" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{quantidadeVolumes}]]></textFieldExpression>
+			</textField>
+			<image>
+				<reportElement x="3" y="2" width="18" height="12">
+					<printWhenExpression><![CDATA[!$F{vinculado}.equals( 0 )]]></printWhenExpression>
+				</reportElement>
+				<imageExpression><![CDATA[$P{seta}]]></imageExpression>
+			</image>
+			<textField>
+				<reportElement style="Texto" x="20" y="2" width="120" height="12">
+					<printWhenExpression><![CDATA[!$F{vinculado}.equals( 0 )]]></printWhenExpression>
+				</reportElement>
+				<textElement>
+					<font fontName="SansSerif" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{siglaClasseProcesso} + " " + $F{numeroProcesso}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Texto" x="252" y="0" width="82" height="12"/>
+				<textElement>
+					<font fontName="SansSerif" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{quantidadeApensos}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Texto" x="345" y="0" width="59" height="12"/>
+				<textElement>
+					<font fontName="SansSerif" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{quantidadeJuntadaLinha}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Texto" x="434" y="0" width="59" height="12"/>
+				<textElement>
+					<font fontName="SansSerif" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{quantidadeVinculo}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<lastPageFooter>
+		<band/>
+	</lastPageFooter>
+</jasperReport>

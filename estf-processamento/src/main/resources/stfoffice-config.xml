@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<stfoffice>
+
+	<atributo nome="caminhoJars" valor="lib/stfoffice" />
+
+	<handlers>
+		<handler requisicao="br.gov.stf.estf.assinatura.stfoffice.editor.RequisicaoAbrirTexto"
+			handler="br.gov.stf.estf.assinatura.stfoffice.editor.AbrirTextoHandler" />
+
+		<handler requisicao="br.gov.stf.estf.assinatura.stfoffice.editor.RequisicaoAbrirDocumento"
+			handler="br.gov.stf.estf.assinatura.stfoffice.editor.RequisicaoAbrirDocumentoHandler" />
+
+		<handler requisicao="br.gov.stf.estf.assinatura.stfoffice.editor.RequisicaoAbrirModelo"
+			handler="br.gov.stf.estf.assinatura.stfoffice.editor.AbrirModeloHandler" />
+	</handlers>
+
+</stfoffice>

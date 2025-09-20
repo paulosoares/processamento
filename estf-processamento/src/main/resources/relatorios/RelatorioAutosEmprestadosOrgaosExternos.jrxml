@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="RelatorioAutosEmprestadosOrgaosExternos" language="groovy" pageWidth="595" pageHeight="842" columnWidth="455" leftMargin="70" rightMargin="70" topMargin="85" bottomMargin="85">
+	<property name="ireport.zoom" value="1.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<style name="Texto" isDefault="true" fontName="Times New Roman" fontSize="10" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
+	<style name="Rotulo" fontName="Times New Roman" fontSize="13" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false">
+		<paragraph lineSpacing="1_1_2"/>
+	</style>
+	<style name="AlinhadoDireita" style="Texto" hAlign="Right" fontName="Times New Roman" fontSize="12" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
+	<style name="RotuloCentralizado" style="Rotulo" hAlign="Center"/>
+	<parameter name="imprimePostal" class="java.lang.String">
+		<defaultValueExpression><![CDATA["N"]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[SELECT g.num_guia as numeroDaGuia,
+       g.ano_guia as anoDaGuia,
+       g.cod_orgao_origem as codigoOrgaoOrigem,
+       sorigem.dsc_setor as descricaoOrgaoOrigem,
+       g.cod_orgao_destino as codigoOrgaoDestino,
+       sdestino.dsc_setor as descricaoOrgaoDestino,
+       pr.sig_classe_proces as siglaClasseProcesso,
+       pr.num_processo as numeroProcesso,
+       pr.qtd_volumes as quantidadeVolumes,
+       pr.qtd_apensos as quantidadeApensos,
+       pr.qtd_juntada_linha as quantidadeJuntadaLinha
+  FROM stf.guias g,
+       stf.desloca_processos dp,
+       judiciario.processo pr,
+       stf.setores sorigem,
+       stf.setores sdestino
+ WHERE     g.num_guia = dp.num_guia
+       AND g.ano_guia = dp.ano_guia
+       AND g.cod_orgao_origem = dp.cod_orgao_origem
+       AND dp.num_processo = pr.num_processo
+       AND dp.sig_classe_proces = pr.sig_classe_proces
+       AND dp.cod_orgao_origem = sorigem.cod_setor
+       AND dp.cod_orgao_destino = sdestino.cod_setor
+       AND g.ano_guia = 2012
+       AND g.num_guia = 7
+       AND g.cod_orgao_origem = 600000151]]>
+	</queryString>
+	<field name="dataRemessa" class="java.util.Date">
+		<fieldDescription><![CDATA[dataRemessa]]></fieldDescription>
+	</field>
+	<field name="descricaoOrgaoExterno" class="java.lang.String">
+		<fieldDescription><![CDATA[descricaoOrgaoExterno]]></fieldDescription>
+	</field>
+	<field name="numeroProcesso" class="java.lang.Long">
+		<fieldDescription><![CDATA[numeroProcesso]]></fieldDescription>
+	</field>
+	<field name="relator" class="java.lang.String">
+		<fieldDescription><![CDATA[relator]]></fieldDescription>
+	</field>
+	<field name="siglaClasseProcesso" class="java.lang.String">
+		<fieldDescription><![CDATA[siglaClasseProcesso]]></fieldDescription>
+	</field>
+	<field name="numeroOrgaoDestino" class="java.lang.String"/>
+	<variable name="totalProcesso" class="java.lang.Long" calculation="Sum">
+		<variableExpression><![CDATA[($F{numeroProcesso}!=null ? 1:1)]]></variableExpression>
+		<initialValueExpression><![CDATA[0]]></initialValueExpression>
+	</variable>
+	<group name="OrgaoExterno">
+		<groupExpression><![CDATA[$F{descricaoOrgaoExterno}]]></groupExpression>
+		<groupHeader>
+			<band height="38">
+				<textField>
+					<reportElement style="Rotulo" x="13" y="3" width="412" height="15"/>
+					<textElement/>
+					<textFieldExpression><![CDATA[$F{numeroOrgaoDestino} + " - " + $F{descricaoOrgaoExterno}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement x="15" y="17" width="430" height="15"/>
+					<textElement/>
+					<text><![CDATA[(Processo   -   Remessa   -   Relator)]]></text>
+				</staticText>
+				<line>
+					<reportElement x="0" y="34" width="455" height="1"/>
+				</line>
+			</band>
+		</groupHeader>
+		<groupFooter>
+			<band height="50"/>
+		</groupFooter>
+	</group>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<pageHeader>
+		<band height="89" splitType="Stretch">
+			<staticText>
+				<reportElement style="Rotulo" x="0" y="0" width="244" height="20"/>
+				<textElement/>
+				<text><![CDATA[STF - Supremo Tribunal Federal]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Rotulo" x="0" y="20" width="244" height="20"/>
+				<textElement/>
+				<text><![CDATA[eSTF-Processamento]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Rotulo" x="313" y="0" width="57" height="15"/>
+				<textElement/>
+				<text><![CDATA[Página:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Rotulo" x="313" y="17" width="57" height="15"/>
+				<textElement/>
+				<text><![CDATA[Data:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Rotulo" x="313" y="34" width="57" height="15"/>
+				<textElement/>
+				<text><![CDATA[Hora:]]></text>
+			</staticText>
+			<textField>
+				<reportElement style="AlinhadoDireita" x="370" y="0" width="85" height="15"/>
+				<textElement/>
+				<textFieldExpression><![CDATA[($P{imprimePostal}.equals( "S" ) ? $V{PAGE_NUMBER}-1 : $V{PAGE_NUMBER})]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report" pattern="dd/MM/yyyy">
+				<reportElement style="AlinhadoDireita" x="370" y="17" width="85" height="15"/>
+				<textElement/>
+				<textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report" pattern="HH:mm:ss">
+				<reportElement style="AlinhadoDireita" x="370" y="34" width="85" height="15"/>
+				<textElement/>
+				<textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement style="RotuloCentralizado" x="0" y="73" width="455" height="15"/>
+				<textElement/>
+				<text><![CDATA[Relatório de Autos Emprestados a Órgão Externo]]></text>
+			</staticText>
+		</band>
+	</pageHeader>
+	<columnHeader>
+		<band height="20"/>
+	</columnHeader>
+	<detail>
+		<band height="21" splitType="Stretch">
+			<textField>
+				<reportElement x="13" y="4" width="432" height="15"/>
+				<textElement/>
+				<textFieldExpression><![CDATA[$F{siglaClasseProcesso} + "/" + $F{numeroProcesso} + "     " +
+new java.text.SimpleDateFormat("dd/MM/yyyy").format($F{dataRemessa}) +
+"     " + $F{relator}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="60"/>
+	</pageFooter>
+</jasperReport>

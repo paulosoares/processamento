@@ -1,0 +1,1265 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <artifactId>estf-processamento</artifactId>
+    <packaging>war</packaging>
+    <version>6.16.11-SNAPSHOT</version>
+    <name>eSTF-Processamento</name>
+    <description>Sistema eSTF-Processamento</description>
+
+	<parent>
+        <groupId>br.jus.stf</groupId>
+        <artifactId>stf-maven-parent</artifactId>
+        <version>1.4.0</version> 
+    </parent>
+	
+    <properties>
+        <corporativo.version>4.2.61-SNAPSHOT</corporativo.version>   
+        <stf-util-jasperreports.version>1.0.0</stf-util-jasperreports.version>
+
+        <stfassinador.path>${project.basedir}/src/main/webapp/${assinadorweb.client.dir}</stfassinador.path>
+        <assinadorweb.version>1.3.26</assinadorweb.version>
+        <assinadorweb.client.dir>lib/stfassinador/</assinadorweb.client.dir>
+        <assinadorweb.client.jar.name>assinadorweb-client-${assinadorweb.version}-full.jar</assinadorweb.client.jar.name>
+        <assinadorweb.client.jar.path>${assinadorweb.client.dir}${assinadorweb.client.jar.name}</assinadorweb.client.jar.path>
+
+        <stfoffice.path>${project.basedir}/src/main/webapp/lib/stfoffice</stfoffice.path>
+        <!--<server-name>${env.SERVER_NAME}</server-name>-->
+		<server-name>sistemast.stf.jus.br</server-name>
+        <buildNumber>${env.BUILD_NUMBER}</buildNumber>
+        <jboss-j2ee.version>4.2.3.GA</jboss-j2ee.version>
+        <stfoffice.version>5.1.15</stfoffice.version>
+
+        <cglib.version>2.1_3</cglib.version>
+
+        <commons-collections.version>3.2.1</commons-collections.version>
+        <commons-dbcp.version>1.2.2</commons-dbcp.version>
+        <commons-io.version>1.4</commons-io.version>
+        <commons-lang.version>2.6</commons-lang.version>
+        <commons-logging.version>1.1.1</commons-logging.version>
+
+        <ejb3-persistence.version>1.0.1.GA</ejb3-persistence.version>
+
+        <hibernate.version>3.2.3.ga</hibernate.version>
+        <hibernate-annotations.version>3.3.1.GA</hibernate-annotations.version>
+        <hibernate-entitymanager.version>3.3.1.ga</hibernate-entitymanager.version>
+        <hibernate-search.version>3.0.0.GA</hibernate-search.version>
+        <hibernate-tools.version>3.2.4.GA</hibernate-tools.version>
+        <hibernate-validator.version>3.0.0.GA</hibernate-validator.version>
+        <jboss-common-jdbc-wrapper.version>3.2.3</jboss-common-jdbc-wrapper.version>
+        <jta.version>1.0.1B</jta.version>
+        <oracle.driver.version>11.2.0.2.0</oracle.driver.version>
+
+        <asm-attrs.version>1.5.3</asm-attrs.version>
+        <aspectjweaver.version>1.5.4</aspectjweaver.version>
+        <dom4j.version>1.6.1</dom4j.version>
+        <jaxen.version>1.1</jaxen.version>
+
+        <apache-taglibs.version>1.1.2</apache-taglibs.version>
+        <jsf.version>1.2_08</jsf.version>
+        <jstl.version>1.2</jstl.version>
+        <lucene-core.version>2.2.0</lucene-core.version>
+        <servlet-api.version>2.5</servlet-api.version>
+        <tomahawk.version>1.1.6</tomahawk.version>
+
+        <slf4j.version>1.6.2</slf4j.version>
+
+        <junit.version>4.4</junit.version>
+
+        <spring.version>2.5.6</spring.version>
+        <spring-ldap.version>1.2.1</spring-ldap.version>
+        <spring-security.version>2.0.4</spring-security.version>
+
+		<barcode4j.version>2.0</barcode4j.version>
+		<batik-bridge.version>1.6-1</batik-bridge.version>
+		<poi.version>3.11</poi.version>
+
+        <app.url>http://sistemas/processamento</app.url>
+        <jira.project.id>PROCESSAMENTO</jira.project.id>
+        <jenkins.job.category>negocio.sistemas</jenkins.job.category>
+        <jenkins.job.id>negocio.sistema.processamento</jenkins.job.id>
+        <tagBase>http://build/stf/csol/projetos/java/processamento/src/tags</tagBase>
+		<app-version>${project.version}</app-version>
+		<instancia-aplicacao />
+		<build-number />
+		<mni.chavePrivada>475T5mopGcVwks09jJ13Bn23EBpxQYId</mni.chavePrivada>
+		<mni.servidor>http://wst.stf.jus.br/servico-intercomunicacao-2.2.2/api/proc/processo/{objetoIncidenteId}/andamentoprocesso/{seqAndamentoProcesso}</mni.servidor>
+		<mni.timeout>6000</mni.timeout>
+    </properties>
+
+    <build>
+        <finalName>processamento</finalName>
+
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+
+        <plugins>
+        	<plugin>
+				<groupId>com.spotify</groupId>
+				<artifactId>docker-maven-plugin</artifactId>
+				<version>0.4.5</version>
+				<configuration>
+					<serverId>docker-registry</serverId>
+					<registryUrl>https://registry.stf.jus.br/</registryUrl>
+					<imageName>registry.stf.jus.br/${project.build.finalName}:${app-version}</imageName>
+					<baseImage>registry.stf.jus.br/jboss-eap/4.3/instancia/processamento:j6</baseImage>						
+					<labels>
+						<label>br.jus.stf.svn_revision=${SVN_REVISION}</label>
+						<label>br.jus.stf.build_number=${BUILD_NUMBER}</label>
+					</labels>
+
+					<env>'
+						<APP>processamento</APP>
+						<LOG_LEVEL>INFO</LOG_LEVEL>
+						<DEPLOY_DIR>$JBOSS_HOME/server/aplicacao/stf/stf_deploy_application/</DEPLOY_DIR>
+						<DEPLOY_DATASOURCE>$JBOSS_HOME/server/aplicacao/stf/stf_deploy_datasource/</DEPLOY_DATASOURCE>
+						<DEPLOY_WAR>${project.build.finalName}.war</DEPLOY_WAR>
+					</env>
+
+					<runs>							
+						<run>mv $DEPLOY_WAR $DEPLOY_DIR</run>
+						<run>sed -i -e "s@{josso-id}@$APP@g" -e "s@{josso-context}@$APP@g" ./conf/josso-agent-config.xml</run>
+						<run>sed -i -e "s@{LOG-LEVEL}@${LOG_LEVEL}@g" ./conf/jboss-log4j.xml</run>
+						<run>RUN sudo curl -LOkf "${REPO}aplicacao/${APP}/msttcorefonts-2.5-3.fc24.noarch.rpm";\
+							 sudo rpm -ivh msttcorefonts-2.5-3.fc24.noarch.rpm;\
+							 sudo rm -f msttcorefonts-2.5-3.fc24.noarch.rpm</run>
+						<run>curl -LOkf "${REPO}aplicacao/${APP}/${APP}-datasource.tar.gz.enc";\
+						 mv ${APP}-datasource.tar.gz.enc $DEPLOY_DATASOURCE;\
+						 desencripta_datasource.sh;\
+						 tar -xzvf ${DEPLOY_DATASOURCE}${APP}-datasource.tar.gz -C ${DEPLOY_DATASOURCE};\						 
+						 rm -f ${DEPLOY_DATASOURCE}${APP}-datasource.tar.gz*</run>
+						<run>sudo chown -R 501:501 $DEPLOY_DIR $DEPLOY_DATASOURCE</run>
+					</runs>
+
+					<resources>
+						<resource>
+							<targetPath>.</targetPath>
+							<directory>${project.build.directory}</directory>
+							<include>${project.build.finalName}.war</include> 
+						</resource>
+					</resources>
+					<noCache>true</noCache>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>2.10.4</version>
+			</plugin>        
+            <plugin>
+                <artifactId>maven-clean-plugin</artifactId>
+                <version>2.4.1</version>
+                <configuration>
+                    <filesets>
+                        <fileset>
+                            <directory>${stfassinador.path}</directory>
+                            <includes>
+                                <include>**/*.jar</include>
+                            </includes>
+                            <followSymlinks>false</followSymlinks>
+                        </fileset>
+                        <!-- Exclui as bibliotecas do stfoffice da pasta -->
+                        <fileset>
+                            <directory>${stfoffice.path}</directory>
+                            <includes>
+                                <include>*stfoffice*/*.jar</include>
+                            </includes>
+                            <followSymlinks>false</followSymlinks>
+                        </fileset>
+                    </filesets>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>2.3</version>
+                <executions>
+                    <execution>
+                        <id>copyStfAssinador</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>br.jus.stf</groupId>
+                                    <artifactId>assinadorweb-client</artifactId>
+                                    <version>${assinadorweb.version}</version>
+                                    <type>jar</type>
+                                    <classifier>full</classifier>
+                                    <overWrite>true</overWrite>
+                                    <destFileName>${assinadorweb.client.jar.name}</destFileName>
+                                </artifactItem>
+                            </artifactItems>
+                            <outputDirectory>${stfassinador.path}</outputDirectory>
+                            <overWriteReleases>true</overWriteReleases>
+                            <overWriteSnapshots>true</overWriteSnapshots>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copyStfOffice</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>${project.groupId}</groupId>
+                                    <artifactId>cmp-stfoffice-editor</artifactId>
+                                    <version>${stfoffice.version}</version>
+                                    <type>jar</type>
+                                    <overWrite>true</overWrite>
+                                    <destFileName>stfoffice-editor.jar</destFileName>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>${project.groupId}</groupId>
+                                    <artifactId>cmp-stfoffice-bootstrap</artifactId>
+                                    <version>${stfoffice.version}</version>
+                                    <type>jar</type>
+                                    <classifier>jar-with-dependencies</classifier>
+                                    <overWrite>true</overWrite>
+                                    <destFileName>stfoffice-bootstrap.jar</destFileName>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>${project.groupId}</groupId>
+                                    <artifactId>cmp-stfoffice-core</artifactId>
+                                    <version>${stfoffice.version}</version>
+                                    <type>jar</type>
+                                    <classifier>jar-with-dependencies</classifier>
+                                    <overWrite>true</overWrite>
+                                    <destFileName>stfoffice-core.jar</destFileName>
+                                </artifactItem>
+                            </artifactItems>
+                            <outputDirectory>${stfoffice.path}</outputDirectory>
+                            <overWriteReleases>true</overWriteReleases>
+                            <overWriteSnapshots>true</overWriteSnapshots>
+                        </configuration>
+                    </execution>
+
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>2.3</version>
+                <configuration>
+                    <filteringDeploymentDescriptors>true</filteringDeploymentDescriptors>
+                    <archive>
+                        <manifest>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                        </manifest>
+                        <manifestEntries>
+                            <Implementation-Build>${buildNumber}</Implementation-Build>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>${project.artifactId}</artifactId>
+                            <parent-artifactId>${project.parent.artifactId}</parent-artifactId>
+                            <version>${project.version}</version>
+                            <Server-Name>${server-name}</Server-Name>
+                            <Description>${project.description}</Description>
+                            <JBoss-Version>${jboss-j2ee.version}</JBoss-Version>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
+
+            <!-- DESCOMENTAR O TRECHO ABAIXO PARA GERAR O CÓDIGO -->
+            <!--<plugin>
+                <groupId>org.jvnet.jax-ws-commons</groupId>
+                <artifactId>jaxws-maven-plugin</artifactId>
+                <version>2.3</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>wsimport</goal>
+                        </goals>
+                        <configuration>
+                        	<target>2.1</target>
+                        	<verbose>true</verbose>
+                        	<wsdlUrls>
+                        		<wsdlUrl>
+                        		https://apps.correios.com.br/SigepMasterJPA/AtendeClienteService/AtendeCliente?wsdl
+                        		</wsdlUrl>
+                        	</wsdlUrls>
+                            <packageName>br.com.correios.bsb.sigep.master.bean.cliente</packageName>
+                            <staleFile>${project.build.directory}/jaxws/stale/AtendeCliente_1.stale</staleFile>
+                            <sourceDestDir>${project.basedir}/src/main/java</sourceDestDir>
+                        </configuration>
+                        <id>wsimport-generate-AtendeCliente_1</id>
+                        <phase>generate-sources</phase>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>javax.xml</groupId>
+                        <artifactId>webservices-api</artifactId>
+                        <version>2.0</version>
+                    </dependency>
+                </dependencies>
+                <configuration>
+                    <sourceDestDir>${project.build.directory}/generated-sources/jaxws-wsimport</sourceDestDir>
+                    <xnocompile>true</xnocompile>
+                    <verbose>true</verbose>
+                    <extension>true</extension>
+                    <catalog>${basedir}/src/jax-ws-catalog.xml</catalog>
+                </configuration>
+            </plugin> -->
+        </plugins>
+        <pluginManagement>
+            <plugins>
+                <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+                <plugin>
+                    <groupId>org.eclipse.m2e</groupId>
+                    <artifactId>lifecycle-mapping</artifactId>
+                    <version>1.0.0</version>
+                    <configuration>
+                        <lifecycleMappingMetadata>
+                            <pluginExecutions>
+                                <pluginExecution>
+                                    <pluginExecutionFilter>
+                                        <groupId>
+                                            org.apache.maven.plugins
+                                        </groupId>
+                                        <artifactId>
+                                            maven-dependency-plugin
+                                        </artifactId>
+                                        <versionRange>
+                                            [2.3,)
+                                        </versionRange>
+                                        <goals>
+                                            <goal>copy</goal>
+                                        </goals>
+                                    </pluginExecutionFilter>
+                                    <action>
+                                        <ignore />
+                                    </action>
+                                </pluginExecution>
+                            </pluginExecutions>
+                        </lifecycleMappingMetadata>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+    <dependencies>
+        <!-- CONFIGURAÇÃO CAS -->
+        <dependency>
+            <groupId>br.jus.stf</groupId>
+            <artifactId>seguranca.cas.spring2</artifactId>
+            <version>1.0.10</version>
+            <scope>compile</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>br.jus.stf</groupId>
+                    <artifactId>seguranca.datasource</artifactId>
+                </exclusion>
+                <exclusion>
+                	<artifactId>commons-lang</artifactId>
+                	<groupId>commons-lang</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>estf-corporativo</artifactId>
+			<version>${corporativo.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.sun.xml.bind</groupId>
+                    <artifactId>jaxb-impl</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>javax.xml.bind</groupId>
+                    <artifactId>jaxb-api</artifactId>
+                </exclusion>
+                <exclusion>
+                	<groupId>org.slf4j</groupId>
+                	<artifactId>slf4j-api</artifactId>
+                </exclusion>                
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>stf-util-jasperreports</artifactId>
+        </dependency>
+
+		<dependency>
+			<groupId>net.sf.jasperreports</groupId>
+			<artifactId>jasperreports-fonts</artifactId>
+			<version>4.0.0</version>
+		</dependency>
+
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>jstl</artifactId>
+        </dependency>
+
+        <dependency>
+            <artifactId>assinadorweb-web-components</artifactId>
+            <groupId>br.jus.stf</groupId>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.sun.xml.bind</groupId>
+                    <artifactId>jaxb-impl</artifactId>
+                </exclusion>
+                <exclusion>
+                	<artifactId>commons-lang</artifactId>
+                	<groupId>commons-lang</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>cmp-stfoffice-bootstrap</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>cmp-stfoffice-editor</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>cmp-stfoffice-core</artifactId>
+            <exclusions>
+                <exclusion>
+                    <artifactId>javassist</artifactId>
+                    <groupId>javassist</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.aspectj</groupId>
+            <artifactId>aspectjweaver</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>aopalliance</groupId>
+            <artifactId>aopalliance</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>asm</groupId>
+            <artifactId>asm-attrs</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.myfaces.tomahawk</groupId>
+            <artifactId>tomahawk</artifactId>
+            <exclusions>
+            	<exclusion>
+            		<artifactId>commons-lang</artifactId>
+            		<groupId>commons-lang</groupId>
+            	</exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.richfaces.ui</groupId>
+            <artifactId>richfaces-ui</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.richfaces.framework</groupId>
+            <artifactId>richfaces-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.richfaces.framework</groupId>
+            <artifactId>richfaces-impl</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>javax.faces</groupId>
+            <artifactId>jsf-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>javax.faces</groupId>
+            <artifactId>jsf-impl</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>jboss</groupId>
+            <artifactId>jboss-common-jdbc-wrapper</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-core</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>apache-taglibs</groupId>
+            <artifactId>standard</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>cglib</groupId>
+            <artifactId>cglib</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>dom4j</groupId>
+            <artifactId>dom4j</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>ejb3-persistence</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-annotations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-entitymanager</artifactId>
+            <exclusions>
+                <exclusion>
+                    <artifactId>javassist</artifactId>
+                    <groupId>javassist</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-search</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-tools</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-validator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>javax.transaction</groupId>
+            <artifactId>jta</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>commons-collections</groupId>
+            <artifactId>commons-collections</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.ldap</groupId>
+            <artifactId>spring-ldap</artifactId>
+            <exclusions>
+            	<exclusion>
+            		<artifactId>commons-lang</artifactId>
+            		<groupId>commons-lang</groupId>
+            	</exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.openoffice</groupId>
+            <artifactId>jopendocument</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>jaxen</groupId>
+            <artifactId>jaxen</artifactId>
+            <exclusions>
+                <exclusion>
+                    <artifactId>xercesImpl</artifactId>
+                    <groupId>xerces</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>xmlParserAPIs</artifactId>
+                    <groupId>xerces</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+        </dependency>
+        <!-- Mockito -->
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-all</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.dbunit</groupId>
+            <artifactId>dbunit</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>fontEnglish</groupId>
+            <artifactId>fontEnglish</artifactId>
+            <version>fontEnglish</version>
+        </dependency>
+        <dependency>
+            <groupId>org.perf4j</groupId>
+            <artifactId>perf4j</artifactId>
+            <version>0.9.16</version>
+        </dependency>
+
+        <dependency>
+            <groupId>net.sf.barcode4j</groupId>
+            <artifactId>barcode4j</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi</artifactId>
+        </dependency>
+
+        <dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt</artifactId>
+			<version>0.6.0</version>
+		</dependency>        
+
+        <dependency>
+            <groupId>batik</groupId>
+            <artifactId>batik-bridge</artifactId>
+            <exclusions>
+                <exclusion>
+                    <artifactId>xercesImpl</artifactId>
+                    <groupId>xerces</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+			<groupId>javax.servlet.jsp</groupId>
+			<artifactId>jsp-api</artifactId>
+			<version>2.1</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+		    <groupId>org.apache.pdfbox</groupId>
+		    <artifactId>pdfbox</artifactId>
+		    <version>2.0.11</version>
+		</dependency>
+		
+    </dependencies>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- COMPONENTES STF -->
+
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>estf-corporativo</artifactId>
+                <version>${corporativo.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <artifactId>itext</artifactId>
+                        <groupId>com.lowagie</groupId>
+                    </exclusion>
+                    <exclusion>
+                        <artifactId>itext-rtf</artifactId>
+                        <groupId>com.lowagie</groupId>
+                    </exclusion>
+                    <exclusion>
+                        <artifactId>aopalliance</artifactId>
+                        <groupId>aopalliance</groupId>
+                    </exclusion>
+                    <exclusion>
+                        <artifactId>jasperreports</artifactId>
+                        <groupId>jasperreports</groupId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>asm</groupId>
+                        <artifactId>asm</artifactId>
+                    </exclusion>
+                    <exclusion>
+                    	<groupId>javax.mail</groupId>
+                    	<artifactId>mail</artifactId>
+                    </exclusion>
+                    <exclusion>
+                    	<groupId>org.slf4j</groupId>
+                    	<artifactId>slf4j-api</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>stf-util-jasperreports</artifactId>
+                <version>${stf-util-jasperreports.version}</version>
+                <scope>compile</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>br.jus.stf</groupId>
+                <artifactId>assinadorweb-web-components</artifactId>
+                <version>${assinadorweb.version}</version>
+                <scope>compile</scope>
+                <exclusions>
+                    <exclusion>
+                        <artifactId>bctsp-jdk15</artifactId>
+                        <groupId>bouncycastle</groupId>
+                    </exclusion>
+                    <exclusion>
+                        <artifactId>assembla</artifactId>
+                        <groupId>assembla</groupId>
+                    </exclusion>
+                    <exclusion>
+                        <artifactId>bouncycastle</artifactId>
+                        <groupId>br.jus.stf.processojudicial</groupId>
+                    </exclusion>
+                    <exclusion>
+                        <artifactId>sunmscapi</artifactId>
+                        <groupId>com.sun</groupId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>cmp-stfoffice-bootstrap</artifactId>
+                <version>${stfoffice.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>cmp-stfoffice-editor</artifactId>
+                <version>${stfoffice.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <artifactId>plugin</artifactId>
+                        <groupId>netscape.javascript</groupId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>cmp-stfoffice-core</artifactId>
+                <version>${stfoffice.version}</version>
+            </dependency>
+
+            <!-- COMMONS -->
+
+            <dependency>
+                <groupId>commons-dbcp</groupId>
+                <artifactId>commons-dbcp</artifactId>
+                <version>${commons-dbcp.version}</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>commons-collections</groupId>
+                <artifactId>commons-collections</artifactId>
+                <version>${commons-collections.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>${commons-io.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-lang</groupId>
+                <artifactId>commons-lang</artifactId>
+                <version>${commons-lang.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-logging</groupId>
+                <artifactId>commons-logging</artifactId>
+                <version>${commons-logging.version}</version>
+            </dependency>
+
+            <!-- SERVLET & JSP -->
+
+            <dependency>
+                <groupId>javax.servlet</groupId>
+                <artifactId>servlet-api</artifactId>
+                <version>${servlet-api.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>javax.servlet</groupId>
+                <artifactId>jstl</artifactId>
+                <version>${jstl.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>apache-taglibs</groupId>
+                <artifactId>standard</artifactId>
+                <version>${apache-taglibs.version}</version>
+            </dependency>
+
+            <!-- JSF -->
+
+            <dependency>
+                <groupId>javax.faces</groupId>
+                <artifactId>jsf-api</artifactId>
+                <version>${jsf.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>javax.faces</groupId>
+                <artifactId>jsf-impl</artifactId>
+                <version>${jsf.version}</version>
+                <optional>false</optional>
+                <scope>provided</scope>
+            </dependency>
+
+            <!-- RICHFACES -->
+
+            <dependency>
+                <groupId>org.richfaces.ui</groupId>
+                <artifactId>richfaces-ui</artifactId>
+                <version>3.3.3.Final</version>
+            </dependency>
+            <dependency>
+                <groupId>org.richfaces.framework</groupId>
+                <artifactId>richfaces-api</artifactId>
+                <version>3.3.3.Final</version>
+            </dependency>
+            <dependency>
+                <groupId>org.richfaces.framework</groupId>
+                <artifactId>richfaces-impl</artifactId>
+                <version>3.3.3.Final-STF1</version>
+            </dependency>
+
+            <!-- TOMAHAWK -->
+
+            <dependency>
+                <groupId>org.apache.myfaces.tomahawk</groupId>
+                <artifactId>tomahawk</artifactId>
+                <version>${tomahawk.version}</version>
+            </dependency>
+
+            <!-- BANCO DE DADOS -->
+
+            <dependency>
+                <groupId>com.oracle</groupId>
+                <artifactId>ojdbc6</artifactId>
+                <version>${oracle.driver.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>jboss</groupId>
+                <artifactId>jboss-common-jdbc-wrapper</artifactId>
+                <version>${jboss-common-jdbc-wrapper.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <!-- HIBERNATE -->
+
+            <dependency>
+                <groupId>org.hibernate</groupId>
+                <artifactId>hibernate-entitymanager</artifactId>
+                <version>${hibernate-entitymanager.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.hibernate</groupId>
+                <artifactId>hibernate</artifactId>
+                <version>${hibernate.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.hibernate</groupId>
+                <artifactId>hibernate-annotations</artifactId>
+                <version>${hibernate-annotations.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.hibernate</groupId>
+                <artifactId>hibernate-search</artifactId>
+                <version>${hibernate-search.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.hibernate</groupId>
+                <artifactId>hibernate-tools</artifactId>
+                <version>${hibernate-tools.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.hibernate</groupId>
+                <artifactId>hibernate-validator</artifactId>
+                <version>${hibernate-validator.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.hibernate</groupId>
+                <artifactId>ejb3-persistence</artifactId>
+                <version>${ejb3-persistence.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>javax.transaction</groupId>
+                <artifactId>jta</artifactId>
+                <version>${jta.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <!-- SPRING -->
+
+            <dependency>
+                <groupId>org.springframework</groupId>
+				<artifactId>spring-web</artifactId>
+				<version>4.1.6.RELEASE</version>
+				<scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+				<artifactId>spring-core</artifactId>
+				<version>4.1.6.RELEASE</version>
+				<scope>compile</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-jdbc</artifactId>
+                <version>${spring.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-dao</artifactId>
+                <version>${spring.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-core</artifactId>
+                <version>${spring.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-beans</artifactId>
+                <version>${spring.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-context</artifactId>
+                <version>${spring.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-aop</artifactId>
+                <version>${spring.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-test</artifactId>
+                <version>${spring.version}</version>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.springframework.security</groupId>
+                <artifactId>spring-security-taglibs</artifactId>
+                <version>${spring-security.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.springframework</groupId>
+                        <artifactId>spring-support</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>org.springframework.ldap</groupId>
+                <artifactId>spring-ldap</artifactId>
+                <version>${spring-ldap.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <!-- ASPECTOS -->
+
+            <dependency>
+                <groupId>org.aspectj</groupId>
+                <artifactId>aspectjweaver</artifactId>
+                <version>1.5.4</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>aopalliance</groupId>
+                <artifactId>aopalliance</artifactId>
+                <version>1.0</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <artifactId>asm</artifactId>
+                <groupId>asm</groupId>
+                <version>1.5.3</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>asm</groupId>
+                <artifactId>asm-attrs</artifactId>
+                <version>${asm-attrs.version}</version>
+            </dependency>
+
+            <!-- JOPENDOCUMENT -->
+
+            <dependency>
+                <groupId>org.openoffice</groupId>
+                <artifactId>jopendocument</artifactId>
+                <version>1.2</version>
+            </dependency>
+
+            <!-- PROXY -->
+
+            <dependency>
+                <groupId>cglib</groupId>
+                <artifactId>cglib</artifactId>
+                <version>${cglib.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <!-- LOG -->
+
+            <dependency>
+                <groupId>log4j</groupId>
+                <artifactId>log4j</artifactId>
+                <version>1.2.16</version>
+                <scope>provided</scope>
+            </dependency>
+<!--             <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-log4j12</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency> -->
+
+            <!-- JAXEN -->
+
+            <dependency>
+                <groupId>jaxen</groupId>
+                <artifactId>jaxen</artifactId>
+                <version>${jaxen.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <artifactId>jdom</artifactId>
+                        <groupId>jdom</groupId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <!-- DOM -->
+
+            <dependency>
+                <groupId>dom4j</groupId>
+                <artifactId>dom4j</artifactId>
+                <version>${dom4j.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <!-- OUTROS -->
+
+            <dependency>
+                <groupId>org.apache.lucene</groupId>
+                <artifactId>lucene-core</artifactId>
+                <version>${lucene-core.version}</version>
+            </dependency>
+
+            <!-- TESTES -->
+
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>${junit.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <!-- Mockito -->
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-all</artifactId>
+                <version>1.8.4</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.dbunit</groupId>
+                <artifactId>dbunit</artifactId>
+                <version>2.4.8</version>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>net.sf.barcode4j</groupId>
+                <artifactId>barcode4j</artifactId>
+                <version>${barcode4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.poi</groupId>
+                <artifactId>poi</artifactId>
+                <version>${poi.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>batik</groupId>
+                <artifactId>batik-bridge</artifactId>
+                <version>${batik-bridge.version}</version>
+            </dependency>
+
+			<!-- https://mvnrepository.com/artifact/javax.xml.ws/jaxws-api -->
+			<dependency>
+			    <groupId>javax.xml.ws</groupId>
+			    <artifactId>jaxws-api</artifactId>
+			    <version>2.2.11</version>
+			</dependency>
+            
+        </dependencies>
+    </dependencyManagement>
+
+  <scm>
+ 	<url>http://build/stf/csol/projetos/java/processamento/src/trunk</url>
+	<connection>scm:svn:http://build/stf/csol/projetos/java/processamento/src/trunk</connection>
+	<developerConnection>scm:svn:http://build/stf/csol/projetos/java/processamento/src/trunk</developerConnection>
+  </scm>
+
+	<profiles>
+		<profile>
+			<id>teste</id>
+			<properties>
+				<mni.chavePrivada>475T5mopGcVwks09jJ13Bn23EBpxQYId</mni.chavePrivada>
+				<mni.servidor>http://wst.stf.jus.br/servico-intercomunicacao-2.2.2/api/proc/processo/{objetoIncidenteId}/andamentoprocesso/{seqAndamentoProcesso}</mni.servidor>
+				<mni.timeout>6000</mni.timeout>
+			</properties>
+		</profile>	
+		<profile>
+			<id>homologacao</id>
+			<properties>
+				<mni.chavePrivada>475T5mopGcVwks09jJ13Bn23EBpxQYId</mni.chavePrivada>
+				<mni.servidor>http://wsh.stf.jus.br/servico-intercomunicacao-2.2.2/api/proc/processo/{objetoIncidenteId}/andamentoprocesso/{seqAndamentoProcesso}</mni.servidor>
+				<mni.timeout>6000</mni.timeout>
+			</properties>
+		</profile>
+		<profile>
+			<id>producao</id>
+			<properties>
+				<mni.chavePrivada>475T5mopGcVwks09jJ13Bn23EBpxQYId</mni.chavePrivada>
+				<mni.servidor>https://ws.stf.jus.br/servico-intercomunicacao-2.2.2/api/proc/processo/{objetoIncidenteId}/andamentoprocesso/{seqAndamentoProcesso}</mni.servidor>
+				<mni.timeout>6000</mni.timeout>			
+			</properties>
+		</profile>
+		<profile>
+			<id>beta</id>
+			<properties>
+				<!-- Servidor onde o deploy será realizado -->
+				<deploy.server>campinas1</deploy.server>
+				<deploy.user>procjud</deploy.user>
+				<deploy.password>procjud@stf</deploy.password>
+				<deploy.folder>/home/procjud/deploys/</deploy.folder>
+				<app.folder>/home/procjud/apps-tramite-gj-beta/</app.folder>
+				<deployed.war.fileName>edecisaobeta</deployed.war.fileName>
+				<execute.hotdeploy>true</execute.hotdeploy>
+				<mni.chavePrivada>475T5mopGcVwks09jJ13Bn23EBpxQYId</mni.chavePrivada>
+				<mni.servidor>http://ws.stf.jus.br</mni.servidor>
+				<mni.timeout>6000</mni.timeout>						
+			</properties>
+		</profile>
+
+		<profile>
+			<id>publish-jboss</id>
+			<build>
+				<plugins>
+					<plugin>
+						<artifactId>maven-resources-plugin</artifactId>
+						<version>2.3</version>
+						<executions>
+							<execution>
+								<id>publish-jboss</id>
+								<phase>validate</phase>
+								<goals>
+									<goal>copy-resources</goal>
+								</goals>
+								<configuration>
+									<encoding>ISO-8859-1</encoding>
+									<outputDirectory>${jboss.home}/server/${jboss.config}/deploy/${project.build.finalName}.war</outputDirectory>
+									<resources>
+										<resource>
+											<directory>${basedir}/src/main/webapp</directory>
+											<excludes>
+												<exclude>**/*.svn</exclude>
+												<exclude>**/*.class</exclude>
+												<exclude>**/*.jar</exclude>
+												<exclude>**/*.MF</exclude>
+												<exclude>**/*.xml*</exclude>
+											</excludes>
+											<filtering>true</filtering>
+										</resource>
+									</resources>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<id>frontend-test</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>com.github.searls</groupId>
+						<artifactId>jasmine-maven-plugin</artifactId>
+						<version>${jasmine.version}</version>
+						<executions>
+							<execution>
+								<goals>
+									<goal>test</goal>
+								</goals>
+							</execution>
+						</executions>
+						<configuration>
+							<jsSrcDir>src</jsSrcDir>
+							<sourceIncludes>
+								<include>${assinadorMobile.relativeFromSrAssinadorDir}/assets_stf/js/app/**/*.js</include>
+							</sourceIncludes>
+							<sourceExcludes>
+								<exclude>${assinadorMobile.relativeFromSrAssinadorDir}/assets_stf/js/app/app-bootstrap.js</exclude>
+							</sourceExcludes>
+							<jsTestSrcDir>${assinadorMobile.baseTestSrcDir}/specs</jsTestSrcDir>
+							<preloadSources>
+								<source>${assinadorMobile.baseSrcDir}/assets/plugins/jquery-1.8.3.min.js</source>
+								<source>${assinadorMobile.baseTestSrcDir}/lib/jasmine-jquery.js</source>
+								<source>${assinadorMobile.baseTestSrcDir}/lib/jasmine-console-fallback.js</source>
+							</preloadSources>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+			<properties>
+				<jasmine.version>1.3.1.6</jasmine.version>
+				<assinadorMobile.relativeFromSrAssinadorDir>main/webapp/mobile/assinador</assinadorMobile.relativeFromSrAssinadorDir>
+				<assinadorMobile.baseSrcDir>src/${assinadorMobile.relativeFromSrAssinadorDir}</assinadorMobile.baseSrcDir>
+				<assinadorMobile.baseTestSrcDir>src/test/javascript/mobile/assinador</assinadorMobile.baseTestSrcDir>
+				<assinadorMobile.externalTestSrcDir>src/test/javascript/mobile-external</assinadorMobile.externalTestSrcDir>
+			</properties>
+		</profile>
+	</profiles>  
+  
+</project>

@@ -1,0 +1,23 @@
+﻿<!-- 
+SQL para criar a massa
+
+
+/* Listar processos findos por gabinete */
+SELECT ap.sig_classe_proces, ap.num_processo, ap.cod_setor, s.sig_setor
+FROM stf.andamento_processos ap
+INNER JOIN setores s ON ap.cod_setor = s.cod_setor
+WHERE ((cod_andamento = 7106) or (cod_andamento = 2309))
+and ap.sig_classe_proces = 'AC'
+and ap.num_processo > 1800
+AND NOT EXISTS (
+SELECT 1
+FROM stf.andamento_processos ap2
+WHERE ap2.num_seq_errado = ap.num_sequencia
+AND ap2.seq_objeto_incidente = ap.seq_objeto_incidente)
+GROUP BY ap.sig_classe_proces, ap.num_processo, ap.cod_setor, s.sig_setor;
+
+AC	1819	600000435	GMRL
+-->
+<testdata>
+	<vars classe="AC" processo="1819" codigoSetor="600000435" siglaSetor="GMRL" /> <!-- Gabinete do Ministro Ricardo Lewandowski-->
+</testdata>

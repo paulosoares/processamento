@@ -1,0 +1,36 @@
+Tags:
+Preconditions:Logado como "administrador"
+O gestor pode pesquisar guias remetidas e deslocadas para ou pelo seu setor:
+#Clique no menu "Principal"
+#Altere o setor para "600000679"
+#Clique no menu "Deslocamento"  e na opção "Pesquisar Guia de Deslocamento"
+#Informe a guia "10794"
+#Informe o ano "2013"
+#Selecione a opção "Utilizar meu setor" no campo "Origem"
+#Clique em pesquisar
+#Verifique se o resultado foi exibido
+
+O gestor pode receber um processo físico desde que saiba o setor de origem o número e ano da guia:
+#Clique no menu "Principal" 
+#Altere o setor para "600000679"
+#Clique no menu "Deslocamento"  e na opção "Receber Documento"
+#Informe o setor  de origem e o número e ano da guia
+#Clique em pesquisar
+#Verifique se a guia foi exibida
+#Clique em receber a guia
+#Verifique se a guia foi recebida com sucesso
+
+O gestor pode deslocar processos físicos:
+#Clique no menu "Principal" 
+#Altere o setor para "600000679"
+#Clique no menu "Deslocamento"  e na opção "Remeter Documento"
+#Informe o setor de destino "600000680"
+#Informe o processo que será deslocado
+#Informe a observação "Teste da TI - obs.: deslocamento de processo"
+#Confirme o deslocamento
+#Verifique se a guia foi gerada com sucesso
+
+*Informações*
+- Para receber o processo, a data de recebimento deve estar em branco.
+- O processo eletrônico é recebido automaticamente.
+- A guia de deslocamento pode ser verificada no sistema Consulta Processual.

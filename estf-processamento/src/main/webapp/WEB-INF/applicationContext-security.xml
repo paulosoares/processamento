@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:sec="http://www.springframework.org/schema/security"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-2.0.xsd
+		 http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+		 http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-2.5.xsd">
+
+	<!-- Definições do CAS -->
+	<import resource="classpath*:/META-INF/spring/casSecurity.xml" />
+	
+	<alias name="dataSourceSTF" alias="dsSeguranca" />
+
+	<bean id="filterSecurityInterceptor" class="org.springframework.security.intercept.web.FilterSecurityInterceptor">
+		<property name="authenticationManager" ref="authenticationManager" />
+		<property name="accessDecisionManager" ref="accessDecisionManager" />
+		<property name="objectDefinitionSource">
+			<value>
+				CONVERT_URL_TO_LOWERCASE_BEFORE_COMPARISON
+				PATTERN_TYPE_APACHE_ANT
+				/pages/assinatura/**=RS_ADM_ASSINADOR,RS_MASTER_PROCESSAMENTO
+				/pages/assinarpeca/**=RS_PECA_ASSINADOR,RS_MASTER_PROCESSAMENTO,RS_ADM_ASSINADOR
+				/pages/principal/**=RS_ADM_ASSINADOR,RS_MASTER_PROCESSAMENTO,RS_PECA_ASSINADOR,RS_EDICAO_MODELOS,RS_ELABORACAO_TEXTOS,RS_GESTAO_TEXTOS,RS_ACOMPANHAMENTO_TEXTOS,RS_ASSINATURA_TEXTOS,RS_CONSULTA_TEXTOS,RS_GABINETE_SEJ,RS_MANTER_GRUPO_USUARIOS,RS_PESQUISAR_AUTOS_EMPRESTADOS, RS_PESQUISAR_DESLOCAMENTO, RS_REGISTRAR_ANDAMENTO, RS_REGISTRAR_ANDAMENTO_LOTE, RS_REGISTRAR_DESLOCAMENTO, RS_INTEGRACAO 
+				/pages/manterdocumentos/**=RS_MASTER_PROCESSAMENTO,RS_ELABORACAO_TEXTOS,RS_GESTAO_TEXTOS
+				/pages/assinardocumentos/**=RS_MASTER_PROCESSAMENTO,RS_ASSINATURA_TEXTOS,RS_ACOMPANHAMENTO_TEXTOS,RS_GESTAO_TEXTOS,RS_REVISAO_TEXTOS
+				/pages/revisardocumentos/**=RS_MASTER_PROCESSAMENTO,RS_GESTAO_TEXTOS,RS_REVISAO_TEXTOS
+				/pages/expedirdocumentos/**=RS_MASTER_PROCESSAMENTO,RS_ACOMPANHAMENTO_TEXTOS,RS_EXPEDICAO_TEXTOS
+				/pages/consultardocumentos/consultardocumentosassinados*=RS_CONSULTA_TEXTOS_ASSINADOS
+				/pages/consultardocumentos/**=RS_MASTER_PROCESSAMENTO,RS_CONSULTA_TEXTOS,RS_CONSULTA_TEXTOS_ASSINADOS,RS_ELABORACAO_TEXTOS,RS_GESTAO_TEXTOS,RS_ASSINATURA_TEXTOS,RS_ACOMPANHAMENTO_TEXTOS
+				/pages/tipotagslivres/**=RS_MASTER_PROCESSAMENTO
+				/pages/modelos/**=RS_MASTER_PROCESSAMENTO,RS_EDICAO_MODELOS
+				/pages/integracao/**=RS_INTEGRACAO
+				/pages/copiarpecas/**=RS_MASTER_PROCESSAMENTO,RS_COPIAR_PECAS
+				/pages/deslocamento/carga/**=RS_CARGA_AUTOS
+				/lib/**=IS_AUTHENTICATED_ANONYMOUSLY
+				/**=IS_AUTHENTICATED_ANONYMOUSLY			
+			</value>
+		</property>
+	</bean>
+
+	<!-- This bean is optional; it isn't used by any other bean as it only listens and logs -->
+	<bean id="loggerListener" class="org.springframework.security.event.authentication.LoggerListener" />
+
+	<bean id="concurrentSessionController"
+		class="org.springframework.security.concurrent.ConcurrentSessionControllerImpl">
+		<property name="maximumSessions" value="1" />
+		<property name="sessionRegistry" ref="sessionRegistry" />
+	</bean>
+
+	<bean id="sessionRegistry"
+		class="org.springframework.security.concurrent.SessionRegistryImpl" />
+
+</beans>

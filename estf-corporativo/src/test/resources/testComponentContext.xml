@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="
+	    http://www.springframework.org/schema/beans
+	    http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+	    http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-2.5.xsd
+	    http://www.springframework.org/schema/aop
+	    http://www.springframework.org/schema/aop/spring-aop-2.5.xsd
+	    http://www.springframework.org/schema/context
+	    http://www.springframework.org/schema/context/spring-context-2.5.xsd"
+	default-lazy-init="false">
+	
+	<tx:annotation-driven />
+
+	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource"
+		destroy-method="close">
+
+		<property name="driverClassName">
+			<value>oracle.jdbc.OracleDriver</value>
+		</property>
+
+		<!-- /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		//																												//
+		//	MODO DE UTILIZAÇÃO: Descomentar o sistema o qual você está testando e deixar todos os outros comentados.	//
+		//																												//
+		//	DICAS:																										//
+		//		CTRL+SHIFT+/ = Comentar código selecionado																//
+		//		CTRL+SHIFT+\ = Descomentar código selecionado															//
+		//																												//
+		//		NÃO USAR CTRL+SHIFT+F (FORMATAÇÃO AUTOMÁTICA DE CÓDIGO) AQUI!!!											//
+		//																												//
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////// -->
+
+		<!-- ESTF-GABINETES -->
+
+<!-- 		<property name="url">
+			<value>jdbc:oracle:thin:@(DESCRIPTION=(FAILOVER=ON)(LOAD_BALANCE=ON)(ADDRESS=(PROTOCOL=TCP)(HOST=bd-orcl-des)(PORT=1521))(ADDRESS=(PROTOCOL=TCP)(HOST=bd-orcl-des)(PORT=1521))(CONNECT_DATA=(SERVER=DEDICATED)(SERVICE_NAME=stfd)(FAILOVER_MODE=(TYPE=SESSION)(METHOD=BASIC))))
+			</value>
+		</property>
+		<property name="username">
+			<value>usuarioegab</value>
+		</property>
+		<property name="password">
+			<value>jduyrye5aehs6g4sj</value>
+		</property> -->
+
+		<!-- ESTF-ASSINADORWEB -->
+
+		<property name="url">
+			<value>jdbc:oracle:thin:@bd-orcl-des.stf.jus.br:1521:stfd</value>
+		</property>
+		<property name="username">
+			<value>USUARIOASSINADOR</value>
+		</property> 
+		<property name="password">
+			<value>d%usuarioassinador08</value>
+		</property>
+
+		<!-- ESTF-SESSÕES -->
+
+<!-- 		<property name="url">
+			<value>jdbc:oracle:thin:@(DESCRIPTION=(FAILOVER=ON)(LOAD_BALANCE=ON)(ADDRESS=(PROTOCOL=TCP)(HOST=bd-orcl-des)(PORT=1521))(ADDRESS=(PROTOCOL=TCP)(HOST=bd-orcl-des)(PORT=1521))(CONNECT_DATA=(SERVER=DEDICATED)(SERVICE_NAME=stfd)(FAILOVER_MODE=(TYPE=SESSION)(METHOD=BASIC))))
+			</value>
+		</property>
+		<property name="username">
+			<value>USUARIOESTFSESSOES</value>
+		</property>
+		<property name="password">
+			<value>wb59kl%45_d5f23</value>
+		</property> -->
+
+		<!-- ESTF-PUBLICAÇÃO -->
+
+<!-- 		<property name="url">
+			<value>jdbc:oracle:thin:@(DESCRIPTION=(FAILOVER=ON)(LOAD_BALANCE=ON)(ADDRESS=(PROTOCOL=TCP)(HOST=bd-orcl-des)(PORT=1521))(ADDRESS=(PROTOCOL=TCP)(HOST=bd-orcl-des)(PORT=1521))(CONNECT_DATA=(SERVER=DEDICATED)(SERVICE_NAME=stfd)(FAILOVER_MODE=(TYPE=SESSION)(METHOD=BASIC))))
+			</value>
+		</property>
+		<property name="username">
+			<value>USUARIOESTFPUBLICACAO</value>
+		</property>
+		<property name="password">
+			<value>sna80g6df38976sa</value>
+		</property> -->
+
+		<!-- ESTF-DECISÃO -->
+
+<!-- 		<property name="url">
+			<value>jdbc:oracle:thin:@(DESCRIPTION=(FAILOVER=ON)(LOAD_BALANCE=ON)(ADDRESS=(PROTOCOL=TCP)(HOST=bd-orcl-des)(PORT=1521))(ADDRESS=(PROTOCOL=TCP)(HOST=bd-orcl-des)(PORT=1521))(CONNECT_DATA=(SERVER=DEDICATED)(SERVICE_NAME=stfd)(FAILOVER_MODE=(TYPE=SESSION)(METHOD=BASIC))))
+			</value>
+		</property>
+		<property name="username">
+			<value>usuariodecisao</value>
+		</property>
+		<property name="password">
+			<value>sdf83%sd7j34</value>
+		</property> -->
+
+	</bean>
+
+	<bean id="sessionFactory"
+		class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
+		<property name="configLocations">
+			<list>
+				<value>classpath*:hibernate.cfg.xml</value>
+			</list>
+		</property>
+
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.dialect">org.hibernate.dialect.OracleDialect</prop>
+				<prop key="hibernate.show_sql">true</prop>
+				<prop key="hibernate.format_sql">true</prop>
+				<prop key="hibernate.use_sql_comments">true</prop>
+				<prop key="hibernate.query.factory_class">org.hibernate.hql.classic.ClassicQueryTranslatorFactory</prop>
+				<prop key="hibernate.cglib.use_reflection_optimizer">true</prop>
+			</props>
+		</property>
+
+		<property name="dataSource">
+			<ref bean="dataSource" />
+		</property>
+	</bean>
+
+	<bean id="transactionManager"
+		class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+		<property name="sessionFactory">
+			<ref local="sessionFactory" />
+		</property>
+	</bean>
+
+	<context:annotation-config />
+
+</beans>

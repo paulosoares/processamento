@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="cartaDeIntimacao" language="groovy" pageWidth="595" pageHeight="842" columnWidth="426" leftMargin="99" rightMargin="70" topMargin="28" bottomMargin="28">
+	<property name="ireport.zoom" value="1.3660269107301422"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="brasaoRepublicaSTF" class="java.lang.String"/>
+	<parameter name="numeroDocumento" class="java.lang.String"/>
+	<parameter name="turmaSecao" class="java.lang.String"/>
+	<parameter name="nomeParte" class="java.lang.String"/>
+	<parameter name="numeroDJe" class="java.lang.String"/>
+	<parameter name="dataDivulgacaoDJ" class="java.lang.String"/>
+	<parameter name="dataEmissao" class="java.lang.String"/>
+	<parameter name="nomeOcupanteCargo" class="java.lang.String"/>
+	<parameter name="cargoOcupante" class="java.lang.String"/>
+	<parameter name="tabEspacamento" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" +
+"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" +
+"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"]]></defaultValueExpression>
+	</parameter>
+	<field name="nomeProcesso" class="java.lang.String"/>
+	<group name="Aba_Rodape_Processos">
+		<groupFooter>
+			<band height="143">
+				<textField isStretchWithOverflow="true">
+					<reportElement stretchType="RelativeToBandHeight" x="1" y="40" width="424" height="35" isPrintWhenDetailOverflows="true"/>
+					<box topPadding="10"/>
+					<textElement textAlignment="Justified" markup="html">
+						<font fontName="SansSerif" size="11" pdfFontName="Times-Roman" isPdfEmbedded="true"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA["DADA E PASSADA na Secretaria do Supremo Tribunal Federal, em " +
+$P{dataEmissao} + "."]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true">
+					<reportElement stretchType="RelativeToBandHeight" x="1" y="5" width="424" height="29" isPrintWhenDetailOverflows="true"/>
+					<textElement textAlignment="Justified" markup="html">
+						<font size="11" pdfFontName="Times-Roman" isPdfEmbedded="true"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA[$P{tabEspacamento} + "Informa que o inteiro teor do(s) processo(s) " +
+"acima relacionado (s) está disponível no sítio eletrônico do Supremo " +
+"Tribunal Federal (<a href='www.stf.jus.br'>www.stf.jus.br</a>)."]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement x="14" y="85" width="400" height="16"/>
+					<textElement textAlignment="Center">
+						<font fontName="SansSerif" size="11" pdfFontName="Times-Roman" isPdfEmbedded="true"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA[$P{nomeOcupanteCargo}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement x="14" y="100" width="400" height="16"/>
+					<textElement textAlignment="Center">
+						<font fontName="SansSerif" size="11" pdfFontName="Times-Roman" isPdfEmbedded="true"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA[$P{cargoOcupante}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement x="14" y="115" width="400" height="16"/>
+					<textElement textAlignment="Center">
+						<font size="10" pdfFontName="Times-Roman" isPdfEmbedded="true"/>
+					</textElement>
+					<text><![CDATA[Documento assinado digitalmente]]></text>
+				</staticText>
+			</band>
+		</groupFooter>
+	</group>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<pageHeader>
+		<band height="153" splitType="Stretch">
+			<image isUsingCache="false">
+				<reportElement key="image-1" mode="Transparent" x="97" y="-10" width="199" height="93" isPrintInFirstWholeBand="true"/>
+				<imageExpression class="java.lang.String"><![CDATA[$P{brasaoRepublicaSTF}]]></imageExpression>
+			</image>
+			<staticText>
+				<reportElement x="116" y="133" width="183" height="16"/>
+				<textElement textAlignment="Center">
+					<font fontName="SansSerif" size="11" isBold="true" isUnderline="true" pdfFontName="Times-Roman" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[INTIMAÇÃO]]></text>
+			</staticText>
+			<componentElement>
+				<reportElement x="-6" y="87" width="181" height="22"/>
+				<jr:Code128 xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd" moduleWidth="1.3" textPosition="none">
+					<jr:codeExpression><![CDATA[$P{numeroDocumento}]]></jr:codeExpression>
+				</jr:Code128>
+			</componentElement>
+			<textField>
+				<reportElement x="1" y="114" width="174" height="20"/>
+				<textElement>
+					<font size="11" pdfFontName="Times-Roman" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["nº " + $P{numeroDocumento}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="175" y="105" width="250" height="12"/>
+				<textElement textAlignment="Right">
+					<font size="8" pdfFontName="Times-Roman" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$P{turmaSecao}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageHeader>
+	<columnHeader>
+		<band height="63" splitType="Stretch">
+			<textField isStretchWithOverflow="true">
+				<reportElement stretchType="RelativeToBandHeight" x="1" y="5" width="424" height="50" isPrintWhenDetailOverflows="true"/>
+				<textElement textAlignment="Justified" markup="html">
+					<font fontName="SansSerif" size="11" isBold="false" pdfFontName="Times-Roman" pdfEncoding="Cp1252" isPdfEmbedded="true"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$P{tabEspacamento} + "De ordem, o (a) " + $P{cargoOcupante} + " do Supremo Tribunal Federal " +
+"<b>intima</b> o (a) <b>" + $P{nomeParte} + "</b>, ou quem as suas vezes fizer, do " +
+"inteiro teor da(s) decisão(ões) ou do(s) despacho(s) referente(s) ao(s) " +
+"processo(s) abaixo relacionado(s), cuja(s) a(s) cópia(s) segue(em) anexa(s), " +
+"extraído(s) da relação das decisões ou dos despachos divulgados no Diário da " +
+"Justiça Eletrônico nº " + $P{numeroDJe} +
+" de " + $P{dataDivulgacaoDJ} + "."]]></textFieldExpression>
+			</textField>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="15" splitType="Stretch">
+			<textField isStretchWithOverflow="true">
+				<reportElement stretchType="RelativeToBandHeight" x="1" y="0" width="425" height="15" isPrintWhenDetailOverflows="true"/>
+				<textElement>
+					<font fontName="SansSerif" size="11" pdfFontName="Times-Roman" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{nomeProcesso}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="CertidaoTransitoSub" language="groovy" pageWidth="595" pageHeight="842" columnWidth="545" leftMargin="0" rightMargin="50" topMargin="0" bottomMargin="0">
+	<property name="ireport.zoom" value="1.5"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<style name="Texto" isDefault="true" fontName="Times New Roman" fontSize="10" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
+	<style name="Rotulo" fontName="Times New Roman" fontSize="13" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false">
+		<paragraph lineSpacing="1_1_2"/>
+	</style>
+	<style name="AlinhadoDireita" style="Texto" hAlign="Right" fontName="Times New Roman" fontSize="12" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
+	<style name="RotuloCentralizado" style="Rotulo" hAlign="Center"/>
+	<subDataset name="dataset1"/>
+	<queryString>
+		<![CDATA[]]>
+	</queryString>
+	<field name="tipoParte" class="java.lang.String">
+		<fieldDescription><![CDATA[tipoParte]]></fieldDescription>
+	</field>
+	<field name="nomeParte" class="java.lang.String">
+		<fieldDescription><![CDATA[nomeParte]]></fieldDescription>
+	</field>
+	<variable name="LOCAL_DATA" class="java.lang.String">
+		<variableExpression><![CDATA["Brasília, " + new SimpleDateFormat("d 'de' MMMM 'de' yyyy", new Locale("pt","BR")).
+format(new Date()).toString()]]></variableExpression>
+	</variable>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<detail>
+		<band height="16" splitType="Stretch">
+			<textField isStretchWithOverflow="true">
+				<reportElement stretchType="RelativeToBandHeight" x="94" y="0" width="409" height="16" isPrintWhenDetailOverflows="true"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="Arial" size="12" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nomeParte}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement stretchType="RelativeToBandHeight" x="0" y="0" width="84" height="16" isPrintWhenDetailOverflows="true"/>
+				<textElement verticalAlignment="Middle" markup="none">
+					<font fontName="Arial" size="12"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tipoParte}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="86" y="0" width="5" height="16"/>
+				<textElement>
+					<font fontName="Arial" size="12" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[":"]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

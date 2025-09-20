@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="report-templates"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jre7"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry kind="con" path="com.thoughtworks.twist.CORE"/>
+	<classpathentry kind="con" path="com.thoughtworks.twist.driver.WEBDRIVER/2.0.0"/>
+	<classpathentry kind="con" path="com.thoughtworks.twist.language.JAVA"/>
+	<classpathentry kind="lib" path="C:/Users/luciana.magalhaes/Downloads/ojdbc6.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

@@ -1,0 +1,43 @@
+﻿<!--
+SELECT '<vars codAndamento='''||a.cod_andamento||''' descAndamento='''||trim(a.dsc_andamento)||''' />'
+FROM stf.andamentos a
+WHERE a.cod_andamento IN (7600,7601,7700,6247,6249,8242,8243)
+OR A.FLG_AND_ESPECIAL = 'S'
+ORDER BY a.dsc_andamento
+
+-->
+<testdata>
+	<vars codAndamento="6247" descAndamento="Agravo provido" visivelComAre="N" />
+	<vars codAndamento="6249" descAndamento="Agravo provido e RE pendente de julgamento" visivelComAre="S" />                               
+	<vars codAndamento="7600" descAndamento="Apresentado em mesa para julgamento" visivelComAre="N" />                                      
+	<vars codAndamento="2658" descAndamento="DISTRIBUIDO" visivelComAre="N" />
+	<vars codAndamento="2674" descAndamento="DISTRIBUIDO POR PREVENCAO" visivelComAre="N" />
+	<vars codAndamento="2660" descAndamento="DISTRIBUIDO POR PREVENCAO DE TURMA" visivelComAre="N" />
+	<vars codAndamento="2670" descAndamento="DISTRIBUIDO/EXCLUSAO DE MINISTRO" visivelComAre="N" />
+	<vars codAndamento="1544" descAndamento="INCIDENTE DE SUSPENSÃO DE PERITO" visivelComAre="N" />
+	<vars codAndamento="7601" descAndamento="Inclua-se em pauta - minuta extraída" visivelComAre="N" />
+	<vars codAndamento="1536" descAndamento="INTERPOSTO AGRAVO DE INSTRUMENTO" visivelComAre="N" />
+	<vars codAndamento="1538" descAndamento="INTERPOSTO AGRAVO REGIMENTAL" visivelComAre="N" />
+	<vars codAndamento="4316" descAndamento="INTERPOSTO RECURSO EXTRAORDINÁRIO" visivelComAre="N" />
+	<vars codAndamento="1546" descAndamento="INTERPOSTOS EMBARGOS DE DECLARACAO" visivelComAre="N" />
+	<vars codAndamento="1548" descAndamento="INTERPOSTOS EMBARGOS DE DIVERGENCIA" visivelComAre="N" />
+	<vars codAndamento="1547" descAndamento="INTERPOSTOS EMBARGOS INFRINGENTES" visivelComAre="N" />
+	<vars codAndamento="7700" descAndamento="Lançamento indevido" visivelComAre="N" />
+	<vars codAndamento="8243" descAndamento="Mérito da repercussão geral julgado no processo nº" visivelComAre="N" />
+	<vars codAndamento="4302" descAndamento="REDATOR PARA O ACÓRDÃO" visivelComAre="N" />
+	<vars codAndamento="2704" descAndamento="REDISTRIBUIDO" visivelComAre="N" />
+	<vars codAndamento="2752" descAndamento="REDISTRIBUIDO, CARATER EXCEPCIONAL" visivelComAre="N" />
+	<vars codAndamento="2750" descAndamento="REDISTRIBUIDO, LICENCA RELATOR ANTERIOR" visivelComAre="N" />
+	<vars codAndamento="2748" descAndamento="REDISTRIBUIDO POR IMPEDIMENTO" visivelComAre="N" />
+	<vars codAndamento="2749" descAndamento="REDISTRIBUIDO POR LICENCA DO RELATOR" visivelComAre="N" />
+	<vars codAndamento="2720" descAndamento="REDISTRIBUIDO POR PREVENCAO" visivelComAre="N" />
+	<vars codAndamento="2730" descAndamento="REDISTRIBUIDO POR PREVENCAO DE TURMA" visivelComAre="N" />
+	<vars codAndamento="2747" descAndamento="REDISTRIBUIDO POR SUCESSAO" visivelComAre="N" />
+	<vars codAndamento="2733" descAndamento="REDISTRIBUIDO/EXCLUSAO DE MINISTRO" visivelComAre="N" />
+	<vars codAndamento="2735" descAndamento="REDISTRIBUIDO/EXCLUSAO PRIMEIRO RELATOR" visivelComAre="N" />
+	<vars codAndamento="2740" descAndamento="REDISTRIBUIDO/EXCLUSAO TURMA ART.76-RI" visivelComAre="N" />
+	<vars codAndamento="2745" descAndamento="REDISTRIBUIDO/IMPEDIMENTO REL. ANTERIOR" visivelComAre="N" />
+	<vars codAndamento="2766" descAndamento="SUBSTITUIÇÃO DO RELATOR - ART. 38 IV, A RISTF" visivelComAre="N" />
+	<vars codAndamento="2765" descAndamento="SUBSTITUICAO DO RELATOR - ART. 38 RI" visivelComAre="N" />
+	<vars codAndamento="8242" descAndamento="Substituído para julgamento de tema de repercussão geral pelo processo nº" visivelComAre="N" />
+</testdata>

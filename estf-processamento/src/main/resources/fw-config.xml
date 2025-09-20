@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<fw-config log="true">
+
+	<cache disabled="true" />
+
+	<max-query-result value="150" />
+
+	<spring singleton-container="false">
+		<bean-factory-key>beanFactorySTF</bean-factory-key>
+	</spring>
+
+
+	<security enabled="true" database="false">
+		<application-name>PROCESSAMENTO</application-name>
+	</security>
+
+	<user>
+		<anonymous>anonimoprocessamento</anonymous>
+
+		<class>br.gov.stf.estf.assinatura.security.UsuarioAssinatura</class>
+
+		<event-listeners>
+			<event-listener>br.gov.stf.estf.assinatura.security.UsuarioAssinaturaEventListener</event-listener>
+		</event-listeners>
+
+		<type value="UT_ACEGI_SECURITY" />
+	</user>
+
+</fw-config>

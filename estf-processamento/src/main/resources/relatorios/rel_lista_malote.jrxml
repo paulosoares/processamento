@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="rel_lista_malote" pageWidth="595" pageHeight="842" columnWidth="567" leftMargin="14" rightMargin="14" topMargin="14" bottomMargin="14">
+	<property name="ireport.zoom" value="1.5"/>
+	<property name="ireport.x" value="80"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="NUMERO_LISTA" class="java.lang.Long"/>
+	<parameter name="DATA_FORMATADA" class="java.lang.String"/>
+	<parameter name="DATA_CRIACAO_LISTA" class="java.lang.String"/>
+	<parameter name="DATA_EXTENSO" class="java.lang.String"/>
+	<parameter name="LOGO_SUPREMO" class="java.lang.String">
+		<defaultValueExpression><![CDATA["C:\\temp\\logo_supremo.png"]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[]]>
+	</queryString>
+	<field name="posicao" class="java.lang.String">
+		<fieldDescription><![CDATA[posicao]]></fieldDescription>
+	</field>
+	<field name="malote" class="java.lang.String">
+		<fieldDescription><![CDATA[malote]]></fieldDescription>
+	</field>
+	<field name="lacre" class="java.lang.String">
+		<fieldDescription><![CDATA[lacre]]></fieldDescription>
+	</field>
+	<field name="guia" class="java.lang.String">
+		<fieldDescription><![CDATA[guia]]></fieldDescription>
+	</field>
+	<field name="destino" class="java.lang.String">
+		<fieldDescription><![CDATA[destino]]></fieldDescription>
+	</field>
+	<field name="observacao" class="java.lang.String"/>
+	<field name="listasRemessa" class="java.lang.String"/>
+	<variable name="extenso" class="java.lang.String"/>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<pageHeader>
+		<band height="67">
+			<image scaleImage="RetainShape">
+				<reportElement x="0" y="0" width="163" height="41"/>
+				<imageExpression><![CDATA[$P{LOGO_SUPREMO}]]></imageExpression>
+			</image>
+			<staticText>
+				<reportElement x="189" y="0" width="247" height="19"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+					<paragraph leftIndent="3" spacingBefore="1"/>
+				</textElement>
+				<text><![CDATA[SUPREMO TRIBUNAL FEDERAL]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="189" y="47" width="247" height="20"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="12" isBold="true"/>
+					<paragraph leftIndent="3" spacingBefore="1"/>
+				</textElement>
+				<text><![CDATA[Lista de Malote]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="448" y="51" width="76" height="14"/>
+				<textElement verticalAlignment="Top">
+					<font size="8" isBold="false"/>
+					<paragraph leftIndent="3" spacingBefore="1"/>
+				</textElement>
+				<text><![CDATA[Data de emissão:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="524" y="51" width="42" height="14"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{DATA_FORMATADA}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="189" y="19" width="247" height="22"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8" isBold="false"/>
+					<paragraph leftIndent="3" spacingBefore="1"/>
+				</textElement>
+				<text><![CDATA[Secretaria Judiciária
+Seção de Baixa de Processos]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="493" y="0" width="57" height="12"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Pág. " +$V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report">
+				<reportElement x="550" y="0" width="16" height="12"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[" / "+$V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageHeader>
+	<columnHeader>
+		<band height="29">
+			<rectangle>
+				<reportElement x="0" y="0" width="566" height="16"/>
+			</rectangle>
+			<staticText>
+				<reportElement x="4" y="0" width="119" height="16"/>
+				<textElement verticalAlignment="Middle">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Data da criação da lista:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="391" y="0" width="89" height="16"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Número da Lista:]]></text>
+			</staticText>
+			<textField>
+				<reportElement mode="Transparent" x="480" y="0" width="85" height="16"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="10" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{NUMERO_LISTA}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="105" y="0" width="141" height="16"/>
+				<textElement verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{DATA_CRIACAO_LISTA}]]></textFieldExpression>
+			</textField>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="26">
+			<rectangle>
+				<reportElement x="18" y="0" width="549" height="26"/>
+			</rectangle>
+			<rectangle>
+				<reportElement x="0" y="0" width="26" height="26"/>
+			</rectangle>
+			<staticText>
+				<reportElement x="30" y="0" width="37" height="14"/>
+				<textElement verticalAlignment="Middle">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Destino:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="30" y="14" width="37" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Malote:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="143" y="14" width="30" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Lacre:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="67" y="0" width="255" height="14"/>
+				<textElement verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{destino}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="67" y="14" width="64" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{malote}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="173" y="14" width="58" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{lacre}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="2" y="6" width="24" height="14"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{posicao}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="322" y="0" width="22" height="26"/>
+				<textElement>
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Obs:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="344" y="0" width="221" height="26"/>
+				<textElement textAlignment="Justified">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[(($F{guia}!= "") ? "Guia(s) " : "") + $F{guia} + (($F{listasRemessa}!="") ? "; Lista(s) " : "") +  $F{listasRemessa} + "; " + $F{observacao}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="150">
+			<rectangle>
+				<reportElement positionType="Float" x="0" y="5" width="567" height="145"/>
+			</rectangle>
+			<staticText>
+				<reportElement x="43" y="118" width="251" height="14"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Funcionário dos Correios (Matrícula n°                                                    )]]></text>
+			</staticText>
+			<line>
+				<reportElement x="42" y="120" width="252" height="1"/>
+			</line>
+			<textField evaluationTime="Page" pattern="">
+				<reportElement x="4" y="28" width="340" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font size="7" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Recebi o(s) " + $V{COLUMN_COUNT} + " ["+ListaMaloteDTO.getMascaraIR($V{COLUMN_COUNT})+"] malote(s) conforme especificado acima."]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="4" y="40" width="340" height="12"/>
+				<textElement>
+					<font size="7" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{DATA_EXTENSO}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="411" y="74" width="37" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Guia:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="470" y="86" width="80" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{guia}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageFooter>
+</jasperReport>

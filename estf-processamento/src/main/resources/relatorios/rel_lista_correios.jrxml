@@ -1,0 +1,458 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="rel_lista_correios" pageWidth="595" pageHeight="842" columnWidth="567" leftMargin="14" rightMargin="14" topMargin="14" bottomMargin="14">
+	<property name="ireport.zoom" value="1.5"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="124"/>
+	<parameter name="UNIDADE_POSTAGEM" class="java.lang.String"/>
+	<parameter name="DATA_POSTAGEM" class="java.lang.String"/>
+	<parameter name="NUMERO_LISTA" class="java.lang.Long"/>
+	<parameter name="CODIGO_ADMINISTRATIVO" class="java.lang.String"/>
+	<parameter name="CLIENTE" class="java.lang.String"/>
+	<parameter name="CONTRATO" class="java.lang.String"/>
+	<parameter name="CEP" class="java.lang.String"/>
+	<parameter name="DATA_FORMATADA" class="java.lang.String"/>
+	<parameter name="USUARIO" class="java.lang.String"/>
+	<parameter name="CARTAO_POSTAGEM" class="java.lang.String"/>
+	<parameter name="LOGO_SUPREMO" class="java.lang.String">
+		<defaultValueExpression><![CDATA["C:\\temp\\logo_supremo.png"]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[]]>
+	</queryString>
+	<field name="cepDestino" class="java.lang.String">
+		<fieldDescription><![CDATA[cepDestino]]></fieldDescription>
+	</field>
+	<field name="class" class="java.lang.Class">
+		<fieldDescription><![CDATA[class]]></fieldDescription>
+	</field>
+	<field name="destinatario" class="java.lang.String">
+		<fieldDescription><![CDATA[destinatario]]></fieldDescription>
+	</field>
+	<field name="numLocalizador" class="java.lang.String">
+		<fieldDescription><![CDATA[numLocalizador]]></fieldDescription>
+	</field>
+	<field name="numPLP" class="java.lang.String">
+		<fieldDescription><![CDATA[numPLP]]></fieldDescription>
+	</field>
+	<field name="observacao" class="java.lang.String">
+		<fieldDescription><![CDATA[observacao]]></fieldDescription>
+	</field>
+	<field name="peso" class="java.lang.String">
+		<fieldDescription><![CDATA[peso]]></fieldDescription>
+	</field>
+	<field name="servicoAdicional" class="java.lang.String">
+		<fieldDescription><![CDATA[servicoAdicional]]></fieldDescription>
+	</field>
+	<field name="tipoServico" class="java.lang.String">
+		<fieldDescription><![CDATA[tipoServico]]></fieldDescription>
+	</field>
+	<field name="volume" class="java.lang.String">
+		<fieldDescription><![CDATA[volume]]></fieldDescription>
+	</field>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<pageHeader>
+		<band height="47">
+			<image scaleImage="RetainShape">
+				<reportElement x="0" y="0" width="163" height="41"/>
+				<imageExpression><![CDATA[$P{LOGO_SUPREMO}]]></imageExpression>
+			</image>
+			<staticText>
+				<reportElement x="189" y="0" width="247" height="19"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+					<paragraph leftIndent="3" spacingBefore="1"/>
+				</textElement>
+				<text><![CDATA[SUPREMO TRIBUNAL FEDERAL]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="190" y="19" width="247" height="23"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="10" isBold="true"/>
+					<paragraph leftIndent="3" spacingBefore="1"/>
+				</textElement>
+				<text><![CDATA[Lista de Postagem]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="448" y="26" width="76" height="14"/>
+				<textElement verticalAlignment="Top">
+					<font size="8" isBold="false"/>
+					<paragraph leftIndent="3" spacingBefore="1"/>
+				</textElement>
+				<text><![CDATA[Data de emissão:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="524" y="26" width="42" height="14"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{DATA_FORMATADA}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="493" y="0" width="57" height="12"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Pág. " +$V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report">
+				<reportElement x="550" y="0" width="16" height="12"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[" / "+$V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageHeader>
+	<columnHeader>
+		<band height="34">
+			<rectangle>
+				<reportElement x="0" y="0" width="566" height="34"/>
+			</rectangle>
+			<staticText>
+				<reportElement x="4" y="0" width="89" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Unidade de Postagem:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="4" y="11" width="89" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Data da Postagem:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="4" y="22" width="89" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Número da Lista:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="92" y="0" width="84" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{UNIDADE_POSTAGEM}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="92" y="11" width="84" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{DATA_POSTAGEM}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="92" y="22" width="84" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{NUMERO_LISTA}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="194" y="11" width="89" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Código Administrativo:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="282" y="11" width="100" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{CODIGO_ADMINISTRATIVO}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="194" y="22" width="35" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Cliente:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="228" y="22" width="152" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{CLIENTE}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="387" y="11" width="50" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Contrato:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="424" y="11" width="100" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{CONTRATO}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="387" y="22" width="21" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[CEP:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="407" y="22" width="37" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{CEP}]]></textFieldExpression>
+			</textField>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="70">
+			<rectangle>
+				<reportElement x="374" y="0" width="192" height="70"/>
+			</rectangle>
+			<componentElement>
+				<reportElement positionType="Float" isPrintRepeatedValues="false" x="420" y="26" width="114" height="40" backcolor="#FFFFFF"/>
+				<jr:Code128 xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd" moduleWidth="1.0" textPosition="none">
+					<jr:codeExpression><![CDATA[$F{numPLP}]]></jr:codeExpression>
+				</jr:Code128>
+			</componentElement>
+			<textField isBlankWhenNull="true">
+				<reportElement x="417" y="6" width="114" height="20"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{numPLP}]]></textFieldExpression>
+			</textField>
+			<rectangle>
+				<reportElement x="0" y="0" width="206" height="70"/>
+			</rectangle>
+			<textField isBlankWhenNull="true">
+				<reportElement x="4" y="8" width="198" height="31"/>
+				<textElement>
+					<font size="6"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{destinatario}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="4" y="0" width="74" height="9"/>
+				<textElement verticalAlignment="Middle">
+					<font size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[DESTINATÁRIO:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="4" y="38" width="50" height="9"/>
+				<textElement verticalAlignment="Middle">
+					<font size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[CEP destino:]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="53" y="38" width="100" height="9"/>
+				<textElement verticalAlignment="Middle">
+					<font size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{cepDestino}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="4" y="46" width="21" height="9"/>
+				<textElement verticalAlignment="Middle">
+					<font size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Obs:]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="24" y="46" width="177" height="24"/>
+				<textElement verticalAlignment="Top">
+					<font size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{observacao}]]></textFieldExpression>
+			</textField>
+			<rectangle>
+				<reportElement x="206" y="0" width="168" height="70"/>
+			</rectangle>
+			<staticText>
+				<reportElement x="212" y="0" width="64" height="14"/>
+				<textElement verticalAlignment="Middle">
+					<font size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[No. Localizador:]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="277" y="0" width="97" height="14"/>
+				<textElement verticalAlignment="Middle">
+					<font size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{numLocalizador}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="212" y="14" width="47" height="14"/>
+				<textElement verticalAlignment="Middle">
+					<font size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Tipo Serviço:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="259" y="14" width="115" height="14"/>
+				<textElement verticalAlignment="Middle">
+					<font size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tipoServico}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="212" y="28" width="64" height="14"/>
+				<textElement verticalAlignment="Middle">
+					<font size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Serviço Adicional:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="212" y="42" width="26" height="14"/>
+				<textElement verticalAlignment="Middle">
+					<font size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Peso:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="212" y="56" width="37" height="14"/>
+				<textElement verticalAlignment="Middle">
+					<font size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Volume:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="276" y="29" width="98" height="14"/>
+				<textElement verticalAlignment="Middle">
+					<font size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{servicoAdicional}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="238" y="42" width="136" height="14"/>
+				<textElement verticalAlignment="Middle">
+					<font size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{peso}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="249" y="56" width="125" height="14"/>
+				<textElement verticalAlignment="Middle">
+					<font size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{volume}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="376" y="0" width="44" height="14"/>
+				<textElement verticalAlignment="Middle">
+					<font size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Nº PLP:]]></text>
+			</staticText>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="145">
+			<rectangle>
+				<reportElement positionType="Float" x="0" y="0" width="566" height="145"/>
+			</rectangle>
+			<staticText>
+				<reportElement x="3" y="0" width="89" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Usuário:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="392" y="0" width="174" height="14"/>
+				<textElement verticalAlignment="Middle">
+					<font size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Carimbo e assinatura / Matrícula dos correios]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="3" y="24" width="241" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[APRESENTAR ESTA LISTA EM CASO DE PEDIDO DE INFORMAÇÕES]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="3" y="37" width="89" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Cartão de Postagem]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="3" y="48" width="74" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Remetente]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="3" y="59" width="74" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Endereço]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="3" y="72" width="342" height="14"/>
+				<textElement verticalAlignment="Middle">
+					<font size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Estou ciente do disposto na cláusula terceira do contrato de prestação de serviços.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="4" y="132" width="290" height="13"/>
+				<textElement verticalAlignment="Middle">
+					<font size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Obs: 1a via balancete, 2a cliente, 3a via arquivar na unidade]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="109" y="118" width="119" height="14"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[ASSINATURA DO REMETENTE]]></text>
+			</staticText>
+			<line>
+				<reportElement x="42" y="120" width="252" height="1"/>
+			</line>
+			<textField>
+				<reportElement x="33" y="0" width="237" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{USUARIO}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="83" y="37" width="153" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{CARTAO_POSTAGEM}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="49" y="48" width="187" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font size="7"/>
+				</textElement>
+				<text><![CDATA[SUPREMO TRIBUNAL FEDERAL]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="43" y="59" width="302" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font size="7"/>
+				</textElement>
+				<text><![CDATA[Praça dos Três Poderes Lote Único, S No Zona Cívico-Administrativa Brasília/DF 70175-900]]></text>
+			</staticText>
+		</band>
+	</pageFooter>
+</jasperReport>

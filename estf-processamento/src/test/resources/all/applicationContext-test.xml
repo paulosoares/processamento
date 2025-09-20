@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="
+    http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+    http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-2.5.xsd
+    http://www.springframework.org/schema/context
+    http://www.springframework.org/schema/context/spring-context-2.5.xsd
+    http://www.springframework.org/schema/aop
+    http://www.springframework.org/schema/aop/spring-aop-2.5.xsd"
+	default-autowire="constructor" default-lazy-init="true" 
+	default-dependency-check="none">
+
+	<tx:annotation-driven />
+	<context:annotation-config />
+	<context:component-scan base-package="br.gov.stf.estf" annotation-config="true" />
+
+	<bean id="sessionFactory"
+		class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
+		<property name="configLocations">
+			<list>
+				<value>classpath*:hibernate.cfg.xml</value>
+			</list>
+		</property>
+
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.dialect">org.hibernate.dialect.OracleDialect</prop>
+				<prop key="hibernate.show_sql">true</prop>
+				<prop key="hibernate.format_sql">true</prop>
+				<prop key="hibernate.show_sql_comments">true</prop>
+				<prop key="hibernate.query.factory_class">org.hibernate.hql.classic.ClassicQueryTranslatorFactory</prop>
+				<prop key="hibernate.bytecode.use_reflection_optimizer">true</prop>
+			</props>
+		</property>
+
+		<property name="dataSource">
+			<ref bean="dataSourceSTF" />
+		</property>
+	</bean>
+
+	<bean id="transactionManager"
+		class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+		<property name="sessionFactory">
+			<ref local="sessionFactory" />
+		</property>
+		<property name="nestedTransactionAllowed" value="true" />
+	</bean>
+
+	<alias name="sessionFactory" alias="sessionFactorySTF" />
+
+	<bean id="dataSourceSTF" class="org.apache.commons.dbcp.BasicDataSource"
+		destroy-method="close">
+
+		<property name="driverClassName">
+			<value>oracle.jdbc.OracleDriver</value>
+		</property>
+		
+		<!-- HOMOLOGACAO -->
+		<property name="url">
+			<value>jdbc:oracle:thin:@bd-orcl-hom:1521:stfh</value>
+		</property>
+		<property name="username">
+			<value>USUARIOssgj</value>
+		</property> 
+		<property name="password">
+			<value>usuariossgj%stfp10</value>
+		</property>
+		
+		<!-- DESENVOLVIMENTO -->
+		<!-- <property name="url">
+			<value>jdbc:oracle:thin:@bd-orcl-des:1521:stfd</value>
+		</property>
+		<property name="username">
+			<value>usuarioassinador</value>
+		</property> 
+		<property name="password">
+			<value>d%usuarioassinador08</value>
+		</property> -->
+	</bean>
+
+	<bean id="genericDAOTarget"
+		class="br.gov.stf.framework.model.dataaccess.hibernate.GenericHibernateDao">
+		<constructor-arg type="java.lang.class"
+			value="br.gov.stf.framework.model.entity.BaseEntity" />
+		<property name="sessionFactory">
+			<ref bean="sessionFactory" />
+		</property>
+	</bean>
+
+	<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+	<!-- Configurações para possibilitar que o Decisão envie e-mails -->
+	<!-- <bean id="mailSession" class="org.springframework.jndi.JndiObjectFactoryBean">
+		Recupera as informações de envio de e-mail constantes no mail-service.xml 
+			do JBoss
+		<property name="jndiName">
+			<value>java:/Mail</value>
+		</property>
+	</bean>
+
+	<bean id="javaMailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
+		Repassa para o javaMailSender as informações de envio de e-mail recuperadas 
+			do JBoss
+		<property name="session" ref="mailSession" />
+	</bean> -->
+	<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+	<!-- <bean
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="locations">
+			<value>classpath:application.properties</value>
+		</property>
+	</bean>
+
+	<bean id="appVersion" class="java.lang.String">
+		<constructor-arg>
+			<value>${app.version}</value>
+		</constructor-arg>
+	</bean> -->
+
+</beans>

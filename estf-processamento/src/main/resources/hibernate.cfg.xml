@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-configuration PUBLIC "-//Hibernate/Hibernate Configuration DTD 3.0//EN" "http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+<hibernate-configuration>
+    <session-factory name="estfprocessamento-sessionfactory">
+        <mapping class="br.gov.stf.estf.expedicao.entidade.DestinatarioListaRemessa" />
+        <mapping class="br.gov.stf.estf.expedicao.entidade.Remetente" />
+        <mapping class="br.gov.stf.estf.expedicao.entidade.TipoEmbalagem" />
+        <mapping class="br.gov.stf.estf.expedicao.entidade.UnidadePostagem" />
+
+        <mapping class="br.gov.stf.estf.expedicao.entidade.TipoServico" />
+        <mapping class="br.gov.stf.estf.expedicao.entidade.TipoComunicacaoExpedicao" />
+        <mapping class="br.gov.stf.estf.expedicao.entidade.TipoServicoCompativel" />
+
+        <mapping class="br.gov.stf.estf.expedicao.entidade.Remessa" />
+        <mapping class="br.gov.stf.estf.expedicao.entidade.ContratoPostagem" />
+        <mapping class="br.gov.stf.estf.expedicao.entidade.ListaRemessa" />
+        <mapping class="br.gov.stf.estf.expedicao.entidade.RemessaTipoServico" />
+        <mapping class="br.gov.stf.estf.expedicao.entidade.RemessaVolume" />
+        <mapping class="br.gov.stf.estf.expedicao.entidade.RemessaListaRemessa" />
+        <mapping class="br.gov.stf.estf.expedicao.entidade.TipoServicoEmbalagem" />
+
+        <mapping class="br.gov.stf.estf.expedicao.entidade.VwServidorAssinador" />
+        <mapping class="br.gov.stf.estf.expedicao.entidade.ConfiguracaoEncaminhamento" />
+
+        <mapping class="br.gov.stf.estf.expedicao.entidade.VwEndereco" />
+
+
+        <mapping class="br.gov.stf.estf.corp.entidade.Bairro" />
+        <mapping class="br.gov.stf.estf.corp.entidade.Logradouro" />
+        <mapping class="br.gov.stf.estf.corp.entidade.Municipio" />
+        <mapping class="br.gov.stf.estf.corp.entidade.Pais" />
+        <mapping class="br.gov.stf.estf.corp.entidade.UnidadeFederacao" />
+    </session-factory>
+</hibernate-configuration>

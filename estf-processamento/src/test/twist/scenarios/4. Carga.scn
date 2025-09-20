@@ -1,0 +1,35 @@
+Tags:
+Preconditions:Logado como "administrador"
+O gestor pode cadastrar pessoas para registro no sistema:
+#Clique no menu "Deslocamento"  submenu "Carga" e na opção "Cadastrar Pessoa"
+#Clique no botão "Nova Pessoa"
+#Informe dados de um preposto
+#Adicione um endereço
+#Adicione um telefone
+#Salve os dados
+#Verifique se a operação foi realizada com sucesso
+
+O gestor pode registrar a autorização de carga de processo para ter controle dos processos emprestados:
+#Clique no menu "Principal"
+#Altere o setor para "600000679"
+#Clique no menu "Deslocamento"  submenu "Carga" e na opção "Autorização e Carga de Processos"
+#Adicione o processo para carga
+#Adicione o responsável pela carga
+#Informe a observação "Teste da TI: teste de carga"
+#Informe a data para devolução
+#Confirme a ação
+#Verifique se o empréstimo foi realizado com sucesso
+
+O gestor pode gerenciar os processos que foram emprestados:
+#Clique no menu "Deslocamento"  submenu "Carga" e na opção "Relatório de Carga dos Autos"
+#Informe o autorizador "ALEXANDRE"
+#Informe a data atual no período
+#Realize a pesquisa
+#Verifique se os processos foram exibidos
+#Selecione o primeiro processo
+#Clique em cobrar
+#Verifique se a quantidade de cobranças no processo foi acrescida
+#Clique em invalidar cobrança
+#Verifique se a quantidade de cobrança foi decrescida
+#Clique em invalidar carga
+#Verifique se a carga foi invalidada com sucesso

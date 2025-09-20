@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="iso-8859-1" ?>
+<!DOCTYPE jboss-web PUBLIC "-//JBoss//DTD Web Application 2.2//EN" "http://www.jboss.org/j2ee/dtd/jboss-web.dtd">
+
+<project name="componente" basedir="." default="dist">
+
+	<property file="build.properties" />
+
+	<property name="prj.dir"			value="./../" />
+	<property name="cmp.dir"			value="${prj.dir}/${cmp.name}" />
+	<property name="cmp.javadir"		value="${cmp.dir}/src/main/java" />
+	<property name="cmp.confdir"		value="${cmp.dir}/src/main/resources" />
+	<property name="cmp.builddir"		value="${cmp.dir}/build" />	
+	<property name="cmp.distdir"		value="${prj.dir}/dist" />
+
+	<path id="prj.distclasspath">
+	  <fileset dir="${prj.dir}/dist" includes="*.jar" /> 
+	</path>	
+	
+	<path id="prj.libclasspath">
+	  <fileset dir="${prj.dir}/lib" includes="*.jar" /> 
+	</path>		
+	
+	<target name="dist" depends="build">
+		<mkdir dir="${cmp.distdir}"/>
+		
+		<jar jarfile="${prj.dir}/dist/${cmp.name}.jar" basedir="${cmp.builddir}"/>
+	</target>
+	
+	<target name="build" depends="instrumentation">		
+		<copy todir="${cmp.builddir}" includeEmptyDirs="yes">
+			<fileset dir="${cmp.confdir}">
+				<patternset>
+					<include name="*.*"/>
+				</patternset>
+			</fileset>
+		</copy>
+	</target>
+
+	
+	<target name="instrumentation" depends="compile, instrumentation.check" if="instrumentation.run">
+		
+		<taskdef name="instrument" classname="org.hibernate.tool.instrument.cglib.InstrumentTask">
+			<classpath refid="prj.libclasspath"/>		
+		</taskdef>
+
+		<instrument verbose="true">
+			<fileset dir="${cmp.builddir}${instrumentation.dir}" includes="${instrumentation.include}"/>
+		</instrument>			
+
+	</target>
+					
+    <target name="instrumentation.check">
+      <condition property="instrumentation.run">
+          <istrue value="${instrumentation.do}"/>
+      </condition>    	
+    	
+   	  <echo message="Instrumentation: ${instrumentation.do}" />
+    </target>		
+	
+	<target name="compile" depends="init" >
+		<mkdir dir="${cmp.builddir}" />
+		<javac debug="true" deprecation="true" destdir="${cmp.builddir}" srcdir="${cmp.javadir}" target="1.5">
+			<classpath>
+				<path refid="prj.libclasspath" />				
+				<path refid="prj.distclasspath" />
+			</classpath>
+		</javac>		
+	</target>
+	
+	<target name="init" depends="clean">
+		<tstamp>
+			<format property="TODAY" pattern="dd-MM-yyyy"/>
+		</tstamp>
+	</target>	
+
+	<target name="clean" >
+		<delete dir="${cmp.builddir}"/>
+	</target>
+</project>

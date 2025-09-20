@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head profile="http://selenium-ide.openqa.org/profiles/test-case">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="selenium.base" href="http://aplh-ssgj:8080/processamento/pages/login/login.jsp" />
+<title>Registrar Andamento de Processo Findo - Somente Leitura</title>
+</head>
+<body>
+<table cellpadding="1" cellspacing="1" border="1">
+<thead>
+<tr><td rowspan="1" colspan="3">Registrar Andamento de Processo Findo - Somente Leitura</td></tr>
+</thead><tbody>
+<tr>
+	<td>store</td>
+	<td>&quot;600000155&quot;</td>
+	<td>setores</td>
+</tr>
+<tr>
+	<td>store</td>
+	<td>Massa/processosFindosSomenteLeitura.xml</td>
+	<td>massa</td>
+</tr>
+<tr>
+	<td>store</td>
+	<td>Andamento não autorizado. Esse processo é de relatoria de outro Ministro e não consta nesse setor fisicamente!</td>
+	<td>mensagem</td>
+</tr>
+<!--Caso de teste -->
+<tr>
+	<td>foreach</td>
+	<td>setor</td>
+	<td>${setores}</td>
+</tr>
+<tr>
+	<td>loadVars</td>
+	<td>../setores.xml</td>
+	<td>codigoSetor==${setor}</td>
+</tr>
+<tr>
+	<td>call</td>
+	<td>alterarSetor</td>
+	<td></td>
+</tr>
+<tr>
+	<td>open</td>
+	<td>/processamento/pages/andamento/registrarAndamento.jsf</td>
+	<td></td>
+</tr>
+<tr>
+	<td>forXml</td>
+	<td>${massa}</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>id=inputClasse</td>
+	<td>${classe}</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>id=inputProcesso</td>
+	<td>${processo}</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>id=btPesquisar</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForTextPresent</td>
+	<td>${mensagem}</td>
+	<td></td>
+</tr>
+<tr>
+	<td>endForXml</td>
+	<td></td>
+	<td></td>
+</tr>
+<tr>
+	<td>endForeach</td>
+	<td></td>
+	<td></td>
+</tr>
+<!--/Caso de teste -->
+<!--SCRIPT alterarSetor-->
+<tr>
+	<td>script</td>
+	<td>alterarSetor</td>
+	<td></td>
+</tr>
+<!--Variáveis a serem passadas-->
+<tr>
+	<td>store</td>
+	<td>${codigoSetor}</td>
+	<td>codigoSetor</td>
+</tr>
+<tr>
+	<td>store</td>
+	<td>${siglaSetor}</td>
+	<td>siglaSetor</td>
+</tr>
+<!--fim das variáveis-->
+<tr>
+	<td>open</td>
+	<td>/processamento/pages/principal/principal.jsf</td>
+	<td></td>
+</tr>
+<tr>
+	<td>storeText</td>
+	<td>//html/body/form/table[2]/tbody/tr/td[2]/table/tbody/tr/td</td>
+	<td>nomeUsuarioComSetorAtual</td>
+</tr>
+<tr>
+	<td>storeEval</td>
+	<td>&quot;${nomeUsuarioComSetorAtual}&quot;.split(&quot;@&quot;)[0]</td>
+	<td>nomeUsuario</td>
+</tr>
+<tr>
+	<td>storeEval</td>
+	<td>&quot;${nomeUsuarioComSetorAtual}&quot;.split(&quot;@&quot;)[1]</td>
+	<td>setorAtual</td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>seletorSetores</td>
+	<td>label=*${codigoSetor}*</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>//span[@id='pnlPrincipalPesquisa']/table/tbody/tr/td[3]/input</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForTextPresent</td>
+	<td>Setor alterado com sucesso!</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertTextPresent</td>
+	<td>${siglaSetor}</td>
+	<td></td>
+</tr>
+<tr>
+	<td>endScript</td>
+	<td></td>
+	<td></td>
+</tr>
+<!--/SCRIPT alterarSetor-->
+</tbody></table>
+</body>
+</html>

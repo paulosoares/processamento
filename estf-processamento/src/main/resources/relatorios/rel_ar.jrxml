@@ -1,0 +1,466 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="rel_ar" language="groovy" pageWidth="595" pageHeight="842" columnWidth="567" leftMargin="14" rightMargin="14" topMargin="14" bottomMargin="14">
+	<property name="ireport.zoom" value="1.5"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="NUM_CONTRATO" class="java.lang.String"/>
+	<parameter name="LOGO_CORREIOS" class="java.lang.String">
+		<defaultValueExpression><![CDATA["C:\\temp\\logo_correios.png"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="REMETENTE" class="java.lang.String"/>
+	<queryString>
+		<![CDATA[]]>
+	</queryString>
+	<field name="codigo" class="java.lang.String">
+		<fieldDescription><![CDATA[codigo]]></fieldDescription>
+	</field>
+	<field name="conteudo" class="java.lang.String">
+		<fieldDescription><![CDATA[conteudo]]></fieldDescription>
+	</field>
+	<field name="destinatario" class="java.lang.String">
+		<fieldDescription><![CDATA[destinatario]]></fieldDescription>
+	</field>
+	<field name="volume" class="java.lang.String"/>
+	<field name="maoPropriaNacional" class="java.lang.Boolean"/>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<detail>
+		<band height="271">
+			<rectangle>
+				<reportElement x="27" y="223" width="309" height="20"/>
+			</rectangle>
+			<rectangle>
+				<reportElement x="27" y="203" width="309" height="20"/>
+			</rectangle>
+			<rectangle>
+				<reportElement x="27" y="183" width="309" height="20"/>
+			</rectangle>
+			<rectangle>
+				<reportElement x="336" y="223" width="131" height="20"/>
+			</rectangle>
+			<staticText>
+				<reportElement x="0" y="0" width="27" height="243"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle" rotation="Left">
+					<font fontName="SansSerif" isBold="true"/>
+				</textElement>
+				<text><![CDATA[COLAR SOMENTE NO VERSO DA ABA]]></text>
+			</staticText>
+			<rectangle>
+				<reportElement x="336" y="203" width="131" height="20"/>
+			</rectangle>
+			<rectangle>
+				<reportElement x="467" y="151" width="100" height="92"/>
+			</rectangle>
+			<rectangle>
+				<reportElement x="467" y="23" width="100" height="129"/>
+			</rectangle>
+			<rectangle>
+				<reportElement x="336" y="23" width="131" height="180"/>
+			</rectangle>
+			<rectangle>
+				<reportElement x="27" y="23" width="309" height="160"/>
+			</rectangle>
+			<rectangle>
+				<reportElement x="27" y="0" width="540" height="23"/>
+			</rectangle>
+			<staticText>
+				<reportElement x="31" y="23" width="74" height="14"/>
+				<textElement verticalAlignment="Middle">
+					<font size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[DESTINATÁRIO]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="27" y="183" width="116" height="16"/>
+				<textElement verticalAlignment="Top">
+					<font size="5" isBold="true"/>
+					<paragraph leftIndent="3" spacingBefore="1"/>
+				</textElement>
+				<text><![CDATA[DECLARAÇÃO DE CONTEÚDO (OPCIONAL)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="27" y="203" width="88" height="16"/>
+				<textElement verticalAlignment="Top">
+					<font size="5" isBold="true"/>
+					<paragraph leftIndent="3" spacingBefore="1"/>
+				</textElement>
+				<text><![CDATA[ASSINATURA DO RECEBEDOR]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="27" y="223" width="88" height="16"/>
+				<textElement verticalAlignment="Top">
+					<font size="5" isBold="true"/>
+					<paragraph leftIndent="3" spacingBefore="1"/>
+				</textElement>
+				<text><![CDATA[NOME LEGÍVEL DO RECEBEDOR]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="336" y="203" width="88" height="16"/>
+				<textElement verticalAlignment="Top">
+					<font size="5" isBold="true"/>
+					<paragraph leftIndent="3" spacingBefore="1"/>
+				</textElement>
+				<text><![CDATA[DATA DE ENTREGA]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="336" y="223" width="88" height="16"/>
+				<textElement verticalAlignment="Top">
+					<font size="5" isBold="true"/>
+					<paragraph leftIndent="3" spacingBefore="1"/>
+				</textElement>
+				<text><![CDATA[Nº DOCUMENTO DE IDENTIDADE]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="31" y="123" width="50" height="10"/>
+				<textElement verticalAlignment="Middle">
+					<font size="7" isBold="true"/>
+					<paragraph leftIndent="3" spacingBefore="1"/>
+				</textElement>
+				<text><![CDATA[REMETENTE:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="345" y="27" width="116" height="69"/>
+				<textElement verticalAlignment="Top">
+					<font size="7" isBold="false"/>
+					<paragraph lineSpacing="Single" leftIndent="3" spacingBefore="1"/>
+				</textElement>
+				<text><![CDATA[TENTATIVAS DE ENTREGA:
+
+1ª DATA ___/___/___ ___:___h
+
+2ª DATA ___/___/___ ___:___h
+
+3ª DATA ___/___/___ ___:___h
+
+]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="345" y="109" width="116" height="11"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="7" isBold="false"/>
+					<paragraph leftIndent="3" spacingBefore="1"/>
+				</textElement>
+				<text><![CDATA[MOTIVO DA DEVOLUÇÃO
+]]></text>
+			</staticText>
+			<rectangle>
+				<reportElement x="342" y="123" width="13" height="13"/>
+				<graphicElement>
+					<pen lineWidth="0.5"/>
+				</graphicElement>
+			</rectangle>
+			<rectangle>
+				<reportElement x="342" y="138" width="13" height="13"/>
+				<graphicElement>
+					<pen lineWidth="0.5"/>
+				</graphicElement>
+			</rectangle>
+			<rectangle>
+				<reportElement x="342" y="153" width="13" height="13"/>
+				<graphicElement>
+					<pen lineWidth="0.5"/>
+				</graphicElement>
+			</rectangle>
+			<rectangle>
+				<reportElement x="342" y="168" width="13" height="13"/>
+				<graphicElement>
+					<pen lineWidth="0.5"/>
+				</graphicElement>
+			</rectangle>
+			<rectangle>
+				<reportElement x="342" y="183" width="13" height="13"/>
+				<graphicElement>
+					<pen lineWidth="0.5"/>
+				</graphicElement>
+			</rectangle>
+			<rectangle>
+				<reportElement x="405" y="123" width="13" height="13"/>
+				<graphicElement>
+					<pen lineWidth="0.5"/>
+				</graphicElement>
+			</rectangle>
+			<rectangle>
+				<reportElement x="405" y="153" width="13" height="13"/>
+				<graphicElement>
+					<pen lineWidth="0.5"/>
+				</graphicElement>
+			</rectangle>
+			<rectangle>
+				<reportElement x="405" y="168" width="13" height="13"/>
+				<graphicElement>
+					<pen lineWidth="0.5"/>
+				</graphicElement>
+			</rectangle>
+			<rectangle>
+				<reportElement x="405" y="138" width="13" height="13"/>
+				<graphicElement>
+					<pen lineWidth="0.5"/>
+				</graphicElement>
+			</rectangle>
+			<staticText>
+				<reportElement x="355" y="124" width="50" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font size="6" isBold="false"/>
+					<paragraph leftIndent="3" spacingBefore="1"/>
+				</textElement>
+				<text><![CDATA[Mudou-se]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="355" y="139" width="50" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font size="6" isBold="false"/>
+					<paragraph leftIndent="3" spacingBefore="1"/>
+				</textElement>
+				<text><![CDATA[End. Insuficiente]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="355" y="154" width="50" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font size="6" isBold="false"/>
+					<paragraph leftIndent="3" spacingBefore="1"/>
+				</textElement>
+				<text><![CDATA[Não Existe o Nº]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="355" y="169" width="50" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font size="6" isBold="false"/>
+					<paragraph leftIndent="3" spacingBefore="1"/>
+				</textElement>
+				<text><![CDATA[Desconhecido]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="355" y="184" width="106" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font size="6" isBold="false"/>
+					<paragraph leftIndent="3" spacingBefore="1"/>
+				</textElement>
+				<text><![CDATA[Outros _______________________]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="417" y="124" width="50" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font size="6" isBold="false"/>
+					<paragraph leftIndent="3" spacingBefore="1"/>
+				</textElement>
+				<text><![CDATA[Recusado]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="417" y="139" width="50" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font size="6" isBold="false"/>
+					<paragraph leftIndent="3" spacingBefore="1"/>
+				</textElement>
+				<text><![CDATA[Não Procurado]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="418" y="154" width="50" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font size="6" isBold="false"/>
+					<paragraph leftIndent="3" spacingBefore="1"/>
+				</textElement>
+				<text><![CDATA[Ausente]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="418" y="169" width="50" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font size="6" isBold="false"/>
+					<paragraph leftIndent="3" spacingBefore="1"/>
+				</textElement>
+				<text><![CDATA[Falecido]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="342" y="123" width="13" height="13"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="6" isBold="false"/>
+					<paragraph leftIndent="3" spacingBefore="1"/>
+				</textElement>
+				<text><![CDATA[1]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="342" y="138" width="13" height="13"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="6" isBold="false"/>
+					<paragraph leftIndent="3" spacingBefore="1"/>
+				</textElement>
+				<text><![CDATA[2]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="342" y="153" width="13" height="13"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="6" isBold="false"/>
+					<paragraph leftIndent="3" spacingBefore="1"/>
+				</textElement>
+				<text><![CDATA[3]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="342" y="168" width="13" height="13"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="6" isBold="false"/>
+					<paragraph leftIndent="3" spacingBefore="1"/>
+				</textElement>
+				<text><![CDATA[4]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="342" y="183" width="13" height="13"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="6" isBold="false"/>
+					<paragraph leftIndent="3" spacingBefore="1"/>
+				</textElement>
+				<text><![CDATA[9]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="405" y="123" width="13" height="13"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="6" isBold="false"/>
+					<paragraph leftIndent="3" spacingBefore="1"/>
+				</textElement>
+				<text><![CDATA[5]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="405" y="138" width="13" height="13"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="6" isBold="false"/>
+					<paragraph leftIndent="3" spacingBefore="1"/>
+				</textElement>
+				<text><![CDATA[6]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="405" y="153" width="13" height="13"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="6" isBold="false"/>
+					<paragraph leftIndent="3" spacingBefore="1"/>
+				</textElement>
+				<text><![CDATA[7]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="405" y="168" width="13" height="13"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="6" isBold="false"/>
+					<paragraph leftIndent="3" spacingBefore="1"/>
+				</textElement>
+				<text><![CDATA[8]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="482" y="152" width="74" height="16"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="5" isBold="false"/>
+					<paragraph leftIndent="3" spacingBefore="1"/>
+				</textElement>
+				<text><![CDATA[RUBRICA E MATRÍCULA DO CARTEIRO]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="480" y="25" width="76" height="16"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="5" isBold="false"/>
+					<paragraph leftIndent="3" spacingBefore="1"/>
+				</textElement>
+				<text><![CDATA[CARIMBO
+UNIDADE DE ENTREGA]]></text>
+			</staticText>
+			<componentElement>
+				<reportElement positionType="Float" isPrintRepeatedValues="false" x="93" y="85" width="177" height="38"/>
+				<jr:Code128 xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd" moduleWidth="1.0" textPosition="top">
+					<jr:codeExpression><![CDATA[$F{codigo}]]></jr:codeExpression>
+				</jr:Code128>
+			</componentElement>
+			<image scaleImage="RetainShape">
+				<reportElement x="27" y="0" width="99" height="23"/>
+				<imageExpression class="java.lang.String"><![CDATA[$P{LOGO_CORREIOS}]]></imageExpression>
+			</image>
+			<staticText>
+				<reportElement x="130" y="0" width="29" height="23"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="18" isBold="true"/>
+				</textElement>
+				<text><![CDATA[AR]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="167" y="0" width="61" height="23"/>
+				<textElement verticalAlignment="Middle">
+					<font size="7" isBold="true"/>
+					<paragraph leftIndent="3" spacingBefore="1"/>
+				</textElement>
+				<text><![CDATA[AVISO DE
+RECEBIMENTO]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="430" y="0" width="85" height="23"/>
+				<textElement textAlignment="Center" verticalAlignment="Top">
+					<font size="7" isBold="true"/>
+					<paragraph leftIndent="3" spacingBefore="1"/>
+				</textElement>
+				<text><![CDATA[CONTRATO]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="31" y="133" width="146" height="10"/>
+				<textElement verticalAlignment="Middle">
+					<font size="7" isBold="true"/>
+					<paragraph leftIndent="3" spacingBefore="1"/>
+				</textElement>
+				<text><![CDATA[ENDEREÇO PARA DEVOLUÇÃO DO AR]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="81" y="123" width="137" height="10"/>
+				<textElement verticalAlignment="Top">
+					<font size="6" isBold="false"/>
+					<paragraph leftIndent="3" spacingBefore="1"/>
+				</textElement>
+				<text><![CDATA[SUPREMO TRIBUNAL FEDERAL]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="437" y="10" width="70" height="13"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="6"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$P{NUM_CONTRATO}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="31" y="37" width="305" height="48"/>
+				<textElement>
+					<font size="6"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{destinatario}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="29" y="190" width="307" height="13"/>
+				<textElement>
+					<font size="5"/>
+					<paragraph leftIndent="3"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{conteudo}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="245" y="169" width="37" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[volume:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="283" y="169" width="53" height="12"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{volume}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="31" y="144" width="214" height="38"/>
+				<textElement verticalAlignment="Middle">
+					<font size="6"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$P{REMETENTE}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="530" y="3" width="37" height="20">
+					<printWhenExpression><![CDATA[$F{maoPropriaNacional} == true]]></printWhenExpression>
+				</reportElement>
+				<textElement>
+					<font size="14"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{maoPropriaNacional} == true ? "MP" : null]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

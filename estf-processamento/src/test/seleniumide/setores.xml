@@ -1,0 +1,96 @@
+﻿<testdata>
+	<vars codigoSetor='600000060' siglaSetor='GM EROS' descricaoSetor='GABINETE MINISTRO EROS GRAU' />
+	<vars codigoSetor='600000306' siglaSetor='CPIN' descricaoSetor='COORDENADORIA DE PROCESSAMENTO INICIAL' />
+	<vars codigoSetor='600000307' siglaSetor='CFIN' descricaoSetor='COORDENADORIA DE PROCESSAMENTO FINAL' />
+	<vars codigoSetor='600000308' siglaSetor='SBXP' descricaoSetor='SEÇÃO DE BAIXA DE PROCESSOS' />
+	<vars codigoSetor='600000311' siglaSetor='SEXP' descricaoSetor='SEÇÃO DE EXPEDIÇÃO' />
+	<vars codigoSetor='600000312' siglaSetor='SARE' descricaoSetor='SEÇÃO DE AUTUAÇÃO DE RECURSOS' />
+	<vars codigoSetor='600000314' siglaSetor='SDIS' descricaoSetor='SEÇÃO DE DISTRIBUIÇÃO' />
+	<vars codigoSetor='600000315' siglaSetor='SPUB' descricaoSetor='SEÇÃO DE PUBLICAÇÕES' />
+	<vars codigoSetor='600000316' siglaSetor='SATE' descricaoSetor='SEÇÃO DE ATENDIMENTO' />
+	<vars codigoSetor='600000317' siglaSetor='CPLE' descricaoSetor='COORDENADORIA DE PROCESSAMENTO DO PLENÁRIO' />
+	<vars codigoSetor='600000319' siglaSetor='SPDP' descricaoSetor='SEÇÃO DE PROCESSOS DIVERSOS DO PLENÁRIO' />
+	<vars codigoSetor='600000323' siglaSetor='CPRI' descricaoSetor='COORDENADORIA DE PROCESSAMENTO DA PRIMEIRA TURMA' />
+	<vars codigoSetor='600000325' siglaSetor='SAIP' descricaoSetor='SEÇÃO DE AGRAVOS DE INSTRUMENTO DA 1ª TURMA' />
+	<vars codigoSetor='600000326' siglaSetor='SPOP' descricaoSetor='SEÇÃO DE PROCESSOS ORIGINÁRIOS DA 1ª TURMA' />
+	<vars codigoSetor='600000327' siglaSetor='CSEG' descricaoSetor='COORDENADORIA DE PROCESSAMENTO DA SEGUNDA TURMA' />
+	<vars codigoSetor='600000328' siglaSetor='SRES' descricaoSetor='SEÇÃO DE RECURSOS EXTRAORDINÁRIOS DA 2ª TURMA' />
+	<vars codigoSetor='600000329' siglaSetor='SAIS' descricaoSetor='SEÇÃO DE AGRAVOS DE INSTRUMENTO DA 2ª TURMA' />
+	<vars codigoSetor='600000330' siglaSetor='SPOS' descricaoSetor='SEÇÃO DE PROCESSOS ORIGINÁRIOS DA 2ª TURMA' />
+	<vars codigoSetor='600000148' siglaSetor='CCOR' descricaoSetor='COORDENADORIA DE ACÓRDÃOS' />
+	<vars codigoSetor='600000149' siglaSetor='GM ELLEN' descricaoSetor='GABINETE MINISTRA ELLEN GRACIE' />
+	<vars codigoSetor='600000151' siglaSetor='GM GILMAR' descricaoSetor='GABINETE MINISTRO GILMAR MENDES' />
+	<vars codigoSetor='600000153' siglaSetor='GM PELUSO' descricaoSetor='GABINETE MINISTRO CEZAR PELUSO' />
+	<vars codigoSetor='600000154' siglaSetor='GMAB' descricaoSetor='GABINETE MINISTRO AYRES BRITTO' />
+	<vars codigoSetor='600000155' siglaSetor='GM BARBOSA' descricaoSetor='GABINETE MINISTRO JOAQUIM BARBOSA' />
+	<vars codigoSetor='600000156' siglaSetor='GM AURELIO' descricaoSetor='GABINETE MINISTRO MARCO AURÉLIO' />
+	<vars codigoSetor='600000181' siglaSetor='SG' descricaoSetor='SECRETARIA-GERAL DA PRESIDÊNCIA' />
+	<vars codigoSetor='600000019' siglaSetor='GAB.SEJ' descricaoSetor='GABINETE DO SECRETÁRIO-SEJ' />
+	<vars codigoSetor='600000041' siglaSetor='SES' descricaoSetor='SECRETARIA DAS SESSÕES' />
+	<vars codigoSetor='600000042' siglaSetor='CSPT' descricaoSetor='COORDENADORIA DE SESSÕES DA PRIMEIRA TURMA' />
+	<vars codigoSetor='600000043' siglaSetor='CSST' descricaoSetor='COORDENADORIA DE SESSÕES DA SEGUNDA TURMA' />
+	<vars codigoSetor='600000049' siglaSetor='SCTA' descricaoSetor='SEÇÃO DE CONTROLE DE ACÓRDÃOS' />
+	<vars codigoSetor='600000059' siglaSetor='COAJ' descricaoSetor='COORDENADORIA DE ANÁLISE DE JURISPRUDÊNCIA' />
+	<vars codigoSetor='600000435' siglaSetor='GMRL' descricaoSetor='GABINETE MINISTRO RICARDO LEWANDOWSKI' />
+	<vars codigoSetor='600000566' siglaSetor='NAP' descricaoSetor='NÚCLEO DE ANÁLISE PROCESSUAL' />
+	<vars codigoSetor='600000567' siglaSetor='NCA' descricaoSetor='NÚCLEO DE CLASSIFICAÇÃO DE ASSUNTOS' />
+	<vars codigoSetor='600000568' siglaSetor='NAAR' descricaoSetor='NÚCLEO DE ANÁLISE DE AGRAVOS REGIMENTAIS' />
+	<vars codigoSetor='600000612' siglaSetor='SGPR' descricaoSetor='SEÇÃO DE GESTÃO E PROJETOS' />
+	<vars codigoSetor='600000621' siglaSetor='SANP' descricaoSetor='SEÇÃO DE ATENDIMENTO NÃO PRESENCIAL' />
+	<vars codigoSetor='600000629' siglaSetor='CPIN' descricaoSetor='COORDENADORIA DE PROCESSAMENTO INICIAL' />
+	<vars codigoSetor='600000630' siglaSetor='CPCR' descricaoSetor='COORDENADORIA DE PROCESSOS CRIMINAIS' />
+	<vars codigoSetor='600000632' siglaSetor='CREC' descricaoSetor='COORDENADORIA DE RECURSOS' />
+	<vars codigoSetor='600000633' siglaSetor='CAPT' descricaoSetor='COORDENADORIA DE APOIO TÉCNICO' />
+	<vars codigoSetor='600000634' siglaSetor='SRPO' descricaoSetor='SEÇÃO DE RECEBIMENTO DE PROCESSOS ORIGINÁRIOS' />
+	<vars codigoSetor='600000636' siglaSetor='SPDI' descricaoSetor='SEÇÃO DE PREVENÇÃO E DISTRIBUIÇÃO' />
+	<vars codigoSetor='600000639' siglaSetor='SPCR' descricaoSetor='SEÇÃO DE PROCESSOS DO CONTROLE CONCENTRADO E RECLAMAÇÕES' />
+	<vars codigoSetor='600000641' siglaSetor='SREX' descricaoSetor='SEÇÃO DE RECURSOS EXTRAORDINÁRIOS' />
+	<vars codigoSetor='600000643' siglaSetor='SEBE' descricaoSetor='SEÇÃO DE BAIXA E EXPEDIÇÃO' />
+	<vars codigoSetor='600000506' siglaSetor='GMMD' descricaoSetor='GABINETE MINISTRO MENEZES DIREITO' />
+	<vars codigoSetor='600000003' siglaSetor='GM CELSO' descricaoSetor='GABINETE MINISTRO CELSO DE MELLO' />
+	<vars codigoSetor='600000048' siglaSetor='SCAC' descricaoSetor='SEÇÃO DE COMPOSIÇÃO DE ACÓRDÃOS' />
+	<vars codigoSetor='600000320' siglaSetor='SPCC' descricaoSetor='SEÇÃO DE PROCESSOS DO CONTROLE CONCENTRADO' />
+	<vars codigoSetor='600000465' siglaSetor='SPCP' descricaoSetor='SEÇÃO DE PROCESSOS DE COMPETÊNCIA DA PRESIDÊNCIA' />
+	<vars codigoSetor='600000489' siglaSetor='SGAB' descricaoSetor='SEÇÃO DE SISTEMAS DE GABINETES E JULGAMENTOS' />
+	<vars codigoSetor='600000508' siglaSetor='AGE' descricaoSetor='ASSESSORIA DE GESTÃO ESTRATÉGICA' />
+	<vars codigoSetor='600000510' siglaSetor='GAB. SEG' descricaoSetor='GABINETE DO SECRETÁRIO - SEG' />
+	<vars codigoSetor='600000179' siglaSetor='PRES. STF' descricaoSetor='PRESIDÊNCIA' />
+	<vars codigoSetor='600000616' siglaSetor='GMDT' descricaoSetor='GABINETE MINISTRO DIAS TOFFOLI' />
+	<vars codigoSetor='600000628' siglaSetor='GSEJ' descricaoSetor='GABINETE DO SECRETÁRIO - SEJ' />
+	<vars codigoSetor='600000631' siglaSetor='CPOR' descricaoSetor='COORDENADORIA DE PROCESSOS ORIGINÁRIOS' />
+	<vars codigoSetor='600000635' siglaSetor='SRRE' descricaoSetor='SEÇÃO DE RECEBIMENTO DE RECURSOS' />
+	<vars codigoSetor='600000637' siglaSetor='SPOC' descricaoSetor='SEÇÃO DE PROCESSOS ORIGINÁRIOS CRIMINAIS' />
+	<vars codigoSetor='600000638' siglaSetor='SREC' descricaoSetor='SEÇÃO DE RECURSOS CRIMINAIS' />
+	<vars codigoSetor='600000640' siglaSetor='SPDI' descricaoSetor='SEÇÃO DE PROCESSOS DIVERSOS' />
+	<vars codigoSetor='600000324' siglaSetor='SREP' descricaoSetor='SEÇÃO DE RECURSOS EXTRAORDINÁRIOS DA 1ª TURMA' />
+	<vars codigoSetor='600000642' siglaSetor='SAGI' descricaoSetor='SEÇÃO DE AGRAVOS DE INSTRUMENTO' />
+	<vars codigoSetor='600000644' siglaSetor='SECO' descricaoSetor='SEÇÃO DE COMUNICAÇÕES' />
+	<vars codigoSetor='600000679' siglaSetor='SRDO' descricaoSetor='SEÇÃO DE RECEBIMENTO E DISTRIBUIÇÃO DE ORIGINÁRIOS' />
+	<vars codigoSetor='600000680' siglaSetor='SRDR' descricaoSetor='SEÇÃO DE RECEBIMENTO E DISTRIBUIÇÃO DE RECURSOS' />
+	<vars codigoSetor='600000681' siglaSetor='GM FUX' descricaoSetor='GABINETE MINISTRO LUIZ FUX' />
+	<vars codigoSetor='600000392' siglaSetor='GAB.STI' descricaoSetor='GABINETE DO SECRETÁRIO-STI' />
+	<vars codigoSetor='600000394' siglaSetor='CATE' descricaoSetor='COORDENADORIA DE ATENDIMENTO' />
+	<vars codigoSetor='600000419' siglaSetor='CSIS' descricaoSetor='COORDENADORIA DE SISTEMAS' />
+	<vars codigoSetor='600000453' siglaSetor='GM CÁRMEN LÚCIA' descricaoSetor='GABINETE MINISTRA CÁRMEN LÚCIA' />
+	<vars codigoSetor='600000569' siglaSetor='CPCR' descricaoSetor='COORDENADORIA DE PROCESSAMENTO DE CRIMINAIS' />
+	<vars codigoSetor='600000570' siglaSetor='CPOR' descricaoSetor='COORDENADORIA DE PROCESSAMENTO DE ORIGINÁRIOS' />
+	<vars codigoSetor='600000571' siglaSetor='CPRE' descricaoSetor='COORDENADORIA DE PROCESSAMENTO DE RECURSOS' />
+	<vars codigoSetor='600000572' siglaSetor='SECOM' descricaoSetor='SEÇÃO DE COMUNICAÇÕES' />
+	<vars codigoSetor='600000573' siglaSetor='SEINP' descricaoSetor='SEÇÃO DE INFORMAÇÕES PROCESSUAIS' />
+	<vars codigoSetor='600000574' siglaSetor='SERAP' descricaoSetor='SEÇÃO DE RECEBIMENTO E AUTUAÇÃO DE PROCESSOS' />
+	<vars codigoSetor='600000575' siglaSetor='SERPP' descricaoSetor='SEÇÃO DE RECEBIMENTO E PROTOCOLO DE PETIÇÕES' />
+	<vars codigoSetor='600000576' siglaSetor='SEAPR' descricaoSetor='SEÇÃO DE ANÁLISE PROCESSUAL' />
+	<vars codigoSetor='600000577' siglaSetor='SECLA' descricaoSetor='SEÇÃO DE CLASSIFICAÇÃO DE ASSUNTOS' />
+	<vars codigoSetor='600000578' siglaSetor='SPDIS' descricaoSetor='SEÇÃO DE PREVENÇÃO E DISTRIBUIÇÃO' />
+	<vars codigoSetor='600000579' siglaSetor='SPCRI' descricaoSetor='SEÇÃO DE PROCESSOS CRIMINAIS' />
+	<vars codigoSetor='600000580' siglaSetor='SECPC' descricaoSetor='SEÇÃO DE COMUNICAÇÕES DE PROCESSOS CRIMINAIS' />
+	<vars codigoSetor='600000581' siglaSetor='SEAPC' descricaoSetor='SEÇÃO DE ATENDIMENTO DE PROCESSOS CRIMINAIS' />
+	<vars codigoSetor='600000582' siglaSetor='SEPCC' descricaoSetor='SEÇÃO DE PROCESSOS DO CONTROLE CONCENTRADO' />
+	<vars codigoSetor='600000583' siglaSetor='SEPDI' descricaoSetor='SEÇÃO DE PROCESSOS DIVERSOS' />
+	<vars codigoSetor='600000584' siglaSetor='SEPCP' descricaoSetor='SEÇÃO DE PROCESSOS DE COMPETÊNCIA DA PRESIDÊNCIA' />
+	<vars codigoSetor='600000585' siglaSetor='SEATO' descricaoSetor='SEÇÃO DE ATENDIMENTO DE ORIGINÁRIOS' />
+	<vars codigoSetor='600000586' siglaSetor='SEREX' descricaoSetor='SEÇÃO DE RECURSOS EXTRAORDINÁRIOS' />
+	<vars codigoSetor='600000587' siglaSetor='SEAGR' descricaoSetor='SEÇÃO DE AGRAVOS DE INSTRUMENTO' />
+	<vars codigoSetor='600000588' siglaSetor='SEARE' descricaoSetor='SEÇÃO DE ATENDIMENTO DE RECURSOS' />
+	<vars codigoSetor='600000683' siglaSetor='GM ROSA' descricaoSetor='GABINETE MINISTRA ROSA WEBER' />
+</testdata>

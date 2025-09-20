@@ -1,0 +1,16 @@
+============================
+Versão: 3.0.0-CR-2
+Data: 16/09/2009
+Usuário: Demétrius Jubé
+============================
+	- Correção do cadastro de PecaProcessoEletronico: não estava sendo alimentada
+	a coluna SEQ_OBJETO_INCIDENTE_COMPLETO 
+	- Retirada da propriedade Protocolo da classe PecaProcessoEletronico
+
+============================
+Versão: 3.0.0-CR-1
+Data: 15/09/2009
+Usuário: Demétrius Jubé
+============================
+	- Lançada a versão apropriada para a nova modelagem do eJud
+  

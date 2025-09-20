@@ -1,0 +1,21 @@
+Tags:
+Preconditions:Logado como "gestor"
+O gestor pode manter os processo de interesse dos advogados:
+#Clique no menu "Consulta"  e na opção "Processo de Interesse"
+#Infome o advogado "1826828"
+#Verifique se os processos de interesse foram exibidos
+#Digite a classe e o número do processo "ADC 8"
+#Clique no botão adicionar
+#Verifique se o processo foi incluido
+#Remova o processo
+#Verifique se o processo foi removido
+
+A consulta de visibilidade de peças está disponível para gestores de setores responsáveis pelas classes processuais:
+#Clique no menu "Consulta"  e na opção "Visibilidade de Peça"
+#Digite a classe "PSV" e o número do processo "47"
+#Realize a pesquisa
+#Verifique se as peças foram exibidas
+#Altere o tipo de visibilidade da primeira peça apresentada para pendente
+#Verifique se o tipo de visibilidade foi alterado
+#Altere o tipo de visibilidade da mesma peça para pública
+#Verifique se o tipo de visibilidade foi alterado

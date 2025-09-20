@@ -1,0 +1,6 @@
+Selenium2:
+	class: org.openqa.selenium.WebDriver
+	fieldName: browser
+	project_path: /processamento
+language:
+	class: com.thoughtworks.twist.language.java.Java

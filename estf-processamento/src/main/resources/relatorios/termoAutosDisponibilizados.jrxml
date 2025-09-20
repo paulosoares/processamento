@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="CertidaoTransito" pageWidth="595" pageHeight="842" columnWidth="395" leftMargin="100" rightMargin="100" topMargin="50" bottomMargin="30">
+	<property name="ireport.zoom" value="1.5"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="242"/>
+	<style name="Texto" isDefault="true" fontName="Times New Roman" fontSize="10" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
+	<style name="Rotulo" fontName="Times New Roman" fontSize="13" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false">
+		<paragraph lineSpacing="1_1_2"/>
+	</style>
+	<style name="AlinhadoDireita" style="Texto" hAlign="Right" fontName="Times New Roman" fontSize="12" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
+	<style name="RotuloCentralizado" style="Rotulo" hAlign="Center"/>
+	<subDataset name="dataset1"/>
+	<parameter name="PATH_BRASAO" class="java.lang.String"/>
+	<parameter name="brasaoRepublicaSTF" class="java.lang.String"/>
+	<parameter name="NOME_FUNCAO_SECRETARIA" class="java.lang.String"/>
+	<parameter name="PROCESSO" class="java.lang.String"/>
+	<parameter name="CORPO" class="java.lang.String"/>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["D:\\workspaces\\processamento\\estf-processamento\\src\\main\\resources\\relatorios\\"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="LISTA_PARTES" class="java.util.List"/>
+	<queryString>
+		<![CDATA[]]>
+	</queryString>
+	<variable name="LOCAL_DATA" class="java.lang.String">
+		<variableExpression><![CDATA["Brasília, " + new SimpleDateFormat("d 'de' MMMM 'de' yyyy'.'", new Locale("pt","BR")).
+format(new Date()).toString().toLowerCase()]]></variableExpression>
+	</variable>
+	<variable name="HOJE" class="java.util.Date">
+		<variableExpression><![CDATA[new Date()]]></variableExpression>
+	</variable>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<pageHeader>
+		<band height="153" splitType="Stretch">
+			<image hAlign="Center" isUsingCache="false">
+				<reportElement key="image-1" mode="Transparent" x="98" y="0" width="199" height="93" isPrintInFirstWholeBand="true"/>
+				<imageExpression><![CDATA[$P{brasaoRepublicaSTF}]]></imageExpression>
+			</image>
+			<staticText>
+				<reportElement x="18" y="133" width="355" height="15"/>
+				<textElement textAlignment="Center">
+					<font fontName="SansSerif" size="11" isBold="true" isUnderline="false" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[TERMO DE DISPONIBILIZAÇÃO DOS AUTOS]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="1" y="114" width="172" height="15"/>
+				<textElement>
+					<font fontName="SansSerif" size="11" isBold="true" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{PROCESSO}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageHeader>
+	<columnHeader>
+		<band/>
+	</columnHeader>
+	<detail>
+		<band height="208" splitType="Stretch">
+			<textField isBlankWhenNull="true">
+				<reportElement positionType="FixRelativeToBottom" stretchType="RelativeToTallestObject" x="0" y="57" width="395" height="54"/>
+				<textElement textAlignment="Justified">
+					<font fontName="SansSerif" size="11" isPdfEmbedded="true"/>
+					<paragraph firstLineIndent="60"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{CORPO}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="FixRelativeToBottom" x="0" y="122" width="395" height="19"/>
+				<textElement textAlignment="Left">
+					<font fontName="SansSerif" size="11" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$V{LOCAL_DATA}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement stretchType="RelativeToBandHeight" x="1" y="174" width="394" height="16"/>
+				<textElement textAlignment="Center">
+					<font fontName="SansSerif" size="11" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{NOME_FUNCAO_SECRETARIA}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="1" y="189" width="394" height="16"/>
+				<textElement textAlignment="Center">
+					<font fontName="SansSerif" size="11" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[(documento eletrônico)]]></text>
+			</staticText>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="38"/>
+	</pageFooter>
+</jasperReport>

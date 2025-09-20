@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="rel_lista_correios" pageWidth="595" pageHeight="872" columnWidth="567" leftMargin="14" rightMargin="14" topMargin="14" bottomMargin="14">
+	<property name="ireport.zoom" value="1.5"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="64"/>
+	<parameter name="NUMERO_LISTA" class="java.lang.Long"/>
+	<parameter name="DATA_FORMATADA" class="java.lang.String"/>
+	<parameter name="DATA_CRIACAO_LISTA" class="java.lang.String"/>
+	<parameter name="NOME_USUARIO" class="java.lang.String"/>
+	<parameter name="LOGO_SUPREMO" class="java.lang.String">
+		<defaultValueExpression><![CDATA["C:\\temp\\logo_supremo.png"]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[]]>
+	</queryString>
+	<field name="destinatario" class="java.lang.String">
+		<fieldDescription><![CDATA[destinatario]]></fieldDescription>
+	</field>
+	<field name="observacao" class="java.lang.String">
+		<fieldDescription><![CDATA[observacao]]></fieldDescription>
+	</field>
+	<field name="peso" class="java.lang.String">
+		<fieldDescription><![CDATA[peso]]></fieldDescription>
+	</field>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<pageHeader>
+		<band height="67">
+			<image scaleImage="RetainShape">
+				<reportElement x="0" y="0" width="163" height="41"/>
+				<imageExpression><![CDATA[$P{LOGO_SUPREMO}]]></imageExpression>
+			</image>
+			<staticText>
+				<reportElement x="189" y="0" width="247" height="19"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+					<paragraph leftIndent="3" spacingBefore="1"/>
+				</textElement>
+				<text><![CDATA[SUPREMO TRIBUNAL FEDERAL]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="189" y="47" width="247" height="20"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="12" isBold="true"/>
+					<paragraph leftIndent="3" spacingBefore="1"/>
+				</textElement>
+				<text><![CDATA[Lista de Remessa]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="448" y="51" width="76" height="14"/>
+				<textElement verticalAlignment="Top">
+					<font size="8" isBold="false"/>
+					<paragraph leftIndent="3" spacingBefore="1"/>
+				</textElement>
+				<text><![CDATA[Data de emissão:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="524" y="51" width="42" height="14"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{DATA_FORMATADA}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="493" y="0" width="57" height="12"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Pág. " +$V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report">
+				<reportElement x="550" y="0" width="16" height="12"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[" / "+$V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageHeader>
+	<columnHeader>
+		<band height="29">
+			<rectangle>
+				<reportElement x="0" y="0" width="566" height="16"/>
+			</rectangle>
+			<staticText>
+				<reportElement x="4" y="0" width="119" height="16"/>
+				<textElement verticalAlignment="Middle">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Data da criação da lista:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="429" y="0" width="73" height="16"/>
+				<textElement verticalAlignment="Middle">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Número da Lista:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="502" y="0" width="63" height="16"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="10" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{NUMERO_LISTA}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="105" y="0" width="141" height="16"/>
+				<textElement verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{DATA_CRIACAO_LISTA}]]></textFieldExpression>
+			</textField>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="92">
+			<rectangle>
+				<reportElement x="0" y="0" width="567" height="92"/>
+			</rectangle>
+			<staticText>
+				<reportElement x="4" y="0" width="75" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Destinatário:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="4" y="46" width="25" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Peso:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="4" y="12" width="340" height="34"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{destinatario}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="29" y="46" width="100" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{peso}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="4" y="58" width="25" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Obs:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="29" y="58" width="522" height="34"/>
+				<textElement verticalAlignment="Top">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{observacao}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="111">
+			<rectangle>
+				<reportElement positionType="Float" x="0" y="9" width="567" height="102"/>
+			</rectangle>
+			<staticText>
+				<reportElement x="394" y="15" width="124" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Carimbo e assinatura / Matrícula]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="43" y="86" width="251" height="14"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Conferente]]></text>
+			</staticText>
+			<line>
+				<reportElement x="42" y="88" width="252" height="1"/>
+			</line>
+			<textField>
+				<reportElement x="45" y="13" width="286" height="14"/>
+				<textElement verticalAlignment="Middle">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{NOME_USUARIO}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="6" y="13" width="39" height="14"/>
+				<textElement verticalAlignment="Middle">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Usuário:]]></text>
+			</staticText>
+		</band>
+	</pageFooter>
+</jasperReport>

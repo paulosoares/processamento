@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<assinadorweb:stfassinadorconfig xmlns:assinadorweb="http://www.stf.jus.br/assinadorweb"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.stf.jus.br/assinadorweb assinadorweb.xsd ">
+	<assinadorClientJarPath>${assinadorweb.client.jar.path}</assinadorClientJarPath>
+	<servidorCarimbadorSerpro>http://carimbo.stf.jus.br/carimbador/carimbar</servidorCarimbadorSerpro>
+	<provider>br.jus.stf.assinadorweb.client.assinador.provider.AssinadorSunMSCapi</provider>
+	<numeroThreadsAssinatura>1</numeroThreadsAssinatura>
+
+	<handlers>
+		<handler requestClass="br.gov.stf.estf.assinatura.stficp.RequisicaoAssinaturaDocumentoTexto"
+			handlerClass="br.gov.stf.estf.assinatura.stficp.impl.AssinarDocumentoTextoHandler" />
+		<handler requestClass="br.gov.stf.estf.assinatura.stficp.RequisicaoAssinaturaDocumentoTextoPeticao"
+			handlerClass="br.gov.stf.estf.assinatura.stficp.impl.AssinarDocumentoTextoPeticaoHandler" />
+		<handler requestClass="br.gov.stf.estf.assinatura.stficp.RequisicaoAssinaturaArquivoProcessoEletronico"
+			handlerClass="br.gov.stf.estf.assinatura.stficp.impl.AssinarArquivoProcessoEletronicoHandler" />
+		<handler requestClass="br.gov.stf.estf.assinatura.stficp.RequisicaoAssinaturaDocumentoComunicacao"
+			handlerClass="br.gov.stf.estf.assinatura.stficp.impl.AssinarDocumentoComunicacaoHandler" />
+	</handlers>
+
+	<configuracaoEmail>
+		<mailSenderBeanId>javaMailSender</mailSenderBeanId>
+		<nomeSistema>eSTF-Assinador</nomeSistema>
+		<remetenteEmail>estfassinador.notificador@stf.jus.br</remetenteEmail>
+		<destinatariosEmailErro>
+			<destinatario email="G-SSNE.SUSTENTACAO@stf.jus.br" />
+			<destinatario email="Julio.Almeida@stf.jus.br" />
+		</destinatariosEmailErro>
+	</configuracaoEmail>
+
+</assinadorweb:stfassinadorconfig>

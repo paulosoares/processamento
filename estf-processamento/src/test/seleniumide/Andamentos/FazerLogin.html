@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head profile="http://selenium-ide.openqa.org/profiles/test-case">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="selenium.base" href="http://aplh-ssgj:8080/processamento/pages/login/login.jsp" />
+<title>Fazer Login</title>
+</head>
+<body>
+<table cellpadding="1" cellspacing="1" border="1">
+<thead>
+<tr><td rowspan="1" colspan="3">Fazer Login</td></tr>
+</thead><tbody>
+<tr>
+	<td>open</td>
+	<td>/processamento/j_spring_security_logout</td>
+	<td></td>
+</tr>
+<tr>
+	<td>open</td>
+	<td>/processamento/pages/login/login.jsp</td>
+	<td></td>
+</tr>
+<tr>
+	<td>loadVars</td>
+	<td>../autenticacao.xml</td>
+	<td>auth=='xml'</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>id=txtUsuario</td>
+	<td>${login}</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>name=j_password</td>
+	<td>${senha}</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>css=input.Botao</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertTitle</td>
+	<td>exact:::.. Principal ..::</td>
+	<td></td>
+</tr>
+<tr>
+	<td>loadVars</td>
+	<td>../setores.xml</td>
+	<td>codigoSetor==&quot;${setor}&quot;</td>
+</tr>
+</tbody></table>
+</body>
+</html>

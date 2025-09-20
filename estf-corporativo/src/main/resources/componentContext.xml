@@ -1,0 +1,343 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:context="http://www.springframework.org/schema/context" xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="	http://www.springframework.org/schema/beans
+                           	http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+                           	http://www.springframework.org/schema/tx
+                           	http://www.springframework.org/schema/tx/spring-tx-2.5.xsd
+                           	http://www.springframework.org/schema/aop                           	
+                           	http://www.springframework.org/schema/aop/spring-aop-2.5.xsd
+                           	http://www.springframework.org/schema/context
+                           	http://www.springframework.org/schema/context/spring-context-2.5.xsd
+                           	http://www.springframework.org/schema/util
+                           	http://www.springframework.org/schema/util/spring-util-2.5.xsd"
+
+	default-autowire="constructor" default-lazy-init="true" default-dependency-check="none">
+
+	<aop:config>
+		<aop:advisor advice-ref="txInterceptor" pointcut="target(br.gov.stf.framework.model.service.GenericService)" />
+	</aop:config>
+
+	<tx:advice id="txInterceptor">
+		<tx:attributes>
+			<tx:method name="pesquisar*" propagation="SUPPORTS" read-only="true" rollback-for="DaoException,ServiceException" />
+			<tx:method name="recuperar*" propagation="SUPPORTS" read-only="true" rollback-for="DaoException,ServiceException" />
+
+			<tx:method name="alterar*" propagation="REQUIRED" rollback-for="DaoException,ServiceException" />
+			<tx:method name="cancelar*" propagation="REQUIRED" rollback-for="DaoException,ServiceException" />
+			<tx:method name="copiar*" propagation="REQUIRED" rollback-for="DaoException,ServiceException" />
+			<tx:method name="criar*" propagation="REQUIRED" rollback-for="DaoException,ServiceException" />
+			<tx:method name="devolver*" propagation="REQUIRED" rollback-for="DaoException,ServiceException" />
+			<tx:method name="encaminhar*" propagation="REQUIRED" rollback-for="DaoException,ServiceException" />
+			<tx:method name="excluir*" propagation="REQUIRED" rollback-for="DaoException,ServiceException" />
+			<tx:method name="expedir*" propagation="REQUIRED" rollback-for="DaoException,ServiceException" />
+			<tx:method name="incluir*" propagation="REQUIRED" rollback-for="DaoException,ServiceException" />
+			<tx:method name="inserir*" propagation="REQUIRED" rollback-for="DaoException,ServiceException" />
+			<tx:method name="persistir*" propagation="REQUIRED" rollback-for="DaoException,ServiceException" />
+			<tx:method name="salvar*" propagation="REQUIRED" rollback-for="DaoException,ServiceException" />
+		</tx:attributes>
+	</tx:advice>
+
+	<tx:annotation-driven />
+
+	<context:component-scan base-package="br.gov.stf.estf" resource-pattern="**/*ServiceImpl.class" />
+	<context:component-scan base-package="br.gov.stf.estf" resource-pattern="**/*ServiceExtraImpl.class" />
+	<context:component-scan base-package="br.gov.stf.estf" resource-pattern="**/*DaoImpl.class" />
+	<context:component-scan base-package="br.gov.stf.estf" resource-pattern="**/*DaoJDBC.class" />
+	<context:component-scan base-package="br.gov.stf.estf" resource-pattern="**/*DaoHibernate.class" />
+	<context:component-scan base-package="br.gov.stf.estf" resource-pattern="**/RolesPopulator.class" />
+	<context:component-scan base-package="br.gov.stf.estf" resource-pattern="**/RolesPopulatorSIAA.class" />
+	<context:component-scan base-package="br.gov.stf.estf.impedimento" resource-pattern="**/*.class" />
+
+	<bean id="userDaoLdap" class="org.springframework.security.ldap.search.FilterBasedLdapUserSearch">
+		<constructor-arg index="0">
+			<value>ou=usuarios,dc=rede,dc=stf,dc=gov,dc=br</value>
+		</constructor-arg>
+		<constructor-arg index="1">
+			<value>(sAMAccountName={0})</value>
+		</constructor-arg>
+		<constructor-arg index="2">
+			<ref local="searchDirCtxFactory" />
+		</constructor-arg>
+		<property name="searchSubtree">
+			<value>true</value>
+		</property>
+	</bean>
+
+	<bean id="searchDirCtxFactory" class="org.springframework.security.ldap.DefaultInitialDirContextFactory">
+		<constructor-arg value="ldap://ad.stf.jus.br:389" />
+		<property name="managerDn">
+			<value>cn=srv-bind-publicacao,OU=Contas de Servicos,OU=CONTAS_ESPECIAIS,DC=rede,DC=stf,DC=gov,DC=br</value>
+		</property>
+		<property name="managerPassword">
+			<value>Q7w@lKz9#x3VbE</value>
+		</property>
+		<property name="extraEnvVars">
+			<map>
+				<entry>
+					<key>
+						<value>java.naming.referral</value>
+					</key>
+					<value>follow</value>
+				</entry>
+			</map>
+		</property>
+	</bean>
+
+	<!-- <context:load-time-weaver/> -->
+
+	<bean id="andamentoProcessoService" class="br.gov.stf.estf.processostf.model.service.impl.AndamentoProcessoServiceImpl">
+		<property name="andamentoHandlers">
+			<util:map id="andamentoHandlers">
+				<entry key="1549">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.VideHandler" />
+				</entry>
+				<entry key="1550">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.VideHandler" />
+				</entry>
+				<entry key="1551">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.VideHandler" />
+				</entry>
+				<entry key="1552">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.VideHandler" />
+				</entry>
+				<entry key="1553">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.VideHandler" />
+				</entry>
+				<entry key="1555">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.VideHandler" />
+				</entry>
+				<entry key="1556">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.VideHandler" />
+				</entry>
+				<entry key="1557">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.VideHandler" />
+				</entry>
+				<entry key="2658">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.AndamentoIndevidoNaoPermitidoHandler" />
+				</entry>
+				<entry key="2765">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.AndamentoIndevidoNaoPermitidoHandler" />
+				</entry>
+				<entry key="2766">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.AndamentoIndevidoNaoPermitidoHandler" />
+				</entry>
+				<entry key="4301">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.VideHandler" />
+				</entry>
+				<entry key="4328">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.AndamentoIndevidoNaoPermitidoHandler" />
+				</entry>
+				<entry key="4340">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.AndamentoIndevidoNaoPermitidoHandler" />
+				</entry>
+				<entry key="6001">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.ConvertidoDiligenciaHandler" />
+				</entry>
+				<entry key="6007">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.SobrestadoHandler" />
+				</entry>
+				<entry key="6503">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.AndamentoDevolucaoRepercussaoGeral" />
+				</entry>
+				<entry key="6505">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.AndamentoDevolucaoRepercussaoGeral" />
+				</entry>
+				<entry key="6510">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.AndamentoDevolucaoRepercussaoGeral" />
+				</entry>
+				<entry key="6010">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.DeterminadaDevolucaoART543BHandler" />
+				</entry>
+				<entry key="6303">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.DeterminadaDevolucaoART543BHandler" />
+				</entry>
+				<entry key="6305">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.DeterminadaDevolucaoART543BHandler" />
+				</entry>
+				<entry key="6208">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.DecisaoUnanimeHandler" />
+				</entry>
+				<entry key="6209">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.DecisaoUnanimeHandler" />
+				</entry>
+				<entry key="6210">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.DecisaoUnanimeHandler" />
+				</entry>
+				<entry key="6211">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.DecisaoUnanimeHandler" />
+				</entry>
+				<entry key="6215">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.DeclinadaCompetenciaHandler" />
+				</entry>
+				<entry key="6222">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.DecisaoUnanimeHandler" />
+				</entry>
+				<entry key="6224">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.DecisaoUnanimeHandler" />
+				</entry>
+				<entry key="6225">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.DecisaoUnanimeHandler" />
+				</entry>
+				<entry key="6228">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.DecisaoUnanimeHandler" />
+				</entry>
+				<entry key="6237">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.DecisaoUnanimeHandler" />
+				</entry>
+				<entry key="6241">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.DecisaoUnanimeHandler" />
+				</entry>
+				<entry key="6300">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.DecisaoRepercussaoGeralHandler" />
+				</entry>
+				<entry key="6301">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.DecisaoRepercussaoGeralHandler" />
+				</entry>
+				<entry key="6306">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.DecisaoRepercussaoGeralHandler" />
+				</entry>
+				<!--<entry key="7002">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.AndamentoBaixaHandler" />
+				</entry>-->
+				<entry key="7100">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.AndamentoBaixaHandler" />
+				</entry>
+				<entry key="7101">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.AndamentoBaixaHandler" />
+				</entry>
+				<!-- <entry key="7103">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.AndamentoBaixaHandler" />
+				</entry>-->
+				<entry key="7104">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.BaixaDefinitivaDosAutosHandler" />
+				</entry>
+				<entry key="7107">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.ReautuadoHandler" />
+				</entry>
+				<entry key="7108">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.AndamentoBaixaHandler" />
+				</entry>
+				<entry key="7111">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.DevolucaoPorImpossibilidadeProcessamentoHandler" />
+				</entry>
+				<!-- <entry key="7112">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.AndamentoBaixaHandler" />
+				</entry> -->
+				<entry key="7204">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.RetiradoPautaHandler" />
+				</entry>
+				<entry key="7500">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.CancelamentoDistribuicaoHandler" />
+				</entry>
+				<entry key="7501">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.AndamentoDistribuicaoHandler" />
+				</entry>
+				<entry key="7502">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.AndamentoDistribuicaoHandler" />
+				</entry>
+				<entry key="7503">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.AndamentoDistribuicaoHandler" />
+				</entry>
+				<entry key="7504">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.AndamentoDistribuicaoHandler" />
+				</entry>
+				<entry key="7505">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.AndamentoIndevidoNaoPermitidoHandler" />
+				</entry>				
+				<entry key="7507">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.AndamentoIndevidoNaoPermitidoHandler" />
+				</entry>
+				<entry key="7508">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.AndamentoIndevidoNaoPermitidoHandler" />
+				</entry>
+				<entry key="7600">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.ApresentacaoEmMesaHandler" />
+				</entry>
+				<entry key="7601">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.IncluaseEmPautaHandler" />
+				</entry>
+				<entry key="7803">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.PeticaoHandler" />
+				</entry>
+				<entry key="8001">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.InterpostoPedidoExtensaoHandler" />
+				</entry>
+				<entry key="8003">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.InterpostoAgravoRegimentalHandler" />
+				</entry>
+				<entry key="8004">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.OpostosEmbargosDeclaracaoHandler" />
+				</entry>
+				<entry key="8005">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.OpostosEmbargosDivergenciaHandler" />
+				</entry>
+				<entry key="8006">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.OpostosEmbargosInfringentesHandler" />
+				</entry>
+				<entry key="8205">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.DesapensadoHandler" />
+				</entry>
+				<!-- <entry key="8218">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.AndamentoBaixaHandler" />
+				</entry> -->
+				<entry key="8219">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.TransitadoEmJulgadoHandler" />
+				</entry>
+				<entry key="8232">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.AutosEmRestauracaoHandler" />
+				</entry>
+				<entry key="8233">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.ApensadoHandler" />
+				</entry>
+				<entry key="8240">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.AnexadoAoProtocoloHandler" />
+				</entry>
+				<entry key="8241">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.AgravoInstrumentoApensadoREHandler" />
+				</entry>
+				<entry key="8242">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.JulgamentoRepercussaoGeralSubstituidoPeloProcessoHandler" />
+				</entry>
+				<entry key="8243">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.MeritoRepercussaoGeralJulgadoNoProcessoHandler" />
+				</entry>
+				<entry key="8244">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.CartaOrdemDevidaHandler" />
+				</entry>
+				<entry key="8245">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.JuntadaProcessoHandler" />
+				</entry>
+				<entry key="8246">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.JuntadaPeticaoHandler" />
+				</entry>
+				<entry key="8302">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.VistaAGUHandler" />
+				</entry>
+				<entry key="8303">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.VistaPGRHandler" />
+				</entry>
+				<entry key="8304">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.VistaAoMinistroHandler" />
+				</entry>
+				<entry key="8305">
+					<bean class="br.gov.stf.estf.processostf.model.service.handler.VistaDevolucaoParaJulgamentoHandler" />
+				</entry>
+			</util:map>
+		</property>
+	</bean>
+    <bean id="oAuthParams" class="br.gov.stf.estf.impedimento.oauth2.OAuthParams">
+        <property name="tokenLocation" value="${oauth2.tokenLocation}"/>
+        <property name="clientId" value="${oauth2.clientId}"/>
+        <property name="clientSecret" value="${oauth2.clientSecret}"/>
+        <property name="resourceServer" value="${oauth2.resourceServer}"/>
+        <property name="timeout" value="${oauth2.timeout}"/>
+        <property name="scope" value="${oauth2.scope}"/> 
+    </bean>
+    <bean id="mniParams" class="br.gov.stf.estf.util.MNIParams">
+        <property name="chavePrivada" value="${mni.chavePrivada}"/>
+        <property name="servidor" value="${mni.servidor}"/>
+        <property name="timeout" value="${mni.timeout}"/>
+    </bean>    
+</beans>

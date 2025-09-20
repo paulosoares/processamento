@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="RelatorioTermoBaixa" language="groovy" pageWidth="595" pageHeight="842" columnWidth="495" leftMargin="50" rightMargin="50" topMargin="30" bottomMargin="60">
+	<property name="ireport.zoom" value="1.5"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="198"/>
+	<style name="Texto" isDefault="true" fontName="Times New Roman" fontSize="10" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
+	<style name="Rotulo" fontName="Times New Roman" fontSize="13" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false">
+		<paragraph lineSpacing="1_1_2"/>
+	</style>
+	<style name="AlinhadoDireita" style="Texto" hAlign="Right" fontName="Times New Roman" fontSize="12" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
+	<style name="RotuloCentralizado" style="Rotulo" hAlign="Center"/>
+	<subDataset name="dataset1"/>
+	<parameter name="PATH_BRASAO" class="java.lang.String"/>
+	<parameter name="ID_PROCESSO" class="java.lang.String"/>
+	<parameter name="TITULO" class="java.lang.String"/>
+	<parameter name="CORPO" class="java.lang.String"/>
+	<parameter name="PATH_ASSINATURA" class="java.lang.String"/>
+	<parameter name="NOME_SECRETARIO" class="java.lang.String"/>
+	<parameter name="DESCRICAO_CARGO" class="java.lang.String"/>
+	<queryString>
+		<![CDATA[]]>
+	</queryString>
+	<field name="dataAndamento" class="java.util.Date">
+		<fieldDescription><![CDATA[dataAndamento]]></fieldDescription>
+	</field>
+	<field name="descricaoAndamento" class="java.lang.String">
+		<fieldDescription><![CDATA[descricaoAndamento]]></fieldDescription>
+	</field>
+	<field name="idAdvogado" class="java.lang.Long">
+		<fieldDescription><![CDATA[idAdvogado]]></fieldDescription>
+	</field>
+	<field name="identificacaoProcesso" class="java.lang.String">
+		<fieldDescription><![CDATA[identificacaoProcesso]]></fieldDescription>
+	</field>
+	<field name="nomeAdvogado" class="java.lang.String">
+		<fieldDescription><![CDATA[nomeAdvogado]]></fieldDescription>
+	</field>
+	<field name="oab" class="java.lang.String">
+		<fieldDescription><![CDATA[oab]]></fieldDescription>
+	</field>
+	<field name="observacaoAndamento" class="java.lang.String">
+		<fieldDescription><![CDATA[observacaoAndamento]]></fieldDescription>
+	</field>
+	<variable name="LOCAL_DATA" class="java.lang.String">
+		<variableExpression><![CDATA["Brasília, " + new SimpleDateFormat("d 'de' MMMM 'de' yyyy", new Locale("pt","BR")).
+format(new Date()).toString()]]></variableExpression>
+	</variable>
+	<variable name="HOJE" class="java.util.Date">
+		<variableExpression><![CDATA[new Date()]]></variableExpression>
+	</variable>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<pageHeader>
+		<band height="212" splitType="Stretch">
+			<staticText>
+				<reportElement style="RotuloCentralizado" x="0" y="66" width="495" height="26"/>
+				<textElement>
+					<font fontName="MyEnglish111 Vivace BT" size="20"/>
+				</textElement>
+				<text><![CDATA[Supremo Tribunal Federal]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="77" y="123" width="111" height="20"/>
+				<textElement>
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{ID_PROCESSO}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement style="RotuloCentralizado" x="0" y="91" width="495" height="24"/>
+				<textElement>
+					<font fontName="MyEnglish111 Vivace BT" size="16"/>
+				</textElement>
+				<text><![CDATA[Secretaria Judiciária]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="0" y="161" width="495" height="20"/>
+				<textElement textAlignment="Center">
+					<font size="16" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{TITULO}]]></textFieldExpression>
+			</textField>
+			<image>
+				<reportElement stretchType="RelativeToTallestObject" x="218" y="16" width="100" height="50"/>
+				<imageExpression><![CDATA[$P{PATH_BRASAO}]]></imageExpression>
+			</image>
+		</band>
+	</pageHeader>
+	<columnHeader>
+		<band/>
+	</columnHeader>
+	<detail>
+		<band height="162" splitType="Stretch">
+			<textField>
+				<reportElement stretchType="RelativeToTallestObject" x="0" y="0" width="457" height="51"/>
+				<textElement/>
+				<textFieldExpression><![CDATA[$P{CORPO}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="0" y="60" width="495" height="12"/>
+				<textElement textAlignment="Center"/>
+				<textFieldExpression><![CDATA[$V{LOCAL_DATA}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="197" y="124" width="100" height="20"/>
+				<textElement textAlignment="Center"/>
+				<text><![CDATA[Secretaria Judiciária]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="197" y="142" width="100" height="20"/>
+				<textElement textAlignment="Center"/>
+				<text><![CDATA[(documento eletrônico)]]></text>
+			</staticText>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="1"/>
+	</pageFooter>
+</jasperReport>

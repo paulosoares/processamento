@@ -1,0 +1,30 @@
+Tags:
+Preconditions:Logado como "administrador"
+O gestor do sistema pode lançar andamento:
+#Clique no menu "Andamento"  e na opção "Registrar Andamento"
+#Digite a classe e o número do processo "ADI 100"
+#Escolha o mérito do processo
+#Informe o código do andamento "7800 - Certidão"
+#Informe a observação "Teste da TI - obs.: lançar andamento"
+#Informe a observação interna "Teste da TI - obs. interna: lançar andamento"
+#Salve o andamento
+#Verifique se o andamento foi lançado com sucesso
+
+O gestor do sistema pode lançar andamento indevido:
+#Clique na borracha da coluna ações de um dos andamentos exibidos
+#Informe a observação "Teste da TI - obs.: indevidar andamento"
+#Informe a observação interna "Teste da TI - obs. interna: indevidar andamento"
+#Confirme a ação
+#Verifique se o andamento indevidado foi riscado
+#Verifique se o andamento "Lançamento indevido" foi registrado com as observações
+
+O gestor do sistema pode editar as observações do andamento:
+#Clicar no lápis da coluna ações de um dos andamentos exibidos
+#Informe a observação "Teste da TI - obs.: edição da observação"
+#Informe a observação interna "Teste da TI - obs. interna: edição da observação"
+#Confirme a ação
+#Verifique se o andamento foi editado com as novas observações
+
+O gestor do sistema pode desfazer andamento indevido:
+#Clique na borracha da coluna ações do andamento 7700 criado anteriormente
+#Verifique se o andamento indevidado foi cancelado com sucesso

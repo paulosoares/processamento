@@ -1,0 +1,22 @@
+﻿<!-- 
+SQL para criar a massa
+
+
+SELECT p.sig_classe_proces as classe, p.num_processo as processo
+FROM judiciario.processo p
+WHERE p.cod_situacao IN ('L')
+AND ROWNUM = 1
+UNION
+SELECT p.sig_classe_proces as classe, p.num_processo as processo
+FROM judiciario.processo p
+WHERE p.cod_situacao IN ('P')
+AND ROWNUM = 1
+
+ADI	427
+HC 	1526
+
+-->
+<testdata>
+	<vars classe="ADI" processo="427" /> <!-- Em cadastramento -->
+	<vars classe="HC" processo="1526" /> <!-- Protocolado -->
+</testdata>

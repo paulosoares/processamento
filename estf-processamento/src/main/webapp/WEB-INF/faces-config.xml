@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<faces-config version="1.2" xmlns="http://java.sun.com/xml/ns/javaee" xmlns:xi="http://www.w3.org/2001/XInclude"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd">
+
+	<application>
+		<variable-resolver>org.springframework.web.jsf.DelegatingVariableResolver</variable-resolver>
+		<locale-config>
+			<default-locale>pt_BR</default-locale>
+		</locale-config>
+		<message-bundle>richfaces</message-bundle>
+	</application>
+
+	<lifecycle>
+		<phase-listener>br.gov.stf.estf.assinatura.visao.listener.UACompatibleHeaderPhaseListener</phase-listener>
+	</lifecycle>
+
+	<converter>
+		<converter-id>dataConverter</converter-id>
+		<converter-class>br.gov.stf.framework.view.jsf.converter.DataConverter</converter-class>
+	</converter>
+	<validator>
+		<validator-id>destinatarioValidator</validator-id>
+		<validator-class>br.gov.stf.estf.expedicao.visao.BeanDestinatario</validator-class>
+	</validator>
+	<converter>
+		<converter-id>beanDestinatarioConverter</converter-id>
+		<converter-class>br.gov.stf.estf.expedicao.visao.BeanDestinatario</converter-class>
+	</converter>
+	
+	<component>
+		<component-type>br.gov.stf.UIHint</component-type>
+		<component-class>br.gov.stf.estf.expedicao.visao.componente.UIHint</component-class>
+	</component>
+		
+</faces-config>

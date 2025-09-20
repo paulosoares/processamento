@@ -1,0 +1,14 @@
+<!--
+SELECT dp.sig_classe_proces, dp.num_processo
+FROM desloca_processos dp
+WHERE dp.dat_recebimento =
+(SELECT MAX (dp2.dat_recebimento)
+FROM desloca_processos dp2
+WHERE dp2.sig_classe_proces = dp.sig_classe_proces AND dp2.num_processo = dp.num_processo AND dp2.cod_orgao_destino = dp.cod_orgao_destino)
+AND ROWNUM = 1
+ANd dp.cod_orgao_origem = '600000003'
+
+-->
+<testdata>
+	<vars classe="HC" processo="86370" relator="MIN. CELSO DE MELLO" />
+</testdata>	

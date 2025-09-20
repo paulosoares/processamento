@@ -1,0 +1,21 @@
+Tags:
+Preconditions:Logado como "administrador"
+O administrador pode manter o período de exclusão de ministro da distribuição de processos:
+#Clique no menu "Administração" e na opção "Exclusão de Ministro da Distribuição"
+#Clique no botão novo
+#Preencha os campos obrigatórios
+#Confirme a ação
+#Verifique se os dados foram incluídos
+#Clique no botão pesquisar da tela principal
+#Verifique se os dados foram exibidos
+#Remova o registro incluído
+#Verifique se o registro foi removido
+
+O administrador pode copiar peças entre processos:
+#Clique no menu "Administração"  e na opção "Copiar peças entre Processo"
+#Informe o processo de origem "ADI 100" e de destino "ADI 500"
+#Selecione as opções no fim do processo e inserir informações do processo origem
+#Selecione as peças que serão copiadas
+#Confirme a ação
+#Verifique se as peças foram copiadas com sucesso
+

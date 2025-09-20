@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<datasources>
+	<local-tx-datasource>
+		<jndi-name>jdbc/assinadorweb</jndi-name>
+		<driver-class>oracle.jdbc.OracleDriver</driver-class>
+		<connection-url>jdbc:oracle:thin:usuarioassinador/q%usuarioassinador14@bd-orcl-qual:1521:stfq</connection-url>
+		<!--<connection-url>jdbc:oracle:thin:usuarioassinador/d%usuarioassinador08@bd-orcl-des:1521:stfd</connection-url>-->
+		<!--<connection-url>jdbc:oracle:thin:usuariossgj/senhaOmitida@bd-orcl-hom:1521:stfh</connection-url>-->
+	</local-tx-datasource>
+</datasources>

@@ -1,0 +1,26 @@
+Tags:
+Preconditions:Logado como "administrador"
+O gestor pode enviar documento para revisão:
+#Clique no menu "Principal"
+#Altere o setor para "600000680"
+#Clique no menu "Expediente"  e na opção "Enviar para Assinar/Revisar"
+#Verifique se os documento foram exibidos
+#Selecione um documento
+#Clique em Encaminhar para Revisão
+#Informe o setor de destino "600000679"
+#Verifique se o documento foi encaminhado com sucesso
+
+O gestor pode finalizar a revisão do documento:
+/#Clique no menu "Expediente"  e na opção "Revisar Documentos"
+
+O gestor pode cancelar a revisão do documento:
+
+O gestor pode enviar o documento para assinatura:
+/#Clique no menu "Principal"
+/#Altere o setor para "600000680"
+#Clique no menu "Expediente"  e na opção "Enviar para Assinar/Revisar"
+#Verifique se os documento foram exibidos
+#Selecione um documento
+#Clique em Encaminhar para Assinatura
+#Informe o setor de destino "600000679"
+#Verifique se o documento foi encaminhado com sucesso

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE jboss-web PUBLIC "-//JBoss//DTD Web Application 2.2//EN" "http://www.jboss.org/j2ee/dtd/jboss-web.dtd">
+
+<fw-config log="false">
+
+	<cache disabled="true" />
+
+	<max-query-result value="150" />
+
+	<spring singleton-container="false">
+		<bean-factory-key>beanFactorySTF</bean-factory-key>
+	</spring>
+
+	<security enabled="true" database="false">
+		<application-name>EGAB</application-name>
+	</security>
+
+	<user>
+		<anonymous>anonimoegab</anonymous>
+
+		<class>br.gov.stf.estf.entidade.usuario.UsuarioEGab</class>
+
+		<event-listeners>
+			<event-listener>br.gov.stf.estf.util.UsuarioEventListener
+			</event-listener>
+		</event-listeners>
+
+		<type value="UT_ACEGI_SECURITY" />
+	</user>
+
+</fw-config>

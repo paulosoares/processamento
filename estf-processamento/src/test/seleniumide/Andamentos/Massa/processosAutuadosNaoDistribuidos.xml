@@ -1,0 +1,15 @@
+<!-- 
+SQL para criar a massa
+
+SELECT p.sig_classe_proces, p.num_processo
+FROM judiciario.processo p
+WHERE 1=1
+AND p.cod_situacao = 'A'
+AND ROWNUM = 1;
+
+AI	766639
+
+-->
+<testdata>
+	<vars classe="AI" processo="766639" />
+</testdata>

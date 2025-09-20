@@ -1,0 +1,30 @@
+﻿<!-- 
+SQL para criar a massa
+
+
+SELECT * FROM judiciario.processo p where p.cod_situacao = 'X'
+Rcl 10382
+Pet 4781 
+MS 29269
+AC 2903
+
+
+SELECT st.cod_ministro
+FROM sit_min_processos st, ministros mn
+WHERE st.sig_classe_proces = 'MS'
+AND st.num_processo = '29269'
+AND st.cod_ocorrencia IN ('RE', 'RG', 'SU')
+AND dat_ocorrencia =
+(SELECT MAX (dat_ocorrencia)
+FROM sit_min_processos
+WHERE sig_classe_proces = 'MS'
+AND num_processo = '29269'
+AND cod_ocorrencia IN ('RE', 'RG', 'SU'))
+AND mn.cod_ministro = st.cod_ministro;
+
+SELECT * FROM stf.ministros m where m.cod_ministro = 39
+
+-->
+<testdata>
+	<vars classe="MS" processo="29269" codigoSetor="600000155" /> <!-- Gabinete do Ministro Joaquim Barbosa -->
+</testdata>

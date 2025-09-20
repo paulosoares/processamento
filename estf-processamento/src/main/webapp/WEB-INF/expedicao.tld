@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<taglib
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-jsptaglibrary_2_1.xsd"
+	xmlns="http://java.sun.com/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	version="2.1">
+
+	<display-name>Expedicao</display-name>
+	<tlib-version>1.0</tlib-version>
+	<short-name>exp</short-name>
+	<uri>http://stf</uri>
+
+	<tag>
+		<name>hint</name>
+		
+		<tag-class>br.gov.stf.estf.expedicao.visao.componente.HintTag</tag-class>
+		<body-content>empty</body-content>
+		
+		<attribute>			
+			<name>value</name>
+			<deferred-value>
+				<type>java.lang.Object</type>
+			</deferred-value>
+		</attribute>
+
+	</tag>
+</taglib>
