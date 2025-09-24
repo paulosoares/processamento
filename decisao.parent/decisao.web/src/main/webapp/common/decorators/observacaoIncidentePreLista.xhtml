@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:s="http://jboss.com/products/seam/taglib"
+	xmlns:a="http://richfaces.org/a4j" 
+	xmlns:c="http://java.sun.com/jstl/core"
+	xmlns:stf="http://www.stf.jus.br/custom-components">
+
+	<script type="text/javascript">
+		function contentEditableValue(el) {
+			return el.value;
+		}
+	</script>
+	<a:loadScript src="/common/scripts/jquery-1.4.2.min.js" />
+	<a:loadScript src="/common/scripts/observacaoIncidentePreLista.js" />
+
+	<a:outputPanel id="errorMessage">
+		<c:if test="#{revisarListasFacesBean.hasError()}">
+			<stf:messages level="ERROR" height="auto" />
+		</c:if>
+	</a:outputPanel>
+ 	<script>
+ 		function setObervacaoEmEdicao(v){
+ 			isObservacaoEmEdicao = v;
+ 		}
+ 	</script>
+	<h:inputTextarea  style="width:100%;height:88px" name="observacaoEditable"  
+		value="#{revisarListasFacesBean.observacao}"
+		onblur="if(!saveObservacao) return false; setObervacaoEmEdicao(false); jsSalvarObservacaoProcesso(contentEditableValue(this))"
+		onkeyup="setObervacaoEmEdicao(true); limitTextArea(this,500)"
+		onkeydown="setObervacaoEmEdicao(true); limitTextArea(this,500)">
+          <f:validateLength maximum="500"/>
+    </h:inputTextarea>
+    <h:outputLabel id="obsIncSize" style="font-size:xx-small;">500/500</h:outputLabel>
+			
+	<a:jsFunction name="jsSalvarObservacaoProcesso" action="#{revisarListasFacesBean.salvarObservacaoIncidentePreLista()}" reRender="messagesPanel,resultTable" 
+		eventsQueue="ajaxQueue" ignoreDupResponses="true" >
+		<a:actionparam name="novaObservacao" assignTo="#{revisarListasFacesBean.observacao}" />
+	</a:jsFunction>
+	
+	<a:jsFunction name="jsLimparMensagens" 
+		eventsQueue="ajaxQueue" ignoreDupResponses="true"
+		reRender="messagesPanel" >
+	</a:jsFunction>
+	
+	<style type="text/css">
+		[name="observacaoEditable"]{
+			border: solid rgb(0, 0, 0);
+			border-width: 1px;
+			padding-right: 30px;
+			width: 100%;			
+			white-space: pre-line;
+		}
+		[name="observacaoEditable"]:focus, 
+		[name="observacaoEditable"]:hover {
+			border: solid rgb(230, 230, 230);
+			border-width: 1px;
+			border-radius: 3px;
+			padding-right: 30px;		
+			background: url('#{facesContext.externalContext.requestContextPath}/common/images/lapis.jpg') no-repeat center right;
+			height: 100%;
+			white-space: pre-line;
+		}
+
+	</style>
+</ui:composition>

@@ -1,0 +1,163 @@
+package br.jus.stf.estf.decisao.pesquisa.persistence.jdbc.mapper;
+
+import java.sql.Date;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.security.context.SecurityContextHolder;
+
+import br.gov.stf.estf.documento.model.util.TipoSessaoControleVoto;
+import br.gov.stf.estf.entidade.documento.Texto.TipoRestricao;
+import br.gov.stf.estf.entidade.documento.TipoSituacaoTexto;
+import br.gov.stf.estf.entidade.documento.TipoTexto;
+import br.gov.stf.estf.entidade.documento.tipofase.FaseTexto;
+import br.gov.stf.estf.entidade.julgamento.TipoVoto.TipoVotoConstante;
+import br.gov.stf.estf.entidade.ministro.Ministro;
+import br.gov.stf.estf.entidade.processostf.TipoMeioProcesso;
+import br.jus.stf.estf.decisao.pesquisa.domain.ObjetoIncidenteDto;
+import br.jus.stf.estf.decisao.pesquisa.domain.TextoDto;
+import br.jus.stf.estf.decisao.pesquisa.domain.TipoPermissaoTexto;
+import br.jus.stf.estf.decisao.support.security.Principal;
+import br.jus.stf.estf.decisao.texto.support.TextoRestrictionChecker;
+
+/**
+ * Mapeia os registros retornados em um {@link java.sql.ResultSet} para 
+ * objetos do tipo {@link ObjetoIncidenteDto}.
+ * 
+ * @author Rodrigo Barreiros
+ * @since 05.05.2010
+ */
+public class TextoMapper implements RowMapper {
+
+	private Log logger = LogFactory.getLog(TextoMapper.class);
+
+	/**
+	 * @see org.springframework.jdbc.core.RowMapper#mapRow(java.sql.ResultSet, int)
+	 */
+	public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
+		TextoDto texto = new TextoDto();
+
+		texto.setId(rs.getLong("id"));
+		texto.setProcesso(getIdentificacaoProcesso(rs.getString("sigla"), rs.getLong("numero"), rs.getString("cadeia")));
+		texto.setSituacaoTexto(TipoSituacaoTexto.valueOf(rs.getLong("situacaoTexto")));
+		if(rs.getLong("situacaoTexto") == TipoSituacaoTexto.CANCELADO.getCodigo()) {
+			texto.setFase(FaseTexto.CANCELADO);
+		} else {
+			try {
+				texto.setFase(FaseTexto.valueOf(rs.getLong("codFase")));
+			} catch (Exception e) {
+				logger.error(String.format("Texto [%s] nao possui fase. Setando como [Nao elaborado]...", texto.getId()));
+				texto.setFase(FaseTexto.NAO_ELABORADO);
+			}
+			texto.setObservacaoFase(rs.getString("observacaoFase"));
+		}
+		texto.setCancelado(TipoSituacaoTexto.CANCELADO.equals(texto.getSituacaoTexto()));
+		texto.setTipoTexto(TipoTexto.valueOf(rs.getLong("codTipoTexto")));
+		if ( rs.getString("textosIguais") == null ){
+			texto.setTextosIguais( Boolean.FALSE );
+		} else {
+			texto.setTextosIguais( rs.getString("textosIguais").equals("S") );
+		}
+		texto.setObservacao(rs.getString("observacao"));
+		texto.setDataInicio(getDataInicio(texto.getFase(), rs.getDate("dataInclusao"), rs.getDate("dataFase")));
+		texto.setIdArquivoEletronico(rs.getLong("seqArquivoEletronico"));
+		
+		if (rs.getString("responsavel") != null)
+			texto.setResponsavel(rs.getString("responsavel"));
+		else
+			texto.setResponsavel(rs.getString("nomeGrupo"));
+		
+		texto.setIdMinistro(rs.getLong("idMinistro"));
+		texto.setMinistro(rs.getString("ministro"));
+		texto.setNomeMinistro(rs.getString("nomeMinistro"));
+		texto.setIdObjetoIncidente(rs.getLong("idObjetoIncidente"));
+		texto.setSequenciaVotos(rs.getLong("sequenciaVotos"));
+		texto.setDataSessao(rs.getDate("dataSessao"));
+		if(rs.getString("tipoSessao") != null) {
+			texto.setTipoSessao(TipoSessaoControleVoto.valueOfCodigo(rs.getString("tipoSessao")).getDescricao());
+		}
+		texto.setTipoRestricao(rs.getString("tipoRestricao"));
+		texto.setIdResponsavel(rs.getString("idResponsavel"));
+		texto.setIdUsuarioInclusao(rs.getString("idUsuarioInclusao"));
+		texto.setPublico(rs.getString("publico").equalsIgnoreCase("S"));
+		texto.setOrigemDigital(rs.getString("origemDigital").equalsIgnoreCase("S"));
+		if (rs.getString("permgrupo") != null)
+			texto.setTipoPermissaoTexto(TipoPermissaoTexto.valueOf(rs.getString("permgrupo")));
+		texto.setNomeGrupo(rs.getString("nomeGrupo"));
+		texto.setTipoMeioProcesso(TipoMeioProcesso.valueOf(rs.getString("tipoMeioProcesso")));
+		texto.setVisivel(!TextoRestrictionChecker.isRestrictedToUser(texto, getPrincipal()) || TipoRestricao.N.equals(texto.getTipoRestricao()));
+		//TODO
+		texto.setRestrito(TextoRestrictionChecker.isRestricted(texto, getPrincipal()));
+		texto.setIdSetorMinistro(rs.getLong("idSetorMinistro"));
+		texto.setDeOutroSetor(checkIfTextoDeOutroSetor(texto));
+		texto.setAssinado(FaseTexto.fasesComTextoAssinado.contains(texto.getFase()));
+		if(rs.getString("favoritoNoGabinete") == null || rs.getString("favoritoNoGabinete").equals("N")) {
+			texto.setFavoritoNoGabinete(false);
+		} else {
+			texto.setFavoritoNoGabinete(true);
+		}
+		
+		if(rs.getString("liberacaoAntecipada") == null ) {
+			texto.setFavoritoNoGabinete(false);
+		} else {
+			texto.setLiberacaoAntecipada(rs.getString("liberacaoAntecipada").equals("S"));
+		}
+		
+		texto.setTipoVoto(TipoVotoConstante.getById(rs.getString("tipoVoto")));
+		return texto;
+	}
+
+	/**
+	 * Formata e retorna a identificação do processo com base na sigla, numero e cadeia do incidente.
+	 */
+	private String getIdentificacaoProcesso(String sigla, Long numero, String cadeia) {
+		String cadeiaFormatada = StringUtils.isNotBlank(cadeia)? cadeia.replaceFirst(sigla + "-", ""):"Mérito";
+		
+		return String.format("%s %s %s", sigla, numero, cadeiaFormatada);
+	}
+
+	/**
+	 * Retorna a data de início que devemos apresentar: será a data de inclusão, se o texto
+	 * ainda estiver na fase "não elaborado" ou a data da transição de fase, caso 
+	 * o texto esteja em qualquer outra fase.
+	 */
+	private Date getDataInicio(FaseTexto faseTexto, Date dataInclusao, Date dataFase) {
+		return (faseTexto.equals(FaseTexto.EM_ELABORACAO) && dataFase == null) ? dataInclusao : dataFase;
+	}
+	
+	/**
+	 * Recupera o usuário autenticado. Esse usuário é encapsulado em um objeto
+	 * Principal que contém as credenciais do usuário.
+	 * 
+	 * @return o principal
+	 */
+	private Principal getPrincipal() {
+		return (Principal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+	}
+	
+	/**
+	 * Verifica se esse texto é de outro setor, diferente do setor do usuário logado.
+	 * 
+	 * @param texto o dto representando o texto
+	 * @return true, se for de outro setor, false, caso contrário
+	 */
+	public Boolean checkIfTextoDeOutroSetor(TextoDto texto) {
+		Ministro ministroPrincipal = getPrincipal().getMinistro();
+		Long idSetorTexto = texto.getIdSetorMinistro();
+
+		Long idSetorPrincipal = null;
+		if (ministroPrincipal != null && ministroPrincipal.getSetor() != null && ministroPrincipal.getSetor().getId().longValue() > 0) {
+			idSetorPrincipal = ministroPrincipal.getSetor().getId();
+		}
+
+		if (idSetorTexto != null && idSetorPrincipal != null && idSetorTexto.equals(idSetorPrincipal)) {
+			return false;
+		}
+
+		return true;
+	}
+}

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<ui:composition  xmlns="http://www.w3.org/1999/xhtml"
+                 xmlns:ui="http://java.sun.com/jsf/facelets"
+                 xmlns:h="http://java.sun.com/jsf/html"
+                 xmlns:f="http://java.sun.com/jsf/core"
+                 xmlns:s="http://jboss.com/products/seam/taglib">
+
+    <div class="prop #{styleClass}">
+
+        <s:div styleClass="name #{invalid ? 'errors' : ''}" style="width: 160px; white-space: nowrap;">
+            <ui:insert name="label"/>
+            <s:span styleClass="required" rendered="#{required}">*</s:span>
+        </s:div>
+
+        <div class="value #{invalid?'errors':''}">
+            <s:validateAll><ui:insert/></s:validateAll>
+        </div>
+
+        <div class="error">
+            <s:message styleClass="errors" showSummary="true" showDetail="false"/>
+        </div>
+        
+		<div class="clear"></div>
+    </div>
+
+</ui:composition>

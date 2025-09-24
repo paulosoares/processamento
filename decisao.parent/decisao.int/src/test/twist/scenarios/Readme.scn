@@ -1,0 +1,26 @@
+Tags:
+Preconditions:
+
+*Browsers supported*
+
+1. Firefox
+2. Internet Explorer
+3. Chrome
+4. HtmlUnit
+5. Android
+6. iOS
+
+*Note: Recording is not supported for mobile devices yet*
+
+*Setting Proxy while Recording*
+
+Browsers like Internet Explorer and Google Chrome requires proxy to be set to "localhost" as the proxy host and "9999" as the proxy port.
+
+In Windows, the proxy needs to be set only once. Setting the proxy while recording and un-setting while playing back is automatically taken care.
+
+In MacOSX and Linux, for chrome browser, proxy need to be set manually while recording and un-set while playing back.
+
+
+*Selenium2 (WebDriver) Configuration*
+
+More information on Selenium2 (WebDriver) configuration can be found by going to *Twist Help* -> *How do I...* -> *Configure Selenium 2 (Webdriver)*

@@ -1,0 +1,73 @@
+/**
+ * 
+ */
+package br.jus.stf.estf.decisao.texto.support;
+
+/**
+ * @author Paulo.Estevao
+ * @since 01.09.2010
+ */
+public enum TextoRelatorioEnum{
+	
+	PROCESSO("processo.processo", "Processo", 80, false),
+	SIGLA_CLASSE_PROCESSO("processo.siglaClasseProcesso", "Classe Processual", 55, false),
+	NUMERO_PROCESSO("processo.numeroProcesso", "Número Processual", 60, false),
+	RECURSO("processo.tipoRecurso", "Recurso", 100, false),
+	MINISTRO("processo.ministro", "Ministro", 130, false),
+	PUBLICO("publico", "Público", 30, false),
+	TEXTOS_IGUAIS("textosIguais", "Textos Iguais", 30, false),
+	SALA_JULGAMENTO("salaJulgamento", "Em Sala de Julgamento", 30, false),
+	PUBLICACAO_RTJ("publiccaoRTJ", "Publicado RTJ", 30, false),
+	DATA_SESSAO("dataSessao", "Data da Sessão", 50, false),
+	OBSERVACAO("observacao", "Observação", 100, false),
+	TIPO_RESTRICAO("tipoRestricao", "Restrição", 60, false),
+	TIPO_FASE_TEXTO_DOCUMENTO("tipoFaseTextoDocumento", "Fase Texto", 60, false),
+	USUARIO_INCLUSAO("usuarioInclusao", "Usuário Inclusão", 60, false),
+	USUARIO_ALTERACAO("usuarioAlteracao", "Usuário Alteração", 60, false),
+	DATA_INCLUSAO("dataInclusao", "Data Inclusão", 60, false),
+	DATA_ALTERACAO("dataAlteracao", "Data Alteração", 60, false);
+	
+	/**
+	 * Atributo da classe.
+	 */
+	private final String atributo;
+	
+	/**
+	 * Descrição da coluna.
+	 */
+	private final String descricao;
+	
+	/**
+	 * Largura minima da coluna.
+	 */
+	private final int tamanho;
+	
+	/**
+	 * é um atributo multi-valorado
+	 */
+	private final boolean multiValorado;
+	
+	private TextoRelatorioEnum(String atributo, String descricao, int tamanho, boolean multiValorado){
+		this.atributo = atributo;
+		this.descricao = descricao;
+		this.tamanho = tamanho;
+		this.multiValorado = multiValorado;
+	}
+	
+	public String getAtributo() {
+		return atributo;
+	}
+
+	public String getDescricao() {
+		return descricao;
+	}
+
+	public int getTamanho() {
+		return tamanho;
+	}
+
+	public boolean isMultiValorado() {
+		return multiValorado;
+	}
+}
+

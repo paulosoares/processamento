@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<f:view xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:s="http://jboss.com/products/seam/taglib"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:rich="http://richfaces.org/rich"
+	xmlns:p="http://primefaces.prime.com.tr/ui"
+	xmlns:a="http://richfaces.org/a4j"
+	xmlns:c="http://java.sun.com/jstl/core"
+	xmlns:stf="http://www.stf.jus.br/custom-components" contentType="text/html">
+	<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+		<head>
+			<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+			<title>eSTF-Decisão</title>
+            <meta name="robots" content="noindex,nofollow,nosnippet,noodp,noarchive,noimageindex" />
+            <meta http-equiv="Pragma" content="no-cache" />  
+	        <meta http-equiv="Cache-Control" content="no-cache" />
+			<a:loadStyle src="resource:///common/styles/theme.xcss" />
+			<a:loadStyle src="/common/styles/reset.css" />
+			<a:loadStyle src="/common/styles/richfaces.css" />
+			<a:loadStyle src="/common/styles/theme.css" />
+			<a:loadScript src="/common/scripts/global.js" />
+			<a:loadScript src="/common/scripts/jquery-1.4.2.min.js" />
+			<a:loadScript src="/common/scripts/styled-select.js" />
+			<!--[if lt IE 8]>
+				<link href="#{facesContext.externalContext.requestContextPath}/common/styles/theme-ie.css" rel="stylesheet" type="text/css" />
+				<link href="#{facesContext.externalContext.requestContextPath}/common/styles/richfaces-ie.css" rel="stylesheet" type="text/css" />
+                <style media="screen" type="text/css">
+                	/* Layout principal */
+                    .root-wrapper       { height:100%; }
+                    body				{ overflow-y: visible; }
+                    /*.panel-outset		{ behavior: url(#{facesContext.externalContext.requestContextPath}/common/styles/PIE.htc); }*/
+                </style>
+            <![endif]-->
+            <script type="text/javascript">
+            //<![CDATA[
+            	$j = jQuery.noConflict();
+            	(function($) { 
+		        	$(function() {
+			        	$('select').styled();
+		        	});
+           		})(jQuery);
+           		
+            	var onAfterAjaxListener = new A4J.AJAX.AjaxListener("onafterajax", function(req,evt,data) {
+	           		A4J.AJAX.removeListener(onAfterAjaxListener);
+	           		A4J.AJAX.AddListener(onAfterAjaxListener);
+	           			$j('select').styled();
+	           		}
+           		);
+           		A4J.AJAX.AddListener(onAfterAjaxListener);
+           	//]]>
+            </script>
+		</head>
+		<body>
+			<div class="root-wrapper">
+				<div class="body">
+					<a:outputPanel id="messagesPanel">
+						<h:messages id="mensagens" showDetail="true" showSummary="false"
+							infoClass="info" infoStyle="color: green;" warnClass="erro"
+							warnStyle="color: green;" errorClass="erro" errorStyle="color: red;"
+							layout="table" rendered="#{showGlobalMessages != 'false'}" />
+					</a:outputPanel>
+					
+					<script type="text/javascript">
+						//<![CDATA[
+							//verifica se o evento foi um enter, se foi, retorna false
+							function noEnter(event){
+								var tecla = event.which;
+						        if (tecla == null)
+						           tecla = event.keyCode;
+								return !(tecla && tecla == 13)
+							}
+			
+							function noCtrlJ(event) {
+								event = event || window.event;
+								if(event.ctrlKey && event.keyCode == 74) { 
+									//previne Ctrl+j do leitor óptico 
+									return false;
+								}
+							}
+			
+							function checkAll(ids, size, headerId, page) {
+								var field = null;
+								for (i = (page - 1) * size; i < page * size; i++) {
+									field = document.getElementById(headerId+i+':check');
+									field.checked = contains(ids, field.className);
+								}
+							}
+							
+							function contains(a, obj){
+								for(var i = 0; i < a.length; i++) {
+									if (a[i] == obj) {
+										return true;
+									}
+								}
+								return false;
+							}
+							/*
+								Alterei a função para que o IE passe a reconhecer os caracteres de
+								\r e \n, o Firefox interpreta um ENTER como somente \n, já o IE
+								o interpreta como \r\n. Porém, o IE só funciona quando é passado 
+								os valores hexadecimal as teclas.
+								Os caracteres\x0D é para CARRIAGE RETURN, o \x0A é para ENTER.
+								Esses caracteres são representados por \r\n.
+							*/				
+							function validaCaracter(field) {
+								var re = /[\x0D\x0A'+''*''\/''='@#$%&<>;:'?''.'!'"'¨§°ºª\b]/g;
+								if (re.test(field.value)) {
+									field.value = field.value.replace(re,"");
+								}
+							}
+						//]]> 		
+					</script>
+					<c:set value="#{refreshController}" var="refresher"/>
+					<a:push interval="2000"
+						action="#{principalFacesBean.atualizarPagina(refresher.textoId)}"
+						reRender="actionModalPanel"
+						eventProducer="#{refresher.adicionarListenerRefresh}"
+						immediate="true"
+						ajaxSingle="true"
+						eventsQueue="ajaxQueue"
+						id="pushPesquisaTextoProcesso" />
+			
+					<a:outputPanel id="actionModalPanel">
+						<rich:panel id="panelItem" autosized="true"
+							rendered="#{actionHolder.action != null}"
+							width="#{actionHolder.action.definition.width}"
+							height="#{actionHolder.action.definition.height}"
+							style="text-align: left; padding: 0px;">
+							<f:facet name="header">
+								<h:panelGroup>
+									<h:outputText value="#{actionHolder.action.definition.name}" />
+								</h:panelGroup>
+							</f:facet>
+			
+							<h:form id="actionForm" styleClass="edit" prependId="false" enctype="multipart/form-data" >
+			
+								<ui:include src="#{actionHolder.action.definition.view}">
+									<ui:param name="actionFacesBean" value="#{actionHolder.action}" />
+								</ui:include>
+			
+								<c:if test="#{actionHolder.action.definition.facet == 'success'}">
+									<div>
+										<p class="result-info"><i>Operação realizada com sucesso.</i></p>
+									</div>
+								</c:if>
+			
+								<s:decorate template="/acoes/support/action.template.xhtml">
+									<ui:param name="facetName" value="errors" />
+									<ui:define name="descricao">#{actionHolder.action.definition.errorTitle}</ui:define>
+									<ui:define name="conteudo">
+										<stf:messages  level="ERROR"/>
+									</ui:define>
+								</s:decorate>
+			
+							</h:form>
+						</rich:panel>
+					</a:outputPanel>
+				</div>
+			</div>
+		</body>
+	</html>
+</f:view>

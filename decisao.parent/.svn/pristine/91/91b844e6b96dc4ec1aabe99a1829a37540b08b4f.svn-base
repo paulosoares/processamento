@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:s="http://jboss.com/products/seam/taglib"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:rich="http://richfaces.org/rich"
+	xmlns:a="http://richfaces.org/a4j"
+	xmlns:c="http://java.sun.com/jstl/core"
+	xmlns:stf="http://www.stf.jus.br/custom-components">
+	
+	<s:decorate id="categorizarProcessos" template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="principal"/>
+		<ui:define name="descricao">
+			Selecionar lista
+		</ui:define>
+		<ui:define name="conteudo">
+			<s:div style="text-align: left;">
+				Mova para a coluna da direita a categoria que o processo será incluido.
+			</s:div>
+			<s:div styleClass="multipleSelectColumns column" id="colunaRestantes">
+				<rich:dataTable	
+					var="categoriaLocal"
+					value="#{actionFacesBean.categoriasRestantes}"
+					rowClasses="dr-table-row-odd, dr-table-row-even"
+					styleClass="data-table">
+					
+					<rich:column styleClass="dr-table-firstcol dr-table-col-center" headerClass="dr-table-firstcol dr-table-col-center largura20px">
+						<f:facet name="header">
+							<a:commandButton image="/common/images/setabaixo.gif"
+								action="#{actionFacesBean.marcarTodasRestantes}"
+								title="Página atual" eventsQueue="ajaxQueue"
+								ignoreDupResponses="true"
+								reRender="colunaRestantes" />
+						</f:facet>
+						<h:selectBooleanCheckbox styleClass="Checkbox" value="#{categoriaLocal.selected}" />
+					</rich:column>
+					
+					<rich:column styleClass="dr-table-lastcol" headerClass="dr-table-lastcol">
+						<f:facet name="header">
+							<h:outputText value="Categorias Restantes" />
+						</f:facet>
+						<h:outputText value="#{categoriaLocal.agrupador.descricao}" />
+					</rich:column>
+				</rich:dataTable>
+			</s:div>
+			<s:div styleClass="multipleSelectColumns separator">
+				<a:commandButton
+					value="Adicionar &gt;" 
+					action="#{actionFacesBean.adicionarSelecionados}" 
+					reRender="colunaRestantes, colunaAdicionados" />
+				<a:commandButton
+					value="&lt; Remover" 
+					action="#{actionFacesBean.removerSelecionados}" 
+					reRender="colunaRestantes, colunaAdicionados" />
+			</s:div>
+			<s:div styleClass="multipleSelectColumns column" id="colunaAdicionados">
+				<rich:dataTable	
+					var="categoriaLocal"
+					value="#{actionFacesBean.categoriasAdicionadas}"
+					rowClasses="dr-table-row-odd, dr-table-row-even"
+					styleClass="data-table">
+					
+					<rich:column styleClass="dr-table-firstcol dr-table-col-center" headerClass="dr-table-firstcol dr-table-col-center largura20px">
+						<f:facet name="header">
+							<a:commandButton image="/common/images/setabaixo.gif"
+								action="#{actionFacesBean.marcarTodasAdicionadas}"
+								title="Página atual" eventsQueue="ajaxQueue"
+								ignoreDupResponses="true"
+								reRender="colunaAdicionados" />
+						</f:facet>
+						<h:selectBooleanCheckbox styleClass="Checkbox" value="#{categoriaLocal.selected}" />
+					</rich:column>
+					
+					<rich:column styleClass="dr-table-lastcol" headerClass="dr-table-lastcol">
+						<f:facet name="header">
+							<h:outputText value="Categorias Adicionadas" />
+						</f:facet>
+						<h:outputText value="#{categoriaLocal.agrupador.descricao}" />
+					</rich:column>
+				</rich:dataTable>
+			</s:div>
+		</ui:define>
+		<ui:define name="botoes">
+           	<a:commandButton 
+           		value="Salvar Alterações" 
+           		action="#{actionFacesBean.salvarCategorizacao}" 
+           		reRender="actionModalPanel"
+				oncomplete="showActionPanel('panelItem', #{actionFacesBean.definition.width}, #{actionFacesBean.definition.height})"
+				eventsQueue="ajaxQueue"
+           		ignoreDupResponses="true" />
+		</ui:define>
+	</s:decorate>
+	
+	
+</ui:composition>

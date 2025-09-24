@@ -1,0 +1,608 @@
+package br.jus.stf.estf.decisao.pesquisa.domain;
+
+import java.util.Date;
+
+import org.hibernate.Hibernate;
+import org.springframework.security.context.SecurityContextHolder;
+
+import br.gov.stf.estf.entidade.documento.Texto;
+import br.gov.stf.estf.entidade.documento.Texto.TipoRestricao;
+import br.gov.stf.estf.entidade.documento.TipoSituacaoTexto;
+import br.gov.stf.estf.entidade.documento.TipoTexto;
+import br.gov.stf.estf.entidade.documento.tipofase.FaseTexto;
+import br.gov.stf.estf.entidade.julgamento.TipoVoto.TipoVotoConstante;
+import br.gov.stf.estf.entidade.ministro.Ministro;
+import br.gov.stf.estf.entidade.processostf.Processo;
+import br.gov.stf.estf.entidade.processostf.TipoMeioProcesso;
+import br.gov.stf.estf.entidade.publicacao.FaseTextoProcesso;
+import br.gov.stf.estf.entidade.usuario.GrupoUsuario;
+import br.gov.stf.estf.entidade.usuario.Usuario;
+import br.gov.stf.estf.entidade.usuario.UsuarioEGab;
+import br.gov.stf.framework.util.DateTimeHelper;
+import br.jus.stf.estf.decisao.documento.support.Documento;
+import br.jus.stf.estf.decisao.support.query.Dto;
+import br.jus.stf.estf.decisao.support.security.Principal;
+import br.jus.stf.estf.decisao.texto.support.TextoRestrictionChecker;
+
+/**
+ * DTO para os dados de Texto retornados na pesquisa avançada.
+ * 
+ * <p>O objetivo é tornar a pesquisa mais eficiente, retornando somente 
+ * os dados utilizados na apresentação do resultado.
+ * 
+ * @author Rodrigo Barreiros
+ * @since 07.04.2010
+ */
+public class TextoDto implements Dto, Documento {
+
+	private static final long serialVersionUID = 926621640636687189L;
+
+	private Long id;
+	private TipoTexto tipoTexto;
+	private Long idMinistro;
+	private Long idSetorMinistro;
+	private String ministro;
+	private String nomeMinistro;	
+	private String responsavel;
+	private String observacao;
+	private FaseTexto fase;
+	private Date dataInicio;
+	private String processo;
+	private boolean textosIguais;
+	private boolean selected;
+	private Long idArquivoEletronico;
+	private Long idObjetoIncidente;
+	private Long sequenciaVotos;
+	private Date dataSessao;
+	private String tipoSessao;
+	private boolean fake;
+	private String tipoRestricao;
+	private String idUsuarioInclusao;
+	private String idResponsavel;
+	private boolean publico;
+	private boolean visivel;
+	private boolean restrito;
+	private boolean restritoAoUsuario;
+	private boolean deOutroSetor;
+	private boolean assinado;
+	private boolean cancelado;
+	private TipoMeioProcesso tipoMeioProcesso;
+	private String observacaoFase;
+	private TipoSituacaoTexto situacaoTexto;
+	private TipoPermissaoTexto tipoPermissaoTexto;
+	private String nomeGrupo;
+	private boolean favoritoNoGabinete;
+	private Boolean liberacaoAntecipada;
+	private TipoVotoConstante tipoVoto;
+	private boolean origemDigital;
+
+	/**
+	 * @see br.jus.stf.estf.decisao.support.query.Dto#getId()
+	 */
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public TipoTexto getTipoTexto() {
+		return tipoTexto;
+	}
+
+	public void setTipoTexto(TipoTexto tipoTexto) {
+		this.tipoTexto = tipoTexto;
+	}
+
+	public Long getIdMinistro() {
+		return idMinistro;
+	}
+
+	public void setIdMinistro(Long idMinistro) {
+		this.idMinistro = idMinistro;
+	}
+	
+	public Long getIdSetorMinistro() {
+		return idSetorMinistro;
+	}
+	
+	public void setIdSetorMinistro(Long idSetorMinistro) {
+		this.idSetorMinistro = idSetorMinistro;
+	}
+	
+	public String getNomeMinistro() {
+		return nomeMinistro;
+	}
+
+	public void setNomeMinistro(String nomeMinistro) {
+		this.nomeMinistro = nomeMinistro;
+	}
+	
+	public String getMinistro() {
+		return ministro;
+	}
+
+	public void setMinistro(String ministro) {
+		this.ministro = ministro;
+	}
+
+	public String getResponsavel() {
+		return responsavel;
+	}
+
+	public void setResponsavel(String responsavel) {
+		this.responsavel = responsavel;
+	}
+
+	public String getObservacao() {
+		if (isDeOutroSetor()) {
+			return null;
+		} else {
+			return observacao;
+		}
+	}
+
+	public FaseTexto getFase() {
+		return fase;
+	}
+
+	public void setFase(FaseTexto fase) {
+		this.fase = fase;
+	}
+
+	public Date getDataInicio() {
+		return dataInicio;
+	}
+
+	public void setDataInicio(Date dataInicio) {
+		this.dataInicio = dataInicio;
+	}
+
+	public void setObservacao(String observacao) {
+		this.observacao = observacao;
+	}
+
+	public boolean isTextosIguais() {
+		return textosIguais;
+	}
+
+	public void setTextosIguais(boolean textosIguais) {
+		this.textosIguais = textosIguais;
+	}
+
+	public void setIdArquivoEletronico(Long idArquivoEletronico) {
+		this.idArquivoEletronico = idArquivoEletronico;
+	}
+
+	public Long getIdArquivoEletronico() {
+		return idArquivoEletronico;
+	}
+
+	/**
+	 * @see br.jus.stf.estf.decisao.support.query.Selectable#isSelected()
+	 */
+	public boolean isSelected() {
+		return selected;
+	}
+
+	/**
+	 * @see br.jus.stf.estf.decisao.support.query.Selectable#setSelected(boolean)
+	 */
+	public void setSelected(boolean selected) {
+		this.selected = selected;
+	}
+
+	public String getProcesso() {
+		return processo;
+	}
+
+	public void setProcesso(String objetoIncidente) {
+		this.processo = objetoIncidente;
+	}
+	
+	public Long getIdObjetoIncidente() {
+		return idObjetoIncidente;
+	}
+
+	public void setIdObjetoIncidente(Long idObjetoIncidente) {
+		this.idObjetoIncidente = idObjetoIncidente;
+	}
+	
+	public Long getSequenciaVotos() {
+		return sequenciaVotos;
+	}
+
+	public void setSequenciaVotos(Long sequenciaVotos) {
+		this.sequenciaVotos = sequenciaVotos;
+	}
+
+	public Date getDataSessao() {
+		return dataSessao;
+	}
+
+	public void setDataSessao(Date dataSessao) {
+		this.dataSessao = dataSessao;
+	}
+
+	public String getTipoSessao() {
+		return tipoSessao;
+	}
+
+	public void setTipoSessao(String tipoSessao) {
+		this.tipoSessao = tipoSessao;
+	}
+	
+
+	public TipoSituacaoTexto getSituacaoTexto() {
+		return situacaoTexto;
+	}
+
+	public void setSituacaoTexto(TipoSituacaoTexto situacaoTexto) {
+		this.situacaoTexto = situacaoTexto;
+	}
+
+	@Override
+	public boolean isFake() {
+		return this.fake;
+	}
+	
+	public void setFake(boolean fake) {
+		this.fake = fake;
+	}
+	
+	public boolean getExisteControleVotos() {
+		return sequenciaVotos != null && sequenciaVotos != 0L;
+	}
+	
+	public String getDescricaoDataSessao () {
+		String data = null;
+		if ( getDataSessao()!=null ) {
+			data = DateTimeHelper.getDataString( getDataSessao() );
+		}
+		return data;
+	}
+	
+	public boolean getExibirInfoControleVoto() {
+		if (getTipoTexto() != null
+				&& (getTipoTexto().getCodigo().equals(TipoTexto.DESPACHO.getCodigo())
+						|| getTipoTexto().getCodigo().equals(TipoTexto.DECISAO_MONOCRATICA.getCodigo())
+						|| getTipoTexto().getCodigo().equals(TipoTexto.DECISAO.getCodigo()) 
+						|| getTipoTexto().getCodigo().equals(TipoTexto.EDITAL_PROPOSTA_SUMULA_VINCULANTE.getCodigo()))) {
+			return false;
+		} else {
+			return true;
+		}
+	}
+
+	/**
+	 * Cria uma instância de TextoDto a partir do valores 
+	 * presente em um dado {@link Texto}
+	 * 
+	 * @param texto o texto de entrada
+	 * @return a instância de TextoDto
+	 */
+	public static TextoDto valueOf(Texto texto) {
+		return valueOf(texto, false);
+	}
+
+	/**
+	 * Recupera uma instância do TextoDto, informando se precisará do Id do Arquivo Eletronico, 
+	 * pois o seu carregamento provoca uam redução de performance.
+	 *  
+	 * @param texto O texto de entrada
+	 * @param carregarIdArquivoEletronico Indicador se o valor será carregado ou não.
+	 * @return
+	 */
+	public static TextoDto valueOf(Texto texto, boolean carregarIdArquivoEletronico) {
+		if(texto == null) {
+			return null;
+		}
+		TextoDto dto = new TextoDto();
+		dto.setProcesso(ObjetoIncidenteDto.valueOf(texto.getObjetoIncidente()).getIdentificacao());
+		adicionaTipoMeioProcesso(dto, texto);
+		if (texto.getResponsavel() != null) {
+			dto.setResponsavel(texto.getResponsavel().getNome());
+			dto.setIdResponsavel(texto.getResponsavel().getId().toString());
+		}
+		if (texto.getUsuarioInclusao() != null){
+			dto.setIdUsuarioInclusao(texto.getUsuarioInclusao().getId());
+		}
+		if (texto.getArquivoEletronico() != null && carregarIdArquivoEletronico) {
+			dto.setIdArquivoEletronico(texto.getArquivoEletronico().getId());
+		}
+		dto.setMinistro(texto.getMinistro().getSigla());
+		dto.setNomeMinistro(texto.getMinistro().getNome());
+		dto.setIdMinistro(texto.getMinistro().getId());
+		dto.setFase(texto.getTipoFaseTextoDocumento());
+		dto.setDataInicio((dto.getFase().equals(FaseTexto.NAO_ELABORADO) ? texto.getDataInclusao() : texto
+				.getDateTransicaoAtual()));
+		dto.setTextosIguais(texto.getTextosIguais());
+		dto.setObservacao(texto.getObservacao());
+		dto.setTipoTexto(texto.getTipoTexto());
+		dto.setId(texto.getId());
+		dto.setSequenciaVotos(texto.getSequenciaVoto());
+		dto.setDataSessao(texto.getDataSessao());
+		if(texto.getControleVoto() != null && texto.getControleVoto().getSessao() != null) {
+			dto.setTipoSessao(texto.getControleVoto().getSessao().getDescricao());
+			dto.setSituacaoTexto(texto.getControleVoto().getTipoSituacaoTexto());
+			if (dto.getSituacaoTexto().equals(TipoSituacaoTexto.CANCELADO)) {
+				dto.setFase(FaseTexto.CANCELADO);
+			}
+			dto.setCancelado(TipoSituacaoTexto.CANCELADO.equals(dto.getSituacaoTexto()));
+		}
+		if(texto.getObjetoIncidente() != null) {
+			dto.setIdObjetoIncidente(texto.getObjetoIncidente().getId());
+		}
+		dto.setTipoRestricao(texto.getTipoRestricao().name());
+		dto.setPublico(texto.getPublico().booleanValue());
+		dto.setOrigemDigital(texto.getOrigemDigital().booleanValue());
+		Principal principal = (Principal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+		dto.setTipoPermissaoTexto(null);
+		
+		 if (texto.getResponsavel() instanceof GrupoUsuario) {
+			 if (texto.getGrupoResponsavel().getUsuarios() != null && texto.getGrupoResponsavel().getUsuarios().size() >0) {
+				 for(UsuarioEGab usuarioEgab : texto.getGrupoResponsavel().getUsuarios()) {
+					 Usuario usuario = usuarioEgab.getUsuario();
+					 if (usuario.getId().equals(principal.getUsuario().getId())) {
+						 dto.setTipoPermissaoTexto(TipoPermissaoTexto.GRUPO);
+						 break;
+					 }
+				 }
+			 }
+		} else if(texto.getResponsavel() instanceof Usuario) {
+			dto.setTipoPermissaoTexto(TipoPermissaoTexto.USUARIO);
+		} 
+		
+		dto.setVisivel(!TextoRestrictionChecker.isRestrictedToUser(dto, principal) || TipoRestricao.N.equals(texto.getTipoRestricao()));
+		dto.setRestritoAoUsuario(TextoRestrictionChecker.isRestrictedToUser(dto, principal));
+		dto.setRestrito(TextoRestrictionChecker.isRestricted(dto,principal));
+		if (texto.getMinistro().getSetor() != null) {
+			dto.setIdSetorMinistro(texto.getMinistro().getSetor().getId());
+		}
+		dto.setDeOutroSetor(checkIfTextoDeOutroSetor(dto, principal));
+		dto.setAssinado(FaseTexto.fasesComTextoAssinado.contains(dto.getFase()));
+		dto.setFavoritoNoGabinete(texto.getFavoritoNoGabinete() != null ? texto.getFavoritoNoGabinete() : false);
+		
+		Hibernate.initialize(texto.getFasesTextoProcesso());
+		for (FaseTextoProcesso ftp : texto.getFasesTextoProcesso()) {
+			if (ftp.getObservacao() != null && ftp.getObservacao().length() > 0) {
+				dto.setObservacaoFase(ftp.getObservacao());
+				break;
+			}
+		}
+		
+		if (texto.getLiberacaoAntecipada() != null)
+			dto.setLiberacaoAntecipada(texto.getLiberacaoAntecipada());
+		else
+			dto.setLiberacaoAntecipada(false);
+		
+		dto.setTipoVoto(texto.getTipoVoto());
+		return dto;
+	}
+
+	private static void adicionaTipoMeioProcesso(TextoDto dto, Texto texto) {
+		Processo processo = (Processo) texto.getObjetoIncidente().getPrincipal();
+		if (processo != null){
+			dto.setTipoMeioProcesso(processo.getTipoMeioProcesso());
+		}
+	}
+
+	/**
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	public boolean equals(Object other) {
+		if (!(other instanceof TextoDto)) {
+			return false;
+		}
+		TextoDto castOther = (TextoDto) other;
+		if (getId() != null && castOther.getId() != null) {
+			return this.getId().equals(castOther.getId());
+		} else if (getSequenciaVotos() != null && castOther.getSequenciaVotos() != null && getIdMinistro() != null && castOther.getIdMinistro() != null) {
+			// Quando não existe texto, apenas controle de votos
+			return this.getSequenciaVotos().equals(castOther.getSequenciaVotos()) && this.getIdMinistro().equals(castOther.getIdMinistro());
+		}
+		return false;
+	}
+
+	/**
+	 * @see java.lang.Object#hashCode()
+	 */
+	public int hashCode() {
+		return (getId() != null) ? getId().hashCode() : super.hashCode();
+	}
+
+	/**
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		String descricao = processo;
+		if (tipoTexto != null && !tipoTexto.getDescricao().equals("")) {
+			descricao += " - " + tipoTexto.getDescricao();
+		}
+		if (getObservacao() != null && !getObservacao().equals("")) {
+			descricao += " - " + observacao;
+		}
+		
+		if (descricao != null) {
+			return descricao;
+		} else {
+			return getId().toString();
+		}
+	}
+	
+	public String getTipoRestricao() {
+		return tipoRestricao;
+	}
+	
+	public void setTipoRestricao(String tipoRestricao) {
+		this.tipoRestricao = tipoRestricao;
+	}
+
+	public String getIdUsuarioInclusao() {
+		return idUsuarioInclusao;
+	}
+
+	public void setIdUsuarioInclusao(String idUsuarioInclusao) {
+		this.idUsuarioInclusao = idUsuarioInclusao;
+	}
+
+	public String getIdResponsavel() {
+		return idResponsavel;
+	}
+
+	public void setIdResponsavel(String idResponsavel) {
+		this.idResponsavel = idResponsavel;
+	}
+	
+	public boolean isVisivel() {
+		return visivel;
+	}
+	
+	public void setVisivel(boolean visivel) {
+		this.visivel = visivel;
+	}
+	
+	public boolean isRestrito() {
+		return restrito;
+	}
+	
+	public void setRestrito(boolean restrito) {
+		this.restrito = restrito;
+	}
+	
+	public boolean isRestritoAoUsuario() {
+		return restritoAoUsuario;
+	}
+
+	public void setRestritoAoUsuario(boolean restritoAoUsuario) {
+		this.restritoAoUsuario = restritoAoUsuario;
+	}
+
+	public boolean isDeOutroSetor() {
+		return deOutroSetor;
+	}
+	
+	public void setDeOutroSetor(boolean deOutroSetor) {
+		this.deOutroSetor = deOutroSetor;
+	}
+	
+	public boolean isPublico() {
+		return publico;
+	}
+
+	public void setPublico(boolean publico) {
+		this.publico = publico;
+	}
+	
+	public void setAssinado(boolean textoAssinado) {
+		this.assinado = textoAssinado;
+	}
+	
+	public boolean isAssinado() {
+		return assinado;
+	}
+	
+	public boolean isCancelado() {
+		return cancelado;
+	}
+
+	public void setCancelado(boolean cancelado) {
+		this.cancelado = cancelado;
+	}
+
+	public boolean isSomenteLeitura() {
+		return FaseTexto.fasesComTextoAssinado.contains(getFase()) || isPublico() || TipoRestricao.N.name().equals(getTipoRestricao()) || isDeOutroSetor();
+	}
+	
+	public TipoMeioProcesso getTipoMeioProcesso() {
+		return tipoMeioProcesso;
+	}
+	
+	public void setTipoMeioProcesso(TipoMeioProcesso tipoMeioProcesso) {
+		this.tipoMeioProcesso = tipoMeioProcesso;
+	}
+	
+	public Boolean getEletronico(){
+		return TipoMeioProcesso.ELETRONICO.equals(getTipoMeioProcesso());
+	}
+	
+	public String getObservacaoFase() {
+		return observacaoFase;
+	}
+
+	public void setObservacaoFase(String observacaoFase) {
+		this.observacaoFase = observacaoFase;
+	}
+	
+	public boolean isPossuiObservacaoFase() {
+		return observacaoFase != null && observacaoFase.length() > 0;
+	}
+
+	public TipoPermissaoTexto getTipoPermissaoTexto() {
+		return tipoPermissaoTexto;
+	}
+
+	public void setTipoPermissaoTexto(TipoPermissaoTexto tipoPermissaoTexto) {
+		this.tipoPermissaoTexto = tipoPermissaoTexto;
+	}
+
+	private static Boolean checkIfTextoDeOutroSetor(TextoDto texto, Principal principal) {
+		Ministro ministroPrincipal = principal.getMinistro();
+		Long idSetorTexto = texto.getIdSetorMinistro();
+
+		Long idSetorPrincipal = null;
+		if (ministroPrincipal != null && ministroPrincipal.getSetor() != null && ministroPrincipal.getSetor().getId().longValue() > 0) {
+			idSetorPrincipal = ministroPrincipal.getSetor().getId();
+		}
+
+		if (idSetorTexto != null && idSetorPrincipal != null && idSetorTexto.equals(idSetorPrincipal)) {
+			return false;
+		}
+
+		return true;
+	}
+
+	public String getNomeGrupo() {
+		return nomeGrupo;
+	}
+
+	public void setNomeGrupo(String nomeGrupo) {
+		this.nomeGrupo = nomeGrupo;
+	}
+
+	public boolean isFavoritoNoGabinete() {
+		return favoritoNoGabinete;
+	}
+
+	public void setFavoritoNoGabinete(boolean favoritoNoGabinete) {
+		this.favoritoNoGabinete = favoritoNoGabinete;
+	}
+
+	public Boolean getLiberacaoAntecipada() {
+		return liberacaoAntecipada;
+	}
+
+	public void setLiberacaoAntecipada(Boolean liberacaoAntecipada) {
+		this.liberacaoAntecipada = liberacaoAntecipada;
+	}
+
+	public TipoVotoConstante getTipoVoto() {
+		return tipoVoto;
+	}
+
+	public void setTipoVoto(TipoVotoConstante tipoVoto) {
+		this.tipoVoto = tipoVoto;
+	}
+
+	public boolean getOrigemDigital() {
+		return origemDigital;
+	}
+
+	public void setOrigemDigital(boolean origemDigital) {
+		this.origemDigital = origemDigital;
+	}
+	
+}

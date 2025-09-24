@@ -1,0 +1,105 @@
+<html xmlns="http://www.w3.org/1999/xhtml" lang="pt-br" xml:lang="pt-br">
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<head>
+<style type="text/css">
+body {
+	font-family: Arial, Helvetica, Tahoma, sans-serif;
+}
+
+.negrito {
+	font-weight: bold;
+}
+
+.tamanhoA4 {
+	width: 21.59cm;
+	height: 27.94cm;
+	padding-left: 0.5cm;
+	padding-right: 0.5cm;
+	padding-top: 0.5cm;
+	padding-bottom: 0.5cm;
+}
+
+</style>
+</head>
+<body>
+	<div class="tamanhoA4">
+	
+		<!-- Sem quebra por sessão -->
+		#if($informacoesJulgamentoReport.objetosIncidente.size() > 0)
+		<table width="100%" border="1" bordercolor="#000000" cellspacing="0">
+			<tr>
+				<td>
+					#foreach($objetoIncidenteReport in $informacoesJulgamentoReport.objetosIncidente)
+					<div style="margin-left: 30px;">
+						<div>$!objetoIncidenteReport.cabecalhoObjetoIncidente</div>
+						<div style="margin-left: 30px;">$!objetoIncidenteReport.primeiroParagrafoTese</div>
+						<div style="margin-left: 30px; color: red; font-weight: bold;">$!objetoIncidenteReport.informacoesEspelho</div>
+					</div>
+					#end
+				</td>
+			</tr>
+			
+			<tr>
+				<td>
+					<div style="text-align: center;">TOTAL DE $!informacoesJulgamentoReport.objetosIncidente.size() PROCESSO(S)</div>
+				</td>
+			</tr>
+		</table>
+		#end
+		
+		<!-- Com quebra por sessão -->
+		#foreach($sessao in $informacoesJulgamentoReport.sessoes)
+		<table border="1" bordercolor="#000000" cellspacing="0" width="100%">
+			<tr>
+				<td align="center" valign="middle" bgcolor="#CCCCCC">$!sessao.cabecalhoSessao</td>
+			</tr>
+			<tr>
+				<td>
+					#foreach($objetoIncidenteReport in $sessao.objetosIncidente)
+					<div style="margin-left: 30px;">
+						<div>$!objetoIncidenteReport.cabecalhoObjetoIncidente</div>
+						<div style="margin-left: 30px;">$!objetoIncidenteReport.primeiroParagrafoTese</div>
+						<div style="margin-left: 30px; color: red; font-weight: bold;">$!objetoIncidenteReport.informacoesEspelho</div>
+					</div>
+					#end
+				</td>
+			</tr>
+			
+			<tr>
+				<td>
+					<div style="text-align: center; width: 100%;">TOTAL DE $!sessao.objetosIncidente.size() PROCESSO(S)</div>
+				</td>
+			</tr>
+		</table>
+		<br />
+		<br />
+		#end
+		
+		#if($informacoesJulgamentoReport.objetosIncidenteSemSessao.size() > 0)
+		<table border="1" bordercolor="#000000" cellspacing="0" width="100%">
+			<tr>
+				<td align="center" valign="middle" bgcolor="#CCCCCC">PROCESSOS SEM SESS&Atilde;O</td>
+			</tr>
+			<tr>
+				<td>
+					#foreach($objetoIncidenteReport in $informacoesJulgamentoReport.objetosIncidenteSemSessao)
+					<div style="margin-left: 30px;">
+						<div>$!objetoIncidenteReport.cabecalhoObjetoIncidente</div>
+						<div style="margin-left: 30px;">$!objetoIncidenteReport.primeiroParagrafoTese</div>
+						<div style="margin-left: 30px; color: red; font-weight: bold;">$!objetoIncidenteReport.informacoesEspelho</div>
+					</div>
+					#end
+				</td>
+			</tr>
+			
+			<tr>
+				<td>
+					<div style="text-align: center; width: 100%;">TOTAL DE $!informacoesJulgamentoReport.objetosIncidenteSemSessao.size() PROCESSO(S)</div>
+				</td>
+			</tr>
+		</table>
+		#end
+		
+	</div>
+</body>
+</html>

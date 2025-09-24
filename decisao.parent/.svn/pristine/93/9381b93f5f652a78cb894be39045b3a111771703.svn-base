@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:s="http://jboss.com/products/seam/taglib"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:rich="http://richfaces.org/rich"
+	xmlns:a="http://richfaces.org/a4j"
+	xmlns:c="http://java.sun.com/jstl/core"
+	xmlns:stf="http://www.stf.jus.br/custom-components">
+
+	<s:decorate id="configurarOpcoesGabinete"
+		template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="principal" />
+		<ui:define name="descricao">
+			<h:outputText value="Escolha as opções padrão para o Gabinete:" />
+			<br/>
+		</ui:define>
+		
+		<ui:define name="conteudo">
+			<div style="margin-bottom:10px;margin-top:10px;">
+				<h:selectBooleanCheckbox styleClass="Checkbox" id="chckTextoRestritoResponsavel" style="vertical-align:middle;"
+					value="#{actionFacesBean.textoRestritoResponsavel}">
+				</h:selectBooleanCheckbox>
+				<span>O acesso ao texto "Em elaboração" será restrito ao responsável, administrador ou Ministro(a).</span>
+			</div>
+
+			<div style="margin-bottom:10px;margin-top:10px;">
+				<h:selectBooleanCheckbox styleClass="Checkbox" id="chckPermitirGrupoComoResposavel" style="vertical-align:middle;"
+					value="#{actionFacesBean.permitirGrupoComoResposavel}">
+				</h:selectBooleanCheckbox>
+				<span>Permitir que grupos do e-Gab sejam responsáveis pelo texto.</span>
+			</div>
+			
+			<div style="margin-bottom:10px;margin-top:10px;">
+				<h:selectBooleanCheckbox styleClass="Checkbox" id="chckOrdenacaoNumerica" style="vertical-align:middle;"
+					value="#{actionFacesBean.ordenacaoNumerica}">
+				</h:selectBooleanCheckbox>
+				<span>Nas listas de julgamento usar ordenação numérica ao invés de ordenação alfanumérica.</span>
+			</div>			
+    
+			<div style="margin-bottom:10px;margin-top:10px;">
+				<h:selectBooleanCheckbox styleClass="Checkbox" id="chckGerarTimbreAssinatura" style="vertical-align:middle;"
+					value="#{actionFacesBean.gerarTimbreAssinatura}">
+				</h:selectBooleanCheckbox>
+				<span>Gerar timbre ao assinar documentos</span>
+			</div>
+
+		</ui:define>
+	
+
+		<ui:define name="botoes">
+			<a:commandButton value="Gravar"
+				action="#{actionFacesBean.execute}"
+				reRender="actionModalPanel, panelMessage"
+				oncomplete="showActionPanel('panelItem', #{actionFacesBean.definition.width}, #{actionFacesBean.definition.height})"
+				eventsQueue="ajaxQueue" ignoreDupResponses="true" />
+				
+		</ui:define>
+	</s:decorate>
+
+</ui:composition>

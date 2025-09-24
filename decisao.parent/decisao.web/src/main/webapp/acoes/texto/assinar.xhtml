@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:s="http://jboss.com/products/seam/taglib"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:rich="http://richfaces.org/rich"
+	xmlns:a="http://richfaces.org/a4j"
+	xmlns:c="http://java.sun.com/jstl/core"
+	xmlns:stf="http://www.stf.jus.br/custom-components">
+	
+
+	<s:decorate template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="principal" />
+		<ui:define name="descricao">Informe os dados abaixo para poder continuar a assinatura:</ui:define>
+		<ui:define name="conteudo">
+			<s:decorate template="/common/decorators/edit.xhtml">
+				<ui:define name="label">Observação:</ui:define>
+				<h:inputTextarea value="#{actionFacesBean.observacao}"
+					rows="5" cols="60" style="width: 300px" onkeyup="this.value = this.value.substring(0, 500);"/>
+			</s:decorate>
+			<s:div>
+				<h:selectBooleanCheckbox styleClass="Checkbox"
+					value="#{actionFacesBean.inserirTimbre}" />
+				<span>Inserir timbre nas páginas do documento.</span>
+			</s:div>
+		</ui:define>
+		<ui:define name="botoes">
+			<a:commandButton value="Assinar"
+				action="#{actionFacesBean.validateAndExecute}"
+				reRender="actionModalPanel"
+				oncomplete="if (#{actionFacesBean.assinar}){
+					#{rich:element('btnConfirmarAssinatura')}.click();
+				}else{
+					showActionPanel('panelItem', #{actionFacesBean.definition.width}, #{actionFacesBean.definition.height});
+				}" eventsQueue="ajaxQueue"
+							ignoreDupResponses="true"/>
+			<!--  Como ocorre um redirecionamento para uma servlet que dispara o jnlp, é necessário utilizar um h:commandButton para fazer o redirecionamento, por isso, esse botao oculto está aqui -->
+			<h:commandButton id="btnConfirmarAssinatura"
+				value="Confirmar Assinatura"
+				action="#{actionFacesBean.executaAssinaturaTextos}"
+				onclick="Richfaces.hideModalPanel('panelItem')"
+				styleClass="botaoOculto" />
+		</ui:define>
+	</s:decorate>
+
+	<s:decorate template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="confirmacao" />
+		<ui:define name="descricao">Confirme a assinatura dos textos abaixo.</ui:define>
+		<ui:define name="conteudo">
+			<c:if test="#{actionFacesBean.existemTextosNaoSeraoAssinados}">
+				<div>
+				<div class="vermelho">Atenção! Não será possível assinar os
+				textos abaixo:</div>
+				<stf:messages level="WARN" />
+				</div>
+			</c:if>
+			<c:if test="#{actionFacesBean.existemTextosIguais}">
+				<div>
+				<div>Os seguintes textos estão em lista de textos iguais. Esta
+				operação afetará todos os textos da lista que pertencem ao gabinete.</div>
+				<stf:messages level="INFO" /></div>
+				<div>Total de textos iguais: #{actionFacesBean.textosIguaisAdicionados.size}</div>
+			</c:if>
+
+		</ui:define>
+		<ui:define name="botoes">
+			<h:commandButton value="Confirmar Assinatura"
+				action="#{actionFacesBean.executaAssinaturaTextos}"
+				onclick="Richfaces.hideModalPanel('panelItem')" rendered="#{actionFacesBean.listaTextosValidos.size() > 0}"/>
+			<a:commandButton value="Voltar"
+				action="#{actionFacesBean.voltar}"
+				reRender="actionModalPanel"
+				oncomplete="showActionPanel('panelItem', #{actionFacesBean.definition.width}, #{actionFacesBean.definition.height})" eventsQueue="ajaxQueue" ignoreDupResponses="true"/>
+		</ui:define>
+	</s:decorate>
+
+
+</ui:composition>

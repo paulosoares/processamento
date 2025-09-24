@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE facelet-taglib PUBLIC "-//Sun Microsystems, Inc.//DTD Facelet Taglib 1.0//EN" "http://java.sun.com/dtd/facelet-taglib_1_0.dtd">
+<facelet-taglib>
+	<namespace>http://www.stf.jus.br/custom-components</namespace>
+	<tag>
+    	<tag-name>calendar</tag-name>
+    	<source>tags/calendar.xhtml</source>
+  	</tag>
+  	<tag>
+    	<tag-name>datascroller</tag-name>
+    	<source>tags/datascroller.xhtml</source>
+  	</tag>
+  	<tag>
+    	<tag-name>datascrollerTextos</tag-name>
+    	<source>tags/datascrollerTextos.xhtml</source>
+  	</tag>
+  	<tag>
+    	<tag-name>messages</tag-name>
+    	<source>tags/messages.xhtml</source>
+  	</tag>
+  	<tag>
+    	<tag-name>simpleDatascroller</tag-name>
+    	<source>tags/simpleDatascroller.xhtml</source>
+  	</tag>
+</facelet-taglib>

@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:s="http://jboss.com/products/seam/taglib"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:rich="http://richfaces.org/rich"
+	xmlns:a="http://richfaces.org/a4j"
+	xmlns:c="http://java.sun.com/jstl/core"
+	xmlns:stf="http://www.stf.jus.br/custom-components"
+    xmlns:fn="http://java.sun.com/jsp/jstl/functions">
+	
+	
+	<s:decorate id="novoTexto"
+		template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="principal" />
+		<ui:define name="descricao">Escolha o processo antes de criar o texto.</ui:define>
+		<ui:define name="conteudo">
+			<div id="divCriarTexto" onkeypress="pesquisar('novoTexto:btnCriarTexto');">
+				<a:outputPanel id="panelMessage">
+					<stf:messages height="31px" styleClass="noBorder" />
+				</a:outputPanel>
+						<div style="margin: 3px 0px; text-align: center;">
+							<c:if test="#{not empty incidenteFacesBean.retornaLocalizacaoAtual}">
+								<span class="vermelho">#{incidenteFacesBean.retornaLocalizacaoAtual} </span>
+							</c:if>
+						</div>
+				<s:decorate template="/common/decorators/edit.xhtml"
+					style="margin-top: 5px">
+					<ui:define name="label">Processo:</ui:define>
+					<h:inputText id="processoPrincipal"
+						value="#{actionFacesBean.idObjetoIncidente}" size="30"
+						onkeydown="return noCtrlJ(event);"
+						onfocus="#{rich:component('sgBoxObjNovoTexto')}.callSuggestion(true)"
+						onclick="#{rich:component('sgBoxObjNovoTexto')}.callSuggestion(true)"
+						style="width: 200px" />
+					<rich:suggestionbox id="sgBoxObjNovoTexto"
+						suggestionAction="#{incidenteFacesBean.searchWithoutFake}"
+						for="processoPrincipal" var="result" minChars="1"
+						fetchValue="#{result.identificacao}"
+						nothingLabel="Nenhum Processo encontrado." width="400">
+	
+						<a:support
+							action="#{actionFacesBean.setObjetoIncidente(result.id)}"
+							ajaxSingle="true" event="onselect"
+							reRender="tipoTexto, pnlLinkNovoIncidente"
+							eventsQueue="ajaxQueue" ignoreDupResponses="true" />
+	
+						<h:column>
+							<h:outputText rendered="#{result.eletronico}" value="e"
+								styleClass="vermelho" />
+							<h:outputText value="#{result.identificacao}"
+								styleClass="oiSuggestion" />
+							<h:outputText value=" » " />
+							<h:outputText value="#{result.nomeRelator}"
+								styleClass="#{(result.idRelator != userFacesBean.principal.ministro.id)? 'oiSuggestion':'green'}" />
+						</h:column>
+					</rich:suggestionbox>
+					<a:outputPanel id="pnlLinkNovoIncidente">
+						<a:commandLink id="lnkNovoIncidente" value="Novo incidente..."
+							style="vertical-align: bottom; margin-left: 5px;"
+							action="#{actionFacesBean.novoIncidente}"
+							reRender="actionModalPanel"
+							oncomplete="showActionPanel('panelItem', #{actionFacesBean.definition.width}, #{actionFacesBean.definition.height})"
+							rendered="#{actionFacesBean.idObjetoIncidente != null and actionFacesBean.usuarioPodeCriarIncidente}"
+							eventsQueue="ajaxQueue" ignoreDupResponses="true" />
+					</a:outputPanel>
+				</s:decorate>
+				<s:decorate template="/common/decorators/edit.xhtml">
+					<ui:define name="label">Responsável:</ui:define>
+					<h:inputText id="txtAutNovoTexto" size="47"
+						value="#{actionFacesBean.responsavel}"
+						style="width: 300px"/>
+					<rich:suggestionbox id="sgBoxAutNovoTexto" for="txtAutNovoTexto"
+						width="300" height="150" var="obj" 
+						fetchValue="#{obj.nome}" nothingLabel="Nenhum registro encontrado."
+						suggestionAction="#{responsavelFacesBean.search}">
+						<h:column>
+							<h:outputText value="#{obj.nome}" styleClass="sugestao" />
+						</h:column>
+						<a:support event="onselect" eventsQueue="ajaxQueue"
+							ignoreDupResponses="true">
+							<f:setPropertyActionListener value="#{obj}"
+								target="#{actionFacesBean.texto.responsavel}" />
+						</a:support>
+					</rich:suggestionbox>
+				</s:decorate>
+				<s:decorate template="/common/decorators/edit.xhtml">
+					<ui:define name="label">Tipo de Texto:</ui:define>
+					<h:selectOneMenu id="tipoTexto" immediate="true" valueChangeListener="#{actionFacesBean.changeIdTipoTexto}"
+						value="#{actionFacesBean.idTipoTexto}" required="true" 
+						style="width: 194px">
+						<s:selectItems var="tipoTexto"
+							value="#{actionFacesBean.tiposTexto}"
+							itemValue="#{tipoTexto.codigo}" label="#{tipoTexto.descricao}" />
+						<a:support event="onchange" ignoreDupResponses="true" reRender="novoTexto"/>
+					</h:selectOneMenu>
+				</s:decorate>
+				<s:decorate id="divTipoVoto" template="/common/decorators/edit.xhtml" rendered="#{actionFacesBean.exigirTipoVoto}">
+					<ui:define name="label">Voto:</ui:define>
+					<h:selectOneMenu id="tipoVoto" value="#{actionFacesBean.tipoVotoId}" required="false" style="width: 194px">
+						<f:selectItem itemLabel="" itemValue=""/>
+						<f:selectItem itemLabel="Acompanha o relator" itemValue="9"/>
+						<f:selectItem itemLabel="Diverge do relator" itemValue="7"/>
+					</h:selectOneMenu>
+				</s:decorate>				
+				<s:decorate template="/common/decorators/edit.xhtml">
+					<ui:define name="label">Observação:</ui:define>
+					<h:inputTextarea value="#{actionFacesBean.texto.observacao}" id="txtObsNovoTexto"
+						rows="3" cols="45" style="width: 300px" onkeyup="validaCaracter(this); if(this.value.length>100){this.value = this.value.substring(0, 100);}"/>
+				</s:decorate>
+			</div>
+		</ui:define>
+		<ui:define name="botoes">
+			<a:commandButton value="Criar" action="#{actionFacesBean.execute}" id="btnCriarTexto"
+				oncomplete="if( #{actionFacesBean.mostraEdicaoTexto}){
+					               		#{rich:element('btnCriar')}.click();
+					               }else{
+					               		showActionPanel('panelItem', #{actionFacesBean.definition.width}, #{actionFacesBean.definition.height});
+					               	}"
+				eventsQueue="ajaxQueue" ignoreDupResponses="true" reRender="panelMessage"/>
+			<!--  Como ocorre um redirecionamento para uma servlet que dispara o jnlp, é necessário utilizar um h:commandButton para fazer o redirecionamento, por isso, esse botao oculto está aqui -->
+			<h:commandButton value="Forward" action="#{actionFacesBean.forward}"
+				onclick="Richfaces.hideModalPanel('panelItem')" id="btnCriar"
+				styleClass="botaoOculto" />
+
+			<script type="text/javascript">
+             //<![CDATA[
+                 window.setTimeout(function(){
+                 	setFocus('novoTexto:btnCriarTexto');
+                 }, 100);
+             //]]>
+             </script>
+		</ui:define>
+	</s:decorate>
+
+	<s:decorate id="novoIncidente"
+		template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="incidente" />
+		<ui:define name="descricao">Escolha o incidente antes de criar o texto.</ui:define>
+		<ui:define name="conteudo">
+			<s:decorate template="/common/decorators/edit.xhtml">
+				<ui:define name="label">Incidente:</ui:define>
+				<h:outputText
+					value="#{actionFacesBean.idObjetoIncidente}" />
+			</s:decorate>
+			<s:decorate template="/common/decorators/edit.xhtml">
+				<ui:define name="label">Tipo de Incidente:</ui:define>
+				<h:selectOneMenu id="tipoIncidente" style="width:200px"
+					value="#{actionFacesBean.idTipoIncidenteJulgamento}"
+					>
+					<s:selectItems var="tipoIncidenteJulgamento"
+						value="#{actionFacesBean.tiposDeIncidentes}"
+						itemValue="#{tipoIncidenteJulgamento.id}"
+						label="#{tipoIncidenteJulgamento.descricao}" />
+					<a:support event="onchange" reRender="controleSequencia"
+						action="#{actionFacesBean.recuperarProximaSequencia}"
+						eventsQueue="ajaxQueue" ignoreDupResponses="true" />
+				</h:selectOneMenu>
+			</s:decorate>
+			<a:outputPanel id="controleSequencia">
+				<s:decorate template="/common/decorators/edit.xhtml"
+					rendered="#{actionFacesBean.mostrarSequencia}">
+					<ui:define name="label">Sequência:</ui:define>
+					<h:inputText value="#{actionFacesBean.sequenciaCadeia}" />
+				</s:decorate>
+			</a:outputPanel>
+		</ui:define>
+		<ui:define name="botoes">
+			<a:commandButton value="Criar Incidente"
+				action="#{actionFacesBean.criarNovoIncidente}"
+				reRender="actionModalPanel"
+				oncomplete="showActionPanel('panelItem', #{actionFacesBean.definition.width}, #{actionFacesBean.definition.height})"
+				eventsQueue="ajaxQueue" ignoreDupResponses="true" />
+			<a:commandButton value="Voltar"
+				action="#{actionFacesBean.voltarParaPrincipal}"
+				reRender="actionModalPanel"
+				oncomplete="showActionPanel('panelItem', #{actionFacesBean.definition.width}, #{actionFacesBean.definition.height})"
+				eventsQueue="ajaxQueue" ignoreDupResponses="true" />
+
+		</ui:define>
+	</s:decorate>
+	
+	<s:decorate template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="warnings"/>
+		<ui:define name="descricao">
+			<h:graphicImage value="/common/images/warning.gif"/>&nbsp;&nbsp;Erro ao criar Incidente Julgamento
+		</ui:define> 
+		<ui:define name="conteudo">
+			<stf:messages level="INFO" />
+		</ui:define>
+		<ui:define name="botoes">
+           	<a:commandButton value="Voltar" action="#{actionFacesBean.voltarParaNovoIncidente}" reRender="actionModalPanel" oncomplete="showActionPanel('panelItem', #{actionFacesBean.definition.width}, #{actionFacesBean.definition.height})" eventsQueue="ajaxQueue"
+							ignoreDupResponses="true"/>
+		</ui:define>
+	</s:decorate>
+
+</ui:composition>

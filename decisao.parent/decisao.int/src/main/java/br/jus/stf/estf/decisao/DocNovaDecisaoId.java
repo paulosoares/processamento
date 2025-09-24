@@ -1,0 +1,84 @@
+package br.jus.stf.estf.decisao;
+
+import java.net.URISyntaxException;
+
+public class DocNovaDecisaoId extends DocDecisaoId {
+	private static final long serialVersionUID = 5161309664787399207L;
+	
+	private Long objetoIncidentePai;
+	private Long idTipoIncidenteJulgamento;
+	private String responsavel;
+	private String observacao;
+	private Long ministroDivergente;
+
+	@Override
+	public String toString() {
+		return this.getClass().getSimpleName() + "@" + this.getNome() + "," + this.getObjetoIncidente() + ","
+				+ this.getTipoTexto();
+	}
+
+	@Override
+	public String toURI() throws URISyntaxException {
+		return StfOfficeDecisaoURI.criarURI("decisao", DocDecisaoId.ACAO_NOVO_DOCUMENTO, this);
+	}
+	
+	
+	//############################ GET & SET ################################
+	/*
+	public Long getObjetoIncidente() {
+		return objetoIncidente;
+	}
+
+	public void setObjetoIncidente(Long objetoIncidente) {
+		this.objetoIncidente = objetoIncidente;
+	}
+
+	public Long getTipoTexto() {
+		return tipoTexto;
+	}
+
+	public void setTipoTexto(Long tipoTexto) {
+		this.tipoTexto = tipoTexto;
+	}
+	 */
+	public Long getObjetoIncidentePai() {
+		return objetoIncidentePai;
+	}
+
+	public void setObjetoIncidentePai(Long objetoIncidentePai) {
+		this.objetoIncidentePai = objetoIncidentePai;
+	}
+
+	public Long getIdTipoIncidenteJulgamento() {
+		return idTipoIncidenteJulgamento;
+	}
+
+	public void setIdTipoIncidenteJulgamento(Long idTipoIncidenteJulgamento) {
+		this.idTipoIncidenteJulgamento = idTipoIncidenteJulgamento;
+	}
+
+	public String getResponsavel() {
+		return responsavel;
+	}
+
+	public void setResponsavel(String responsavel) {
+		this.responsavel = responsavel;
+	}
+
+	public String getObservacao() {
+		return observacao;
+	}
+
+	public void setObservacao(String observacao) {
+		this.observacao = observacao;
+	}
+
+	public Long getMinistroDivergente() {
+		return ministroDivergente;
+	}
+
+	public void setMinistroDivergente(Long ministroDivergente) {
+		this.ministroDivergente = ministroDivergente;
+	}
+
+}

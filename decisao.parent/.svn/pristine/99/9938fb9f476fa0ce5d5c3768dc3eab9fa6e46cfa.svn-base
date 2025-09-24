@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:s="http://jboss.com/products/seam/taglib"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:rich="http://richfaces.org/rich"
+	xmlns:a="http://richfaces.org/a4j"
+	xmlns:c="http://java.sun.com/jstl/core"
+	xmlns:stf="http://www.stf.jus.br/custom-components">
+	
+
+	<s:decorate template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="confirmar" />
+		<ui:define name="descricao">Verifique as informações abaixo antes de prosseguir</ui:define>
+		<ui:define name="conteudo">		
+				<div>Registro a ser excluído:</div>
+				<div><stf:messages level="WARN"/></div>
+				
+		</ui:define>
+		<ui:define name="botoes">
+			<a:outputPanel id="btnConfirmarPanel">
+					<a:commandButton value="Confirmar a Exclusão"
+	action="#{actionFacesBean.excluirIncidente}" reRender="actionModalPanel"
+	oncomplete="showActionPanel('panelItem', #{actionFacesBean.definition.width}, #{actionFacesBean.definition.height})" eventsQueue="ajaxQueue"
+	ignoreDupResponses="true"/>
+			</a:outputPanel>
+			
+		</ui:define>
+	</s:decorate>
+	
+
+
+<s:decorate template="/acoes/support/action.template.xhtml">
+	<ui:param name="facetName" value="naopermitido" />
+	<ui:define name="descricao" >
+	<div><stf:messages level="WARN"/></div>
+	<div styleClass="vermelho" >Não é possível a exclusão do incidente </div>
+	<div styleClass="vermelho" > <h:outputText value="#{actionFacesBean.nomeRecurso}" /></div>
+		<div class="vermelho">#{actionFacesBean.msgRestricao}</div>
+				<div><stf:messages level="ERROR"/></div>
+	</ui:define>
+</s:decorate>
+
+
+	<s:decorate template="/acoes/support/action.templateVoltar.xhtml">
+		<ui:param name="facetName" value="confirmado" />
+		<ui:define name="descricao">Verifique as informações abaixo antes de prosseguir</ui:define>
+		<ui:define name="conteudo">		
+				<div>Resultado da Operação:</div>
+				<div><stf:messages level="INFO"/></div>
+				
+		</ui:define>
+	<ui:define name="botoes">
+	<a:commandButton value="Concluído" action="#{principalFacesBean.init()}" rendered="#{not (actionFacesBean.refresh or actionFacesBean.actionFrame)}"
+	reRender="resultPanel, actionModalPanel, panelMenuAssinar, pesquisaPrincipal" immediate="true" ajaxSingle="true" eventsQueue="ajaxQueue"
+	oncomplete="#{principalFacesBean.init()}" ignoreDupResponses="true">
+	<rich:componentControl for="panelItem" attachTo="close" operation="hide" event="onclick"/>
+	</a:commandButton>	
+	</ui:define>
+	</s:decorate>
+
+</ui:composition>

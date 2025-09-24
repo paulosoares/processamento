@@ -1,0 +1,161 @@
+/**
+ * 
+ */
+package br.jus.stf.estf.decisao.texto.support;
+
+import java.text.SimpleDateFormat;
+import java.util.LinkedList;
+import java.util.List;
+
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
+
+import br.gov.stf.estf.entidade.documento.Texto;
+import br.gov.stf.estf.entidade.ministro.Ministro;
+import br.gov.stf.estf.entidade.processostf.ObjetoIncidente;
+import br.jus.stf.estf.decisao.objetoincidente.support.ProcessoReport;
+import br.jus.stf.estf.report.model.Field;
+
+/**
+ * @author Paulo.Estevao
+ *
+ */
+public class TextoReport {
+	private final ProcessoReport processo;
+	private final Texto texto;
+	
+	/**
+	 * Valor atribuido para um campo em branco
+	 */
+	private final String BLANK_FIELD = "";
+	
+	private final SimpleDateFormat simpleDateFormat;
+	
+	private final ObjetoIncidente objetoIncidente;
+	
+	public TextoReport(Ministro ministro, Texto texto){
+		this.texto = texto;
+		this.objetoIncidente = texto.getObjetoIncidente();
+		processo = new ProcessoReport(objetoIncidente, ministro);
+		
+		simpleDateFormat = new SimpleDateFormat("dd/MM/yyyy");
+	}
+	
+	public ProcessoReport getProcesso() {
+		return processo;
+	}
+	
+	public String getPublico() {
+		return texto.getPublico()?"Sim":"Não";
+	}
+
+	public String getTextosIguais() {
+		return texto.getTextosIguais()?"Sim":"Não";
+	}
+	
+	public String getSalaJulgamento() {
+		return texto.getSalaJulgamento()?"Sim":"Não";
+	}
+
+	public String getPubliccaoRTJ() {
+		return texto.getPubliccaoRTJ() != null && texto.getPubliccaoRTJ() ? "Sim" : "Não";
+	}
+
+	public String getDataSessao() {
+		if(texto.getDataSessao() != null){
+			return simpleDateFormat.format(texto.getDataSessao());
+		}else{
+			return BLANK_FIELD;
+		}
+		
+	}
+
+	public String getObservacao() {
+		if(texto.getObservacao() != null){
+			return texto.getObservacao();
+		}else{
+			return BLANK_FIELD;
+		}
+	}
+
+	public String getTipoRestricao() {
+		if(texto.getTipoRestricao() != null){
+			return texto.getTipoRestricao().getDescricao();
+		}else{
+			return BLANK_FIELD;
+		}
+	}
+
+	public String getTipoFaseTextoDocumento() {
+		if(texto.getTipoFaseTextoDocumento() != null){
+			return texto.getTipoFaseTextoDocumento().getDescricao();
+		}else{
+			return BLANK_FIELD;
+		}
+	}
+
+	public String getUsuarioInclusao() {
+		if(texto.getUsuarioInclusao() != null){
+			return texto.getUsuarioInclusao().getNome();
+		}else{
+			return BLANK_FIELD;
+		}
+	}
+
+	public String getUsuarioAlteracao() {
+		if(texto.getUsuarioAlteracao() != null){
+			return texto.getUsuarioAlteracao().getNome();
+		}else{
+			return BLANK_FIELD;
+		}
+	}
+
+	public String getDataInclusao() {
+		if(texto.getDataInclusao() != null){
+			return simpleDateFormat.format(texto.getDataInclusao());
+		}else{
+			return BLANK_FIELD;
+		}
+	}
+
+	public String getDataAlteracao() {
+		if(texto.getDataAlteracao() != null){
+			return simpleDateFormat.format(texto.getDataAlteracao());
+		}else{
+			return BLANK_FIELD;
+		}
+	}
+
+	public ObjetoIncidente<?> getObjetoIncidente() {
+		return objetoIncidente;
+	}
+
+	public static List<Field> getFields(List<TextoRelatorioEnum> camposRelatorio){
+		
+		List<Field> fields = new LinkedList<Field>();
+		
+		//FIXME Pesquisar uma solução para a altura dos campos
+		for(TextoRelatorioEnum processoRecursoRelatorioEnum : camposRelatorio){
+			fields.add(getField(processoRecursoRelatorioEnum, processoRecursoRelatorioEnum.getTamanho(), 10));
+		}
+		return fields;
+	}
+	
+	public boolean equals(Object obj) {
+		return new EqualsBuilder().append(objetoIncidente.getId().longValue(), 37).equals(obj);
+	}
+	
+	public int hashCode() {
+		return new HashCodeBuilder(17, 37).append(objetoIncidente.getId()).toHashCode();
+	}
+	
+	private static Field getField(TextoRelatorioEnum textoRelatorioEnum, int width, int height){
+		Field f = new Field(width,
+			height,
+			textoRelatorioEnum.getAtributo(),
+			textoRelatorioEnum.getDescricao()) {
+		};
+		return f;
+	}
+
+}

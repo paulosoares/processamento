@@ -1,0 +1,284 @@
+'use strict';
+
+StfDecisao.viewCtrl('SelecaoDocumentosAssinaturaViewCtrl', 'selecao-documentos-assinatura',
+		function(assinaturaService, msgService, assinaturaModel, flowService, loaderService, datatableUtil, togglesUtil) {
+	var self = this;
+	
+	var painelDocsPendentes = 'painel-docs-pendentes';
+	var painelNenhumDoc = 'painel-nenhum-doc';
+	var toggleDocumentosParaAssinar = togglesUtil.viewsToggle([painelDocsPendentes, painelNenhumDoc]);
+	
+	var painelDocsParaAssinar = 'painel-docs-para-assinar';
+	
+	function renderTextos(data, type, row) {
+		var finalRendered = "";
+		
+		var extraRows = [];
+		
+		if (!arrayToDocEntityAdapter.fieldValueFromArray(row, 'assinar')) {
+			extraRows.push('<span class="extra-info">(' + arrayToDocEntityAdapter.fieldValueFromArray(row, 'motivoNaoAssinar') + ')</span>'); 
+		}
+		if (arrayToDocEntityAdapter.fieldValueFromArray(row, 'textosIguais')) {
+			finalRendered += '<img src="assets_stf/img/page_white_stack.png">&nbsp;';
+			extraRows.push('<span class="extra-warning">(Pertence a lista de textos iguais. Assinar este texto assinará todos da lista.)</span>');
+		}
+		finalRendered += '<span>' +  arrayToDocEntityAdapter.fieldValueFromArray(row, 'processo') + " - " + arrayToDocEntityAdapter.fieldValueFromArray(row, 'descricao') + '</span><br /><span class="muted">';
+		if(arrayToDocEntityAdapter.fieldValueFromArray(row, 'responsavel') == null) {
+			finalRendered += "Não possui responsável." +'</span>';
+		} else {
+			finalRendered += arrayToDocEntityAdapter.fieldValueFromArray(row, 'responsavel') +'</span>';
+		}
+		finalRendered += '</span>';
+		if (extraRows.length > 0) {
+			for (var i in extraRows) {
+				finalRendered += '<br />' + extraRows[i];
+			}
+		}
+		return finalRendered;
+    }
+	
+	function renderExpedientes(data, type, row) {
+		return '<span>' +  arrayToDocEntityAdapter.fieldValueFromArray(row, 'processo') + '</span><br /><span class="muted">'+ arrayToDocEntityAdapter.fieldValueFromArray(row, 'descricao') +'</span>';
+    }
+	
+	var botoesAcoesToggle = togglesUtil.viewsToggle(['acoes-sem-selecao', 'acoes-com-selecao']);
+	
+	var arrayToDocEntityAdapter = (function() { 
+		var ArrayToDocEntityAdapter = function() { // Definindo uma classe anônima (escopo isolado)
+			var fields = ['id', 'processo', 'descricao', 'responsavel', 'assinar', 'motivoNaoAssinar', 'textosIguais', 'devemSerAssinadosJunto'];
+			
+			this.entityToArray = function(entity) {
+				var docArr = [];
+				for (var i in fields) {
+					docArr.push(entity[fields[i]]);
+				}
+				return docArr;
+			};
+			
+			this.fieldValueFromArray = function(arr, fieldName) {
+				var index = fields.indexOf(fieldName);
+				if (index > -1) {
+					return arr[index];
+				} else {
+					throw "Campo [" + fieldName + "] inexistente no array.";
+				}
+			};
+		};
+		return new ArrayToDocEntityAdapter();
+	})();
+	
+	function adaptTextoToArrayOfArrays(documentos) {
+		var arrDocs = [];
+		
+		for (var i in documentos) {
+			var docArr = arrayToDocEntityAdapter.entityToArray(documentos[i]);
+			arrDocs.push(docArr);
+		}
+		return arrDocs;
+	}
+	
+	function adaptExpedientesToArrayOfArrays(documentos) {
+		var arrDocs = [];
+		for (var i in documentos) {
+			var docArr = arrayToDocEntityAdapter.entityToArray(documentos[i]);
+			arrDocs.push(docArr);
+		}
+		return arrDocs;
+	}
+	
+	function getTextosParaAssinar() {
+		return assinaturaModel.textosParaAssinar;
+	}
+	
+	function getExpedientesParaAssinar() {
+		return assinaturaModel.comunicacoesParaAssinar;
+	}
+	
+	function updateBotoesAcoes() {
+		var qtdeSelecionados = self.datatableTextosViewCtrl.getTotalSelecionados() + self.datatableExpedientesViewCtrl.getTotalSelecionados();
+		$('.btn-assinar-selecionados').html('Assinar Selecionados (' + qtdeSelecionados + ')');
+	}
+	
+	function detalheTextoHandler(id){
+		flowService.irParaDetalheTexto(id);
+	}
+	
+	function detalheExpedienteHandler(id){
+		flowService.irParaDetalheExpediente(id);
+	}
+	
+	
+	this.datatableTextosViewCtrl = datatableUtil.datatableCtrl('#tabela-textos', renderTextos, botoesAcoesToggle, 
+			getTextosParaAssinar, adaptTextoToArrayOfArrays, updateBotoesAcoes, detalheTextoHandler, arrayToDocEntityAdapter, '#painel-nenhum-texto');
+	
+	this.datatableExpedientesViewCtrl = datatableUtil.datatableCtrl('#tabela-expedientes', renderExpedientes, botoesAcoesToggle,
+			getExpedientesParaAssinar, adaptExpedientesToArrayOfArrays, updateBotoesAcoes, detalheExpedienteHandler, arrayToDocEntityAdapter, '#painel-nenhum-expediente');
+	
+	
+	this.getDataTableTextos = function() {
+		return self.datatableTextosViewCtrl.dataTable;
+	};
+	
+	this.getDataTableExpedientes = function() {
+		return self.datatableExpedientesViewCtrl.dataTable;
+	};
+	
+	this.update = function(atualizarDocumentos, callback, erroFatal) {
+		if (erroFatal) {
+			$('#abas-docs-assinar').hide();
+			$('#painel-abas-e-conteudo').hide();
+			msgService.show();
+		} else {
+			assinaturaService.getMinistro().done(function(ministro){
+				$('.nomeMinistro').html(ministro.nome);
+			}).fail(function() {
+				$('.nomeMinistro').html('');
+			});
+			
+			var finalizarAtualizacao = function() {
+				if (assinaturaModel.documentosParaAssinar.length > 0) {
+					toggleDocumentosParaAssinar.toggle(painelDocsPendentes);
+					$('#' + painelDocsParaAssinar).show();
+					$('#qtde-docs-liberados').html(assinaturaModel.documentosParaAssinar.length);
+					$('.btn-assinar-todos').html('Assinar Todos (' + assinaturaModel.documentosParaAssinar.length + ')');
+					$('.link-assinar-expedientes').html('Assinar Expedientes (' + assinaturaModel.comunicacoesParaAssinar.length + ')');
+					$('.link-assinar-decisoes').html('Assinar Textos (' + assinaturaModel.textosParaAssinar.length + ')');
+				} else {
+					$('#' + painelDocsParaAssinar).hide();
+					toggleDocumentosParaAssinar.toggle(painelNenhumDoc);
+				}
+				self.datatableTextosViewCtrl.update();
+				self.datatableExpedientesViewCtrl.update();
+				if (callback) {
+					callback();
+				}
+			}
+			if (atualizarDocumentos) {
+				loaderService.loaderOn();
+				msgService.show();
+				$('#abas-docs-asssinar').hide();
+				assinaturaService.getDocumentosParaAssinar().done(function(lista){
+					assinaturaModel.documentosParaAssinar = lista;
+					assinaturaModel.textosParaAssinar = [];
+					assinaturaModel.comunicacoesParaAssinar = [];
+					for (var i in lista){
+						if(lista[i].tipo == "texto"){
+							assinaturaModel.textosParaAssinar.push(lista[i]);
+						} else if (lista[i].tipo == "comunicacao"){
+							assinaturaModel.comunicacoesParaAssinar.push(lista[i]);
+						}
+					}
+					finalizarAtualizacao();
+					if(lista.length == 0){
+						$('#abas-docs-assinar').hide();
+						$('#painel-abas-e-conteudo').hide();
+					} else {					
+						$('#abas-docs-assinar').show();
+						$('#painel-abas-e-conteudo').show();
+						$('#painel-docs-para-assinar').show();
+					}
+				}).fail(function(data){
+					msgService.addError(data.errors);
+					msgService.show();
+					$('#' + painelDocsPendentes).hide();
+					if (callback) {
+						callback();
+					}
+					$('#abas-docs-assinar').hide();
+					$('#painel-abas-e-conteudo').hide();
+					$('#painel-docs-para-assinar').hide();
+				}).always(function(lista){
+					loaderService.loaderOff();
+				});
+			} else {
+				finalizarAtualizacao();
+			}
+		}
+	};
+	
+	var registerEvents = function() {
+		$('.btn-assinar-todos').click(function(e) {
+			e.preventDefault();
+			if (assinaturaModel.textosParaAssinar.length + assinaturaModel.comunicacoesParaAssinar.length > 0) {
+				assinaturaModel.setDocumentosASeremAssinados(assinaturaModel.textosParaAssinar.concat(assinaturaModel.comunicacoesParaAssinar));
+				flowService.irParaSenha();
+			} else {
+				msgService.clear();
+				msgService.addError("Nenhum documento para assinar.");
+				msgService.show();
+			}
+		});
+		
+		$('.btn-assinar-selecionados').click(function(e) {
+			e.preventDefault();
+			assinaturaModel.setDocumentosASeremAssinados([]);
+			var docsParaAssinar = assinaturaModel.documentosParaAssinar;
+			var checksTextosSelecionados = self.datatableTextosViewCtrl.getSelecionados();
+			var checksExpedientesSelecionados = self.datatableExpedientesViewCtrl.getSelecionados();
+			var checksSelecionados = checksTextosSelecionados.add(checksExpedientesSelecionados);
+			
+			if (checksSelecionados.length == 0) {
+				msgService.clear();
+				msgService.addError("Nenhum documento selecionado para assinar.");
+				msgService.show();
+			} else {
+				var documentosASeremAssinados = [];
+				checksSelecionados.each(function() {
+					var id = $(this).val();
+					for (var i in docsParaAssinar) {
+						if (docsParaAssinar[i].id == id) {
+							documentosASeremAssinados.push(docsParaAssinar[i]);
+							break;
+						}
+					}
+				});
+				assinaturaModel.setDocumentosASeremAssinados(documentosASeremAssinados);
+				flowService.irParaSenha();
+			}
+		})
+		
+		$('.link-assinar-decisoes').click(function(e) {
+			e.preventDefault();
+			if (assinaturaModel.textosParaAssinar.length > 0) {
+				assinaturaModel.setDocumentosASeremAssinados(assinaturaModel.textosParaAssinar);
+				flowService.irParaSenha();
+			} else {
+				msgService.clear();
+				msgService.addError("Nenhum texto para assinar.");
+				msgService.show();
+			}
+		});
+		
+		$('.link-assinar-expedientes').click(function(e) {
+			e.preventDefault();
+			if (assinaturaModel.comunicacoesParaAssinar.length > 0) {
+				assinaturaModel.setDocumentosASeremAssinados(assinaturaModel.comunicacoesParaAssinar);
+				flowService.irParaSenha();
+			} else {
+				msgService.clear();
+				msgService.addError("Nenhum expediente para assinar.");
+				msgService.show();
+			}
+		});
+
+		$('.atualizar-documentos').click(function(e) {
+			e.preventDefault();
+			console.log('atualizar documentos');
+			self.update(true);
+		});
+		
+		var idDivTabelaTextos = 'div-tabela-textos';
+		var idDivTabelaExpedientes = 'div-tabela-expedientes';
+		var toggleTables = togglesUtil.viewsToggle([idDivTabelaTextos, idDivTabelaExpedientes]);
+		var idBtnTabelaTextos = 'btn-tabela-textos';
+		var idBtnTabelaExpedientes = 'btn-tabela-expedientes';
+		var botoesTabelaToggle = togglesUtil.toggle([idBtnTabelaTextos, idBtnTabelaExpedientes]);
+		botoesTabelaToggle.toggleWith('click');
+		botoesTabelaToggle.toggleCallback(function(domEl, id, e) {
+			 e.preventDefault();
+			 $(domEl).tab('show');
+		});
+	};
+	
+	registerEvents();
+});

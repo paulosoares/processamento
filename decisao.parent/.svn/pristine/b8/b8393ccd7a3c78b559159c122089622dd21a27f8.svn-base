@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<assinadorweb:stfassinadorconfig xmlns:assinadorweb="http://www.stf.jus.br/assinadorweb"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.stf.jus.br/assinadorweb assinadorweb.xsd ">
+	<assinadorClientJarPath>${assinadorweb.client.jar.path}</assinadorClientJarPath>
+	<servidorCarimbadorSerpro>http://carimbo.stf.jus.br/carimbador/carimbar</servidorCarimbadorSerpro>
+	<provider>br.jus.stf.assinadorweb.client.assinador.provider.AssinadorSunMSCapi</provider>
+	<numeroThreadsAssinatura>3</numeroThreadsAssinatura>
+	<handlers>
+		<handler handlerClass="br.jus.stf.estf.decisao.texto.support.AssinarTextoHandler" requestClass="br.jus.stf.estf.decisao.texto.support.RequisicaoAssinaturaTexto" />
+		<handler handlerClass="br.jus.stf.estf.decisao.comunicacao.support.AssinarComunicacaoHandler" requestClass="br.jus.stf.estf.decisao.comunicacao.support.RequisicaoAssinaturaComunicacao" />
+		<handler handlerClass="br.jus.stf.estf.decisao.documento.support.AssinarDocumentoHandler" requestClass="br.jus.stf.estf.decisao.documento.support.RequisicaoAssinaturaDocumento" />
+		<handler handlerClass="br.jus.stf.estf.decisao.texto.support.TestarAssinaturaTextoHandler" requestClass="br.jus.stf.estf.decisao.texto.support.RequisicaoTesteAssinaturaTexto" />
+		<handler handlerClass="br.jus.stf.estf.decisao.comunicacao.support.TestarAssinaturaComunicacaoHandler"
+			requestClass="br.jus.stf.estf.decisao.comunicacao.support.RequisicaoTesteAssinaturaComunicacao" />
+	</handlers>
+	<configuracaoEmail>
+		<mailSenderBeanId>javaMailSender</mailSenderBeanId>
+		<nomeSistema>eSTF-Decisão</nomeSistema>
+		<remetenteEmail>estfdecisao.notificador@stf.jus.br</remetenteEmail>
+		<destinatariosEmailErro>
+			<destinatario email="G-SSNE.GER@stf.jus.br" />
+			<destinatario email="G-DECISAO.SSNE@stf.jus.br" />
+		</destinatariosEmailErro>
+	</configuracaoEmail>
+</assinadorweb:stfassinadorconfig>

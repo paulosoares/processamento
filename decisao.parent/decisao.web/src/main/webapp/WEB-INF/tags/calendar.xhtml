@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:s="http://jboss.com/products/seam/taglib"
+    xmlns:ui="http://java.sun.com/jsf/facelets"
+    xmlns:f="http://java.sun.com/jsf/core"
+    xmlns:h="http://java.sun.com/jsf/html"
+    xmlns:rich="http://richfaces.org/rich"
+    xmlns:a="http://richfaces.org/a4j"
+    xmlns:c="http://java.sun.com/jstl/core">
+	<rich:calendar value="#{value}"
+				   required="#{required}"
+				   inputSize="10"
+				   popup="true"
+				   datePattern="#{datePattern == null ? 'dd/MM/yyyy' : datePattern}"
+				   showWeeksBar="false"
+				   showFooter="true"
+				   firstWeekDay="0"
+				   zindex="999"
+				   onexpand="jQuery(this).detach().appendTo('body');"
+				   verticalOffset="3"
+				   id="#{id}"
+				   disabled="#{disabled == null ? 'false' : disabled}">
+		<f:facet name="header">
+			<h:panelGrid columns="3" width="100%" columnClasses="rich-calendar-tool, rich-calendar-month">
+				<h:outputText value="{previousMonthControl}" style="font-weight:bold;"/>
+				<h:outputText value="{currentMonthControl}" style="font-weight:bold;"/>
+				<h:outputText value="{nextMonthControl}" style="font-weight:bold;"/>
+	        </h:panelGrid>
+    	</f:facet>
+    	
+		<f:facet name="weekDay">
+			<h:outputText value="{weekDayLabelShort}"/>
+		</f:facet>
+	</rich:calendar>
+</ui:composition>

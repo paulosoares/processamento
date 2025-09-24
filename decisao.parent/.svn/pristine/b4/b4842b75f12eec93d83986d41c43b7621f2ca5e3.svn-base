@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:s="http://jboss.com/products/seam/taglib"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:rich="http://richfaces.org/rich"
+	xmlns:a="http://richfaces.org/a4j"
+	xmlns:c="http://java.sun.com/jstl/core"
+	xmlns:stf="http://www.stf.jus.br/custom-components">
+
+	<s:decorate id="imprimirResultadoPesquisaTextos"
+		template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="principal" />
+		<ui:define name="descricao">
+			Imprimir Resultado da Pesquisa
+		</ui:define>
+		<ui:define name="conteudo">
+			<a:outputPanel id="mensagens">
+				<stf:messages height="13px"/>
+			</a:outputPanel>
+			<span>Obs.: A quantidade máxima de campos permitida é 8 (oito).</span>
+			<s:decorate template="/common/decorators/edit.xhtml"
+				style="margin-top: 5px">
+				<rich:pickList value="#{actionFacesBean.listaColunasSelecionadas}"
+					copyControlLabel="Copiar" 
+					copyAllControlLabel="Copiar Todos" 
+					copyAllVisible="false" 
+					removeControlLabel="Remover" 
+					removeAllControlLabel="Remover Todos"
+					sourceListWidth="160px"
+					targetListWidth="160px">
+					<f:selectItems value="#{actionFacesBean.listaColunas}" />
+				</rich:pickList>
+			</s:decorate>
+		</ui:define>
+		<ui:define name="botoes">
+			<h:commandButton value="Gerar Relatório" action="#{actionFacesBean.report}" id="report" />
+		</ui:define>
+	</s:decorate>
+
+</ui:composition>

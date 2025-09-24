@@ -1,0 +1,241 @@
+package br.jus.stf.estf.decisao.pesquisa.web.comunicacao;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Date;
+
+import java.awt.Color;
+import org.jboss.seam.ScopeType;
+import org.jboss.seam.annotations.In;
+import org.jboss.seam.annotations.Logger;
+import org.jboss.seam.annotations.Name;
+import org.jboss.seam.annotations.Scope;
+import org.jboss.seam.faces.FacesMessages;
+import org.jboss.seam.log.Log;
+import org.springframework.security.Authentication;
+import org.springframework.security.context.SecurityContextHolder;
+
+import com.fasterxml.jackson.core.base.GeneratorBase;
+import com.lowagie.text.Chunk;
+import com.lowagie.text.DocumentException;
+import com.lowagie.text.Element;
+import com.lowagie.text.Font;
+import com.lowagie.text.Phrase;
+import com.lowagie.text.Rectangle;
+import com.lowagie.text.pdf.ColumnText;
+import com.lowagie.text.pdf.PdfContentByte;
+import com.lowagie.text.pdf.PdfReader;
+import com.lowagie.text.pdf.PdfStamper;
+import com.sun.star.awt.FontFamily;
+
+import br.gov.stf.estf.documento.model.service.ComunicacaoService;
+import br.gov.stf.estf.documento.model.service.DocumentoComunicacaoService;
+import br.gov.stf.estf.entidade.documento.DocumentoComunicacao;
+import br.gov.stf.estf.entidade.documento.DocumentoEletronico;
+import br.gov.stf.estf.entidade.documento.TipoComunicacao;
+import br.gov.stf.estf.entidade.documento.PecaProcessoEletronicoComunicacao;
+import br.gov.stf.framework.model.service.ServiceException;
+import br.jus.stf.estf.decisao.pesquisa.domain.ComunicacaoDto;
+import br.jus.stf.estf.decisao.pesquisa.domain.Pesquisa;
+import br.jus.stf.estf.decisao.pesquisa.service.PesquisaService;
+import br.jus.stf.estf.decisao.support.controller.context.FacesBean;
+import br.jus.stf.estf.decisao.support.controller.faces.datamodel.PagedList;
+import br.jus.stf.estf.decisao.support.security.Principal;
+import br.jus.stf.estf.decisao.support.util.GlobalFacesBean;
+import br.jus.stf.estf.decisao.support.util.ReportUtils;
+import br.jus.stf.estf.decisao.support.util.STFOfficeUtils;
+import br.jus.stf.estf.report.ReportOutputStrategy;
+import br.jus.stf.estf.decisao.objetoincidente.service.ObjetoIncidenteService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+
+/**
+ * Bean JSF (Seam Component) para controle e tratamento de eventos de tela associados a 
+ * Comunicacao. Usado pelo mecanismo de pesquisa para recuperação e edição de informações.
+ * 
+ * <p>Implementação <code>FacesBean</code> para Comunicações.
+ * 
+ */
+@Name("comunicacaoFacesBean")
+@Scope(ScopeType.CONVERSATION)
+public class ComunicacaoFacesBean extends STFOfficeUtils implements FacesBean<ComunicacaoDto>, ReportOutputStrategy {
+
+	@In("#{pesquisaService}")
+	private PesquisaService pesquisaService;
+
+	@In("#{documentoComunicacaoService}")
+	private DocumentoComunicacaoService documentoComunicacaoService;
+	
+	@In(value = "globalFacesBean", create = true)
+	private GlobalFacesBean globalFacesBean;
+	
+	@In
+	private FacesMessages facesMessages;
+	
+	@Qualifier("objetoIncidenteServiceLocal")
+	@Autowired
+	private ObjetoIncidenteService objetoIncidenteService;
+	
+	@Logger
+	private Log logger;
+	private TipoComunicacao tipoComunicacaoSelecionado;
+	private String nomeMinistroRelator;
+	private String dscNomeDocumento;
+	private String usuarioCriacao;
+	public Long idTipoComunicacaoSelecionado;
+	private Date dataCriacao;
+	private boolean refresh;
+	private File reportOutputFile;
+	private FileOutputStream reportOutputStream;
+
+	/**
+	 * @see br.jus.stf.estf.decisao.support.controller.context.FacesBean#search(br.jus.stf.estf.decisao.pesquisa.domain.Pesquisa, int, int)
+	 */
+	@Override
+	public PagedList<ComunicacaoDto> search(Pesquisa pesquisa, int first, int max) {
+		pesquisa.setFirstResult(first);
+		pesquisa.setMaxResults(max);
+		return pesquisaService.pesquisarComunicacoes(pesquisa);
+	}
+
+	/**
+	 * Carrega informações de texto e do conteúdo do texto.
+	 * 
+	 * @see br.jus.stf.estf.decisao.support.controller.context.FacesBean#load(java.lang.Object)
+	 */
+	@Override
+	public ComunicacaoDto load(ComunicacaoDto dto) {
+		return dto;
+	}
+	
+	/**
+	 * Gera o relatório e redireciona para download o texto selecionado na tela de 
+	 * listagem de resultados.
+	 * @param dto a Comunicação selecionada.
+	 * @throws IOException 
+	 * @throws DocumentException 
+	 */
+	public void gerarPDFComunicacao(ComunicacaoDto dto) throws IOException, DocumentException {
+		try {
+			if( dto.getId() != null ){
+				DocumentoComunicacao documentoComunicacao = documentoComunicacaoService.recuperarPorId(dto.getIdDocumentoComunicacao());
+				if ( documentoComunicacao != null && documentoComunicacao.getDocumentoEletronico().getArquivo() != null ) {
+					if(dto.getTipoConfidencialidade() !=null) {
+						byte[] pdf = documentoComunicacao.getDocumentoEletronico().getArquivo();
+						ByteArrayOutputStream retorno = new ByteArrayOutputStream(); 
+						PdfReader reader = new PdfReader(pdf);
+						PdfStamper stamper = new PdfStamper(reader, retorno);		
+						  Font f = new Font(FontFamily.MODERN, 18, Font.BOLD, Color.WHITE);	
+				        Chunk textAsChunk = new Chunk(dto.getTipoConfidencialidade().getDescricao().toUpperCase(), f);        
+				        textAsChunk.setBackground(Color.RED, 5 , 8, 5, 10);
+				        for( int i = 1; i <= reader.getNumberOfPages(); i++){        
+					        Rectangle pageSize = reader.getPageSize(i);
+					        PdfContentByte over = stamper.getOverContent(i);       
+					        Phrase p = new Phrase(textAsChunk); 
+					        over.saveState();       
+					        ColumnText.showTextAligned(over, Element.ALIGN_TOP, p, pageSize.getWidth() - 230, pageSize.getHeight() - 40, 0);
+					        over.restoreState();
+				        }
+				        stamper.close();
+				        reader.close();
+				        ReportUtils.report(new ByteArrayInputStream(retorno.toByteArray()));
+					}else {
+						ReportUtils.report(new ByteArrayInputStream(documentoComunicacao.getDocumentoEletronico().getArquivo()));
+					}
+				} else {
+					facesMessages.add("Não foi possível gerar o arquivo PDF.", dto);
+				}
+			}
+		} catch (ServiceException e) {
+			logger.error(e, dto.getId());
+			facesMessages.add(e.getMessage(), dto);
+		}
+	}
+	
+	public void gerarPDFVinculado(PecaProcessoEletronicoComunicacao dto) throws ServiceException {
+		if( dto != null && dto.getId() != null ){
+				ReportUtils.report(new ByteArrayInputStream(dto.getPecaProcessoEletronico().getDocumentos().get(0).getDocumentoEletronico().getArquivo()));
+				try {
+					objetoIncidenteService.registrarLogSistema(dto.getPecaProcessoEletronico().getObjetoIncidente(), "CONSULTA_PECA", "Consultar Peça Processual", dto.getPecaProcessoEletronico().getDocumentos().get(0).getPecaProcessoEletronico().getId(),"JUDICIARIO.PECA_PROCESSUAL");
+				}catch (Exception e) {
+					e.printStackTrace();
+					// TODO: handle exception
+				}
+				
+				
+			} else {
+				facesMessages.add("Não foi possível gerar o arquivo PDF.", dto);
+		}
+	}	
+
+	public boolean isRefresh() {
+		return refresh;
+	}
+
+	public String getUsuarioCriacao() {
+		return usuarioCriacao;
+	}
+
+	public void setUsuarioCriacao(String usuarioCriacao) {
+		this.usuarioCriacao = usuarioCriacao;
+	}
+	
+	public TipoComunicacao getTipoComunicacaoSelecionado() {
+		return tipoComunicacaoSelecionado;
+	}
+
+	public void setTipoComunicacaoSelecionado(
+			TipoComunicacao tipoComunicacaoSelecionado) {
+		this.tipoComunicacaoSelecionado = tipoComunicacaoSelecionado;
+	}
+
+	public String getNomeMinistroRelator() {
+		return nomeMinistroRelator;
+	}
+
+	public void setNomeMinistroRelator(String nomeMinistroRelator) {
+		this.nomeMinistroRelator = nomeMinistroRelator;
+	}
+
+	public String getDscNomeDocumento() {
+		return dscNomeDocumento;
+	}
+
+	public void setDscNomeDocumento(String dscNomeDocumento) {
+		this.dscNomeDocumento = dscNomeDocumento;
+	}
+
+	public Date getDataCriacao() {
+		return dataCriacao;
+	}
+
+	public void setDataCriacao(Date dataCriacao) {
+		this.dataCriacao = dataCriacao;
+	}
+
+	/**
+	 * Recupera o usuário autenticado. Esse usuário é encapsulado em um objeto
+	 * Principal que contém as credenciais do usuário.
+	 * 
+	 * @return o principal
+	 */
+	private Principal getPrincipal() {
+		return (Principal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+	}
+	
+	private Authentication getAuthentication() {
+		return (Authentication) SecurityContextHolder.getContext().getAuthentication();
+	}
+	
+	@Override
+	public OutputStream getOutputStreamFor(String reportName)
+			throws IOException {
+		reportOutputFile = File.createTempFile("report", ".tmp");
+		reportOutputStream = new FileOutputStream(reportOutputFile);
+		return reportOutputStream;
+	}
+}

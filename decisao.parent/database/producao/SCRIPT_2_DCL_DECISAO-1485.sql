@@ -1,0 +1,2 @@
+grant select, insert, update, delete on judiciario.restricao_classe_recurso to rs_decisao_gerente, rs_judiciario_gerente;
+GRANT SELECT ON JUDICIARIO.restricao_classe_recurso TO rs_decisao_consulta, rd_decisao_consulta, rs_epetcadastro, rs_ws_epet, rd_judiciario_consulta, rs_judiciario_consulta;

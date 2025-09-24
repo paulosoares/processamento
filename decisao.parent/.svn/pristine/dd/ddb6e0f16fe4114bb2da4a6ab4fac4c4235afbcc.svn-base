@@ -1,0 +1,1590 @@
+package br.jus.stf.estf.decisao.pesquisa.web;
+
+import static br.jus.stf.estf.decisao.support.util.ApplicationContextUtils.getApplicationContext;
+
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Stack;
+
+import javax.faces.context.FacesContext;
+import javax.faces.model.DataModel;
+import javax.faces.model.SelectItem;
+
+import org.jboss.seam.ScopeType;
+import org.jboss.seam.annotations.Create;
+import org.jboss.seam.annotations.In;
+import org.jboss.seam.annotations.Logger;
+import org.jboss.seam.annotations.Name;
+import org.jboss.seam.annotations.Out;
+import org.jboss.seam.annotations.Scope;
+import org.jboss.seam.faces.FacesMessages;
+import org.jboss.seam.international.StatusMessage.Severity;
+import org.jboss.seam.log.Log;
+import org.richfaces.event.DataScrollerEvent;
+import org.springframework.security.context.SecurityContextHolder;
+
+import br.gov.stf.estf.entidade.documento.ListaTextos;
+import br.gov.stf.estf.entidade.documento.TipoTexto;
+import br.gov.stf.estf.entidade.julgamento.Colegiado;
+import br.gov.stf.estf.entidade.julgamento.Colegiado.TipoColegiadoConstante;
+import br.gov.stf.estf.entidade.julgamento.ListaJulgamento;
+import br.gov.stf.estf.entidade.julgamento.Sessao;
+import br.gov.stf.estf.entidade.localizacao.Setor;
+import br.gov.stf.estf.entidade.ministro.Ministro;
+import br.gov.stf.estf.entidade.ministro.MinistroPresidente;
+import br.gov.stf.estf.entidade.processostf.ListaProcessos;
+import br.gov.stf.estf.entidade.processostf.ObjetoIncidente;
+import br.gov.stf.estf.entidade.usuario.ConfiguracaoUsuario;
+import br.gov.stf.estf.entidade.usuario.TipoConfiguracaoUsuario;
+import br.gov.stf.estf.impedimento.service.ImpedimentoService;
+import br.gov.stf.estf.julgamento.model.service.ListaJulgamentoService;
+import br.gov.stf.estf.localizacao.model.service.SetorService;
+import br.gov.stf.estf.ministro.model.service.MinistroPresidenteService;
+import br.gov.stf.estf.ministro.model.service.MinistroService;
+import br.gov.stf.framework.model.service.ServiceException;
+import br.jus.stf.estf.decisao.objetoincidente.service.ObjetoIncidenteService;
+import br.jus.stf.estf.decisao.pesquisa.domain.ComunicacaoDto;
+import br.jus.stf.estf.decisao.pesquisa.domain.ListaIncidentesDto;
+import br.jus.stf.estf.decisao.pesquisa.domain.ListaTextosDto;
+import br.jus.stf.estf.decisao.pesquisa.domain.ObjetoIncidenteDto;
+import br.jus.stf.estf.decisao.pesquisa.domain.Pesquisa;
+import br.jus.stf.estf.decisao.pesquisa.domain.Pesquisa.TipoPesquisa;
+import br.jus.stf.estf.decisao.pesquisa.domain.TextoDto;
+import br.jus.stf.estf.decisao.pesquisa.domain.TipoTextoDto;
+import br.jus.stf.estf.decisao.pesquisa.service.PesquisaService;
+import br.jus.stf.estf.decisao.pesquisa.web.incidente.IncidenteFacesBean;
+import br.jus.stf.estf.decisao.pesquisa.web.texto.TextoFacesBean;
+import br.jus.stf.estf.decisao.support.action.support.ActionController;
+import br.jus.stf.estf.decisao.support.action.support.ActionHolder;
+import br.jus.stf.estf.decisao.support.action.support.ActionIdentification;
+import br.jus.stf.estf.decisao.support.action.support.ActionInterface;
+import br.jus.stf.estf.decisao.support.controller.context.Context;
+import br.jus.stf.estf.decisao.support.controller.context.Context.ContextType;
+import br.jus.stf.estf.decisao.support.controller.context.ContextConfiguration;
+import br.jus.stf.estf.decisao.support.controller.context.FacesBean;
+import br.jus.stf.estf.decisao.support.controller.faces.datamodel.ListDataModel;
+import br.jus.stf.estf.decisao.support.controller.faces.datamodel.PagedList;
+import br.jus.stf.estf.decisao.support.controller.faces.datamodel.PagedListDataModel;
+import br.jus.stf.estf.decisao.support.query.Dto;
+import br.jus.stf.estf.decisao.support.query.Selectable;
+import br.jus.stf.estf.decisao.support.security.PermissionChecker;
+import br.jus.stf.estf.decisao.support.security.Principal;
+import br.jus.stf.estf.decisao.support.security.UserFacesBean;
+import br.jus.stf.estf.decisao.support.util.GlobalFacesBean;
+
+/**
+ * Ponto central de controle para pesquisas e visualização de resultados. 
+ * 
+ * @author Rodrigo Barreiros
+ * @since 30.04.2010
+ */
+@Name("principalFacesBean")
+@Scope(ScopeType.CONVERSATION)
+public class PrincipalFacesBean {
+
+	@Logger
+	private Log logger;
+	
+	private static final int DEFAULT_PAGE_SIZE = 25;
+
+	private Map<Class<?>, ActionController<?>> controllers = new HashMap<Class<?>, ActionController<?>>();
+
+	@Out("pesquisaAvancada")
+	private Pesquisa pesquisaAvancada = new Pesquisa();
+	private Pesquisa pesquisaPrincipal = new Pesquisa();
+	private boolean exibirPesquisaAvancada;
+	
+	private Long seqObjetoIncidente;
+	private Long codSetor;
+	private String idActionFrame;
+	
+	private Stack<Context> trilha = new Stack<Context>();
+	private Integer pageSize = DEFAULT_PAGE_SIZE;
+	private Context currentContext;
+	
+
+	@In
+	private FacesMessages facesMessages;
+
+	@In(value = "actionHolder", create = true)
+	private ActionHolder<?> actionHolder;
+
+	@In("#{objetoIncidenteServiceLocal}")
+	private ObjetoIncidenteService objetoIncidenteService;
+	
+	@In("#{ministroService}")
+	private MinistroService ministroService;
+	
+	@In("#{setorService}")
+	private SetorService setorService;
+
+	@In(value = "globalFacesBean", create = true)
+	private GlobalFacesBean globalFacesBean;
+	
+	@In("#{pesquisaService}")
+	private PesquisaService pesquisaService;
+	
+	@In("#{permissionChecker}")
+	private PermissionChecker permissionChecker;
+	
+	@In("#{userFacesBean}")
+	private UserFacesBean userFacesBean;
+	
+	@In("#{incidenteFacesBean}")
+	private IncidenteFacesBean incidenteFacesBean;
+	
+	@In("#{impedimentoService}")
+	private ImpedimentoService impedimentoService;
+	
+	@In("#{ministroPresidenteService}")
+	private MinistroPresidenteService ministroPresidenteService;
+	
+	private ObjetoIncidenteDto objetoIncidenteNovoTexto;
+
+	private String tipoRegistro;
+	
+	private String nomeConfiguracaoPesquisa;
+	
+	private String escopoConfiguracaoPesquisa;
+	
+	private Long configuracaoPesquisa;
+	
+	private boolean renderedNovaConfiguracaoPesquisa;
+	
+	private String idTipoPesquisaRapida;
+	
+	private List<TipoTextoDto> tiposTextoDto;
+	
+	private boolean temImpedimento = false;
+
+	@In("#{listaJulgamentoService}")
+	private ListaJulgamentoService listaJulgamentoService;
+	
+	private List<ListaJulgamento> listasJulgamento = new ArrayList<ListaJulgamento>();
+		
+	/**
+	 * Realiza a pesquisa avançada dado o tipo de objeto resultado. Por exemplo, caso a pesquisa seja
+	 * por Textos, o Bean JSF corresponde será recuperado e a pesquisa por textos será adicionada
+	 * passando o objeto de pesquisa avançada. O contexto de apresentação será criado
+	 * dado o DataModel gerado com base na pesquisa de textos.
+	 * 
+	 * @param clazz a classe do objeto resultado
+	 * @param <T> o tipo do objeto resultado
+	 * @see ContextConfiguration
+	 */
+	public <T extends Dto> void pesquisar(Class<T> clazz) {
+		limparCamposNaoPreenchidos();
+		obterTiposTexto();
+		
+		pesquisaAvancada.setTipoPesquisa(TipoPesquisa.valueOf(clazz));
+		
+		if (!isPesquisaValida(pesquisaAvancada, clazz)) {
+			return;
+		}
+		
+		Principal principal = (Principal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		if (principal.getMinistro() != null && principal.getMinistro().getSetor() != null) {
+			pesquisaAvancada.put("idSetorMinistroLogado", principal.getMinistro().getSetor().getId());
+		}
+
+		// Selecionando o Bean JSF responsável pela pesquisa...
+		final FacesBean<T> searchFacesBean = ContextConfiguration.getFacesBean(clazz);
+
+		// Criando o contexto de apresentação para a pesquisa avançada...
+		currentContext = new Context(new PagedListDataModel<T>(pageSize) {
+			public PagedList<T> fetchPage(final int start, final int size) {
+				return searchFacesBean.search(pesquisaAvancada, start, size);
+			}
+		});
+
+		// Setando controlador de ações para entidade pesquisada...
+		ActionController<T> actionController = getActionControllerInstance(clazz);
+		addOptions(actionController);
+		currentContext.setActionController(actionController);
+
+		// Setando a pagina para apresentação de resultados...
+		currentContext.setPage(ContextConfiguration.getListPage(clazz));
+
+		// Setando tipo de contexto...
+		currentContext.setType(ContextType.LIST);
+
+		// Resetando o scroller e a trilha de contextos...
+		currentContext.setPageIndex(1);
+
+		// A pesquisa deve limpar a ação que está no ActionHolder
+		actionHolder.clean();
+		actionHolder.setActionController(actionController);
+		trilha.clear();
+
+		setTipoRegistro(clazz);
+		
+		// Se a opção de Abrir no painel de visualização estiver marcada, abre o primeiro registro no painel de visualização
+		if (pesquisaAvancada.isNotBlank("painelVisualizacao")
+				&& (Boolean) pesquisaAvancada.get("painelVisualizacao")
+				&& currentContext.getResult() != null
+				&& currentContext.getResult().getRowCount() > 0) {
+			final TextoFacesBean textoFacesBean = (TextoFacesBean) ContextConfiguration.getFacesBean(TextoDto.class);
+			TextoDto texto = textoFacesBean.load((TextoDto) currentContext.getResult().getRowData(0));
+			visualizar(currentContext.getResult(), texto, false);
+		}
+	}
+
+	private <T extends Dto> boolean isPesquisaValida(Pesquisa pesquisa, Class<T> clazz) {
+		boolean isValido = true;
+		// O usuário deve informar pelo menos um critério de busca.
+		// Verificando...
+		if (pesquisa.isBlank() && !clazz.equals(ListaIncidentesDto.class)
+				&& !clazz.equals(ListaTextosDto.class) && !clazz.equals(ComunicacaoDto.class)) {
+			facesMessages.add("Informe pelo menos um filtro (critério) para a pesquisa.");
+			isValido = false;
+		}
+		
+		if (pesquisa.isNotBlank("colegiado")
+				&& !pesquisa.isNotBlank("agendamento")
+						&& !pesquisa.isNotBlank("inicioDataSessaoJulgamento") 
+						&& !pesquisa.isNotBlank("fimDataSessaoJulgamento")) {
+			facesMessages.add("O preenchimento do critério Colegiado exige que o usuário preencha o critério Agendamento ou Data Sessão.");
+			isValido = false;
+		}
+		
+		if (pesquisa.isNotBlank("inicioDataSessaoJulgamento") && !pesquisa.isNotBlank("fimDataSessaoJulgamento")) {
+			facesMessages.add("O preenchimento do Data de Sessão inicial exige que o usuário preencha a Data de Sessão final.");
+			isValido = false;
+		}
+		
+		if (!pesquisa.isNotBlank("inicioDataSessaoJulgamento") && pesquisa.isNotBlank("fimDataSessaoJulgamento")) {
+			facesMessages.add("O preenchimento do Data de Sessão final exige que o usuário preencha a Data de Sessão inicial.");
+			isValido = false;
+		}
+		
+		if (pesquisa.isNotBlank("inicioDataSessaoJulgamento") && pesquisa.isNotBlank("fimDataSessaoJulgamento")) {
+			Date inicio = (Date) pesquisa.get("inicioDataSessaoJulgamento");
+			Date fim = (Date) pesquisa.get("fimDataSessaoJulgamento");
+			if (inicio.compareTo(fim) > 0) {
+				facesMessages.add("A Data de Sessão final deve ser maior ou igual à Data de Sessão inicial.");
+				isValido = false;
+			}
+		}
+		
+		return isValido;
+	}
+
+	private void obterTiposTexto() {
+		pesquisaAvancada.getParameters().remove("tiposTexto");
+		List<Long> selecionados = obterIdsTiposTextoSelecionados();
+		if (selecionados != null && selecionados.size() > 0) {
+			pesquisaAvancada.put("tiposTexto", selecionados);
+		} 
+	}
+
+	private List<Long> obterIdsTiposTextoSelecionados() {
+		List<Long> selecionados = new ArrayList<Long>();
+		for (TipoTextoDto dto : getTiposTextoDto()) {
+			if (dto.isSelected()) {
+				selecionados.add(dto.getId());
+			}
+		}
+		return selecionados;
+	}
+
+	/**
+	 * Carrega um dado objeto para visualização em tela. O Bean JSF que fará a carga do objeto,
+	 * será selecionado a partir do tipo de objeto. Por exemplo, para visualizar um incidente 
+	 * selecionado a partir da pesquisa de incidentes, o Bean JSF correspondente será 
+	 * carregado e o contexto de apresentação será criado a partir do contexto de 
+	 * origem do objeto selecionado. Isso é necessário para manter parte do contexto
+	 * anterior, como a quantidade total de registros e a página onde o objeto foi
+	 * selecionado.  
+	 * @param <T>
+	 * @param parent
+	 * @param entidade
+	 */
+	public <T extends Dto> void visualizar(final DataModel parent, final T entidade) {
+		visualizar(parent, entidade, true);
+	}
+
+	/**
+	 * Carrega um dado objeto para visualização em tela. O Bean JSF que fará a carga do objeto,
+	 * será selecionado a partir do tipo de objeto. Por exemplo, para visualizar um incidente 
+	 * selecionado a partir da pesquisa de incidentes, o Bean JSF correspondente será 
+	 * carregado e o contexto de apresentação será criado a partir do contexto de 
+	 * origem do objeto selecionado. Isso é necessário para manter parte do contexto
+	 * anterior, como a quantidade total de registros e a página onde o objeto foi
+	 * selecionado.  
+	 * 
+	 * @param parent o DataModel a partir do qual o objeto foi selecionado
+	 * @param entidade o objeto selecionado
+	 * @param <T> o tipo do objeto selecionado
+	 * @param incluirNaTrilha Se o contexto atual deve ser incluído na trilha.
+	 * @see ContextConfiguration
+	 */
+	@SuppressWarnings("unchecked")
+	public <T extends Dto> void visualizar(final DataModel parent, final T entidade, boolean incluirNaTrilha) {
+		final FacesBean<T> viewFacesBean = (FacesBean<T>) ContextConfiguration.getFacesBean(entidade.getClass());
+		Context newContext = null;
+		int newIndex = -1;
+
+		if (parent != null) {
+			if (parent instanceof PagedListDataModel<?>) {
+				// Visualizar disparado da tela resultado da pesquisa paginada.
+				newContext = new Context(new PagedListDataModel<T>(1) {
+					private PagedList<T> current = ((PagedListDataModel) parent).getPage();
+
+				    @Override
+				    public int getRowCount() {
+				        return current.getTotal();
+				    }
+				    
+					public PagedList<T> fetchPage(int start, int size) {
+						// Se o objeto que devemos carregar será fora do limite
+						// da página corrente, devemos carregar a próxima
+						// página.
+						if ((size > 1) && (current == null || ((start < current.getStart() || start >= (current.getStart() + pageSize)) && !current.hasMorePagesLoaded()))) {
+							current = ((PagedListDataModel) parent).fetchPage(start - (start % pageSize), pageSize);
+						}
+						// Dentro da página corrente, o index da entidade que
+						// devemos carregar será o resto da divisão do index
+						// enviado pelo tamanho da página. Ex.: se o usuário
+						// seleciona no paginador a entidade de index 14 e o
+						// tamanho
+						// da página é 10, carregaremos, da página carrente, a
+						// entidade de index 4.
+						T entidade = viewFacesBean.load(current.getResults().get(current.hasMorePagesLoaded() ? start : start % pageSize));
+						return new PagedList<T>(Arrays.asList(entidade), start, current.getTotal());
+					}
+
+					public Dto getRowData(int index) {
+						if (!current.hasMorePagesLoaded()) {
+							if (index < current.getStart() || index >= (current.getStart() + pageSize)) {
+								fetchPage(((int) index / pageSize) * pageSize, pageSize);
+							}
+							index = index % pageSize;
+						}
+						return current.getResults().get(index);
+					}
+					
+					public void reset() {
+						Set<T> oldSelecteds = getSelecteds();
+						Set<T> newSelecteds = new LinkedHashSet<T>();
+						for (T dto : oldSelecteds) {
+							T rowData = viewFacesBean.load(dto);
+							newSelecteds.add(rowData);
+						}
+						unselectAll();
+						getSelecteds().addAll(newSelecteds);
+					}
+				});
+				newIndex = parent.getRowIndex() + 1;
+			} else {
+				// Visualizar disparado da lista de detalhes (textos do
+				// ministro, por exemplo).
+				newContext = new Context(new ListDataModel<T>((List) parent.getWrappedData()) {
+					public Object getRowData() {
+						if (super.getRowData() != null) {
+							return viewFacesBean.load((T) super.getRowData());
+						} else {
+							return null;
+						}
+					}
+
+					public void reset() {
+						Set<T> oldSelecteds = getSelecteds();
+						Set<T> newSelecteds = new LinkedHashSet<T>();
+						for (T dto : oldSelecteds) {
+							T rowData = viewFacesBean.load(dto);
+							newSelecteds.add(rowData);
+						}
+						unselectAll();
+						getSelecteds().addAll(newSelecteds);
+//						super.reset();
+//						((ListDataModel) parent).select((Dto) getRowData());
+					}
+				});
+
+				newIndex = ((List) parent.getWrappedData()).indexOf(entidade) + 1;
+			}
+		} else {
+			// Visualizar disparado sem parent (suggestion box, por exemplo).
+			newContext = new Context(new ListDataModel<T>(viewFacesBean.load(entidade)) {
+				public void reset() {
+					setDataModelWrapper(Arrays.asList(viewFacesBean.load(entidade)));
+				}
+			});
+			newIndex = newContext.getResult().getRowIndex() + 1;
+		}
+
+		// Setando controlador de ações para entidade visualizada...
+		ActionController<?> actionController = getActionControllerInstance(entidade.getClass());
+		addOptions(actionController);
+		actionHolder.setActionController(actionController);
+		newContext.setActionController(actionController);
+
+		// Setando a pagina para apresentação de resultados...
+		newContext.setPage(ContextConfiguration.getViewPage(entidade.getClass()));
+
+		// Selecionando objeto que será visualizado...
+		// Necessário para acionar o carregamento das ações.
+		newContext.getResult().select(entidade);
+
+		// Setando tipo de contexto...
+		newContext.setType(ContextType.VIEW);
+
+		// Se existia um context anterior, devemos armazená-lo para posterior
+		// restauração.
+		if (currentContext != null && incluirNaTrilha) {
+			trilha.push(currentContext);
+		}
+
+		// Setando novo contexto...
+		newContext.setPageIndex(newIndex);
+		currentContext = newContext;
+		
+		setTipoRegistro(entidade.getClass());
+	}
+
+	/**
+	 * Executa uma ação em função do tipo de incidente. Se for um incidente fake, entende-se
+	 * não devemos carrega-lo para visualização e sim pesquisar todos os textos
+	 * vinculados a ele, por isso preechemos o id do incidente no objeto de pesquisa
+	 * e executamos a pesquisa avançada.
+	 * 
+	 * <p>Se for um incidente real (não fake), disparamos a visualização normalmente
+	 * 
+	 * @param incidente o incidente alvo
+	 */
+	public void executar(ObjetoIncidenteDto incidente) {
+		if (incidente != null) {
+			this.objetoIncidenteNovoTexto = incidente;
+			if (incidente.isFake()) {
+				pesquisaAvancada.put("objetoIncidente", incidente);
+				pesquisaAvancada.put("identificacao", incidente.getIdentificacao());
+				this.pesquisar(TextoDto.class);
+			} else {
+				this.visualizar(null, incidente, false);
+			}
+			verificarImpedimento(incidente.getId());
+		}	
+		
+		// O tamanho da página será sempre o default
+		this.pageSize = DEFAULT_PAGE_SIZE;
+		
+		// Limpa a configuração de pesquisa selecionada
+		this.configuracaoPesquisa = null;
+	}
+	
+	/**
+	 * Visualiza um incidente a partir de uma chamada HTTP via método GET.
+	 * Os parâmetros a serem passados são: seqObjetoIncidente e codSetor
+	 * (este último é opcional). 
+	 */
+	public void visualizarIncidente() {
+		if (seqObjetoIncidente != null) {
+			ObjetoIncidenteDto dto = carregarIncidente();
+			executar(dto);
+			pesquisaPrincipal.getParameters().put("identificacao", dto.getIdentificacao());
+			
+			seqObjetoIncidente = null;
+			codSetor = null;
+		}
+	}
+	
+	/**
+	 * Visualiza uma ação sobre um incidente a partir de uma chamanda HTTP via GET 
+	 */
+	@SuppressWarnings({"unchecked", "rawtypes"})
+	public void visualizarFrameAcao() {
+		
+		if (seqObjetoIncidente != null && idActionFrame != null) {
+			ObjetoIncidenteDto dto = carregarIncidente();
+				
+			Set<ObjetoIncidenteDto> setIncidente = new HashSet<ObjetoIncidenteDto>(0);
+			setIncidente.add(dto);
+			for (ActionInterface action : getActionControllerInstance(ObjetoIncidenteDto.class).getActions(setIncidente)) {
+				if (action.getDefinition().getId().equals(idActionFrame)) {
+					actionHolder.setAction(action);
+					actionHolder.getAction().setActionFrame(true);
+				}
+			}
+			
+			seqObjetoIncidente = null;
+			codSetor = null;
+		}
+	}
+
+	private ObjetoIncidenteDto carregarIncidente() {
+		Principal principal = (Principal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		try {
+			if (codSetor == null) {
+				codSetor = principal.getUsuario().getSetor().getId();
+			}
+			
+			Setor setor = setorService.recuperarPorId(codSetor);
+			if (principal.getSetores().contains(setor) || permissionChecker.hasPermission(principal, ActionIdentification.ACESSAR_TODOS_OS_GABINETES)) {
+				principal.setIdSetor(codSetor);
+				principal.setMinistro(ministroService.recuperarMinistro(setor));
+			}
+			
+		} catch (ServiceException e) {
+			logger.error(e.getMessage(), e);
+		}
+		
+		IncidenteFacesBean incidenteFacesBean = (IncidenteFacesBean) ContextConfiguration.getFacesBean(ObjetoIncidenteDto.class);
+		ObjetoIncidenteDto dto = new ObjetoIncidenteDto();
+		dto.setId(seqObjetoIncidente);
+		dto = incidenteFacesBean.load(dto);
+		return dto;
+	}	
+
+	/**
+	 * Recupera o contexto anterior e o restaura (apresenta na tela).
+	 */
+	@SuppressWarnings("unchecked")
+	public void voltar() {
+		currentContext.getResult().unselectAll();
+		
+		currentContext = trilha.pop();
+		
+		//currentContext.getResult().reset();
+		
+		// Muda o tipo de registro exibido no datascroller.
+		setTipoRegistro(currentContext.getActionController().getResourceClass());
+	}
+
+	/**
+	 * Recupera o contexto anterior atualizado e o restaura (apresenta na tela).
+	 */
+	@SuppressWarnings("unchecked")
+	public void voltarAtualizando() {
+		currentContext.getResult().unselectAll();
+		
+		currentContext = trilha.pop();
+		
+		currentContext.getResult().reset();
+		
+		// Muda o tipo de registro exibido no datascroller.
+		setTipoRegistro(currentContext.getActionController().getResourceClass());
+	}
+
+	/**
+	 * Evento de paginação disparado pelo Data Scroller da tela principal (principal.xhtml)
+	 * 
+	 * <p>Utilizado para selecionar o registro quando paginando via visualizador 
+	 * de resultados. É necessário para que o ActionController posso recuperar
+	 * o recurso selecionado e montar a lista de ações correspondente.
+	 * 
+	 * @param event o evento de paginação
+	 */
+	@SuppressWarnings("unchecked")
+	public void paginar(DataScrollerEvent event) {
+		int index = event.getPage();
+		if (currentContext.getType().equals(ContextType.VIEW)) {
+			Dto rowData = null;
+			try {
+				rowData = currentContext.getResult().getRowData(event.getPage() - 1);
+			} catch (IndexOutOfBoundsException e) {
+				currentContext.getResult().reset();
+				rowData = currentContext.getResult().getRowData(currentContext.getResult().getRowCount() - 1);
+				index = currentContext.getResult().getRowCount();
+			}
+			
+//			if (pesquisaAvancada.isNotBlank("painelVisualizacao")
+//					&& (Boolean) pesquisaAvancada.get("painelVisualizacao")
+//					&& currentContext.getResult() != null
+//					&& currentContext.getResult().getRowCount() > 0) {
+//				final TextoFacesBean textoFacesBean = (TextoFacesBean) ContextConfiguration.getFacesBean(TextoDto.class);
+//				rowData = textoFacesBean.load((TextoDto) rowData);
+//			}
+				if (null != pesquisaAvancada.getTipoPesquisa() && pesquisaAvancada.getTipoPesquisa().name().equals("TEXTOS")) {
+					final TextoFacesBean textoFacesBean = (TextoFacesBean) ContextConfiguration.getFacesBean(TextoDto.class);
+					rowData = textoFacesBean.load((TextoDto) rowData);
+				}
+			currentContext.getResult().select(rowData);
+		}
+		currentContext.setPageIndex(index);
+	}
+
+	/**
+	 * Altera o tipo de pesquisa para visualização.
+	 * 
+	 * @param tipoPesquisa o tipo de pesquisa solicitado
+	 */
+	public void changeTipoPesquisa() {
+		this.exibirPesquisaAvancada = !exibirPesquisaAvancada;
+		// Reset o bean ao mudar o tipo de pesquisa.
+		this.currentContext = null;
+		this.pesquisaAvancada = new Pesquisa();
+		this.inicializarCamposPadrao();
+		this.objetoIncidenteNovoTexto = null;
+		this.configuracaoPesquisa = null;
+		this.tiposTextoDto = null;
+		setListasJulgamento(new ArrayList<ListaJulgamento>());
+	}
+	
+	public void limpar() {
+		this.currentContext = null;
+		this.pesquisaAvancada = new Pesquisa();
+		this.inicializarCamposPadrao();
+		this.objetoIncidenteNovoTexto = null;
+		this.configuracaoPesquisa = null;
+		this.tiposTextoDto = null;
+		setListasJulgamento(new ArrayList<ListaJulgamento>());
+	}
+	
+	private void inicializarCamposPadrao() {
+		if (this.exibirPesquisaAvancada && this.userFacesBean.getPrincipal().getMinistro() != null) {
+			this.pesquisaAvancada.put("nomeMinistroTexto", this.userFacesBean.getPrincipal().getMinistro().getNome());
+			this.pesquisaAvancada.put("idMinistroTexto", this.userFacesBean.getPrincipal().getMinistro().getId());
+		}
+	}
+	// --------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Instancia e retorna o Action Controller associado a um dado de tipo de recurso.
+	 * 
+	 * @param <T> o tipo de recurso
+	 * @param clazz a classe do recurso
+	 * @return o Action Controller
+	 */
+	@SuppressWarnings("unchecked")
+	public <T extends Selectable> ActionController<T> getActionControllerInstance(Class<T> clazz) {
+		ActionController<T> actionController = (ActionController<T>) controllers.get(clazz);
+		if (actionController == null) {
+			actionController = (ActionController<T>) getApplicationContext().getBean("actionController", new Object[] {clazz} );
+			controllers.put(clazz, actionController);
+		}
+		return actionController;
+	}
+
+	/**
+	 * Recupera a Ação Novo de Acordo com o tipo de contexto.
+	 * 
+	 * @param context o contexto corrente
+	 * @return a ação novo texto
+	 */
+	@SuppressWarnings("unchecked")
+	public ActionInterface getAcaoNovoTexto(Context context) {
+		ActionInterface newAction;
+		newAction = (ActionInterface) getApplicationContext().getBean("novoTextoParaObjetoIncidenteActionFacesBean");
+		if (isContextoDeUnicoProcessoSelecionado(context)) {
+			newAction.setResources(context.getResult().getSelecteds());
+		} else {
+			// Se algum processo estiver selecionado, define o processo que será
+			// carregado por default na ação.
+			newAction.setResources(getObjetoIncidenteNovoTexto());
+		}
+		return newAction;
+	}
+	
+	/**
+	 * Retorna as ações que devem estar disponíveis sem recursos.
+	 * @return
+	 */
+	@SuppressWarnings("rawtypes")
+	private List<ActionInterface> getAcoesQualquerContexto() {
+		List<ActionInterface> acoes = new ArrayList<ActionInterface>();
+		adicionarAcaoQualquerContexto(acoes,ActionIdentification.ATUALIZAR_MACROS_ATALHOS,(ActionInterface) getApplicationContext().getBean("atualizarMacrosAtalhosActionFacesBean"));
+
+		Principal principal = (Principal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		if ( principal.getMinistro() != null ) {
+			adicionarAcaoQualquerContexto(acoes,ActionIdentification.CONFIGURAR_OPCOES_GABINETE,(ActionInterface) getApplicationContext().getBean("configurarOpcoesGabineteActionFacesBean"));
+		}
+
+		adicionarAcaoQualquerContexto(acoes,ActionIdentification.CONFIGURAR_SISTEMA,(ActionInterface) getApplicationContext().getBean("configurarSistemaActionFacesBean"));
+		adicionarAcaoQualquerContexto(acoes,ActionIdentification.CONSULTAR_ATA_DE_JULGAMENTO,(ActionInterface) getApplicationContext().getBean("consultaAtaJulgamentoActionFacesBean"));
+		adicionarAcaoQualquerContexto(acoes,ActionIdentification.NOVA_LISTA_DE_PROCESSOS,(ActionInterface) getApplicationContext().getBean("criarEditarListaProcessosActionFacesBean"));
+		adicionarAcaoQualquerContexto(acoes,ActionIdentification.GERENCIAR_CATEGORIAS,(ActionInterface) getApplicationContext().getBean("gerenciarCategoriaActionFacesBean"));
+//		adicionarAcaoQualquerContexto(acoes,ActionIdentification.CONFIGURAR_SISTEMA,(ActionInterface) getApplicationContext().getBean("referendarDecisaoActionFacesBean"));
+
+		
+		return acoes;
+	}
+	
+	@SuppressWarnings("rawtypes")
+	private void adicionarAcaoQualquerContexto(List<ActionInterface> acoes, ActionIdentification transacao, ActionInterface acao) {
+		Principal principal = (Principal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		if (permissionChecker.hasPermission(principal, transacao)) {
+			acoes.add(acao);
+		}
+	}	
+	
+	/**
+	 * Retorna as ações para os recursos selecionados.
+	 * @return
+	 */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public List<ActionInterface> getActions() {
+		List<ActionInterface> listaRetorno = new ArrayList<ActionInterface>();
+		if (currentContext == null) {
+			listaRetorno = getAcoesQualquerContexto();  
+		} else {
+			Set<?> setContext = currentContext.getResult().getSelecteds();
+			listaRetorno = currentContext.getActionController().getActions(setContext);			
+		}
+		return listaRetorno;
+	}
+
+
+	private boolean isContextoDeUnicoProcessoSelecionado(Context context) {
+		return context != null && context.getActionController().getResourceClass().equals(ObjetoIncidenteDto.class)
+				&& context.getResult().getSelecteds().size() == 1;
+	}
+
+	public boolean isAlgumDocumentoSelecionado() {
+		return isDocumentoSelecionadoContextoAtual() || isDocumentoSelecionadoObjetoIncidente();
+	}
+	
+	private boolean isDocumentoSelecionadoContextoAtual() {
+		Context context = getCurrentContext();
+		return context != null
+				&& (context.getActionController().getResourceClass().equals(TextoDto.class) || context.getActionController().getResourceClass()
+						.equals(ComunicacaoDto.class)) && context.getResult().getSelecteds().size() > 0;
+	}
+	
+	private boolean isDocumentoSelecionadoObjetoIncidente() {
+		Context context = getCurrentContext();
+		// Para essa checagem, tem de estar na página de detalhe do objeto incidente.
+		return context != null && context.getPage().equals("/pesquisa/incidente.xhtml") && incidenteFacesBean.getTextos() != null
+				&& incidenteFacesBean.getTextos().getSelecteds().size() > 0;
+	}
+	
+	private Set<ObjetoIncidenteDto> getObjetoIncidenteNovoTexto() {
+		Set<ObjetoIncidenteDto> objetosIncidentes = new HashSet<ObjetoIncidenteDto>();
+		if (objetoIncidenteNovoTexto != null) {
+			objetosIncidentes.add(objetoIncidenteNovoTexto);
+		}
+		return objetosIncidentes;
+	}
+	/**
+	 * Adiciona opções ao Action Controller corrente. Essas opções serão repassadas
+	 * aos handlers para filtragem da lista de ações.
+	 * 
+	 * @param <T> o tipo do recurso gerenciado pelo action controller
+	 * @param actionController o action controller corrente
+	 */
+	private <T extends Selectable> void addOptions(ActionController<T> actionController) {
+		actionController.addOption(ListaProcessos.class, pesquisaAvancada.get("idListaIncidentes"));
+		actionController.addOption(ListaTextos.class, pesquisaAvancada.get("idListaTextos"));
+	}
+
+	/**
+	 * Retorno o objeto representando a pesquisa principal.
+	 * 
+	 * @return a pesquisa principal
+	 */
+	public Pesquisa getPesquisaPrincipal() {
+		return pesquisaPrincipal;
+	}
+
+	/**
+	 * Retorno o objeto representando a pesquisa avançada, como os critérios de pesquisa
+	 * informados pelo usuário preenchidos.
+	 * 
+	 * @return a pesquisa avançada
+	 */
+	public Pesquisa getPesquisaAvancada() {
+		return pesquisaAvancada;
+	}
+
+	/**
+	 * Seta o flag que indica se a pesquisa avançada deve ou não ser exibida.
+	 * 
+	 * @param exibirPesquisaAvancada o indicador de exibição
+	 */
+	public void setExibirPesquisaAvancada(boolean exibirPesquisaAvancada) {
+		this.exibirPesquisaAvancada = exibirPesquisaAvancada;
+	}
+
+	/**
+	 * Indica se a tela de pesquisa principal deve ser exibida.
+	 * 
+	 * @return true, se sim, false, caso contrário
+	 */
+	public boolean isExibirPesquisaPrincipal() {
+		return !exibirPesquisaAvancada;
+	}
+
+	/**
+	 * Indica se a tela de pesquisa avançada deve ser exibida.
+	 * 
+	 * @return true, se sim, false, caso contrário
+	 */
+	public boolean isExibirPesquisaAvancada() {
+		return exibirPesquisaAvancada;
+	}
+
+	public Long getSeqObjetoIncidente() {
+		return seqObjetoIncidente;
+	}
+
+	public void setSeqObjetoIncidente(Long seqObjetoIncidente) {
+		this.seqObjetoIncidente = seqObjetoIncidente;
+	}
+	
+	public Long getCodSetor() {
+		return codSetor;
+	}
+
+	public void setCodSetor(Long codSetor) {
+		this.codSetor = codSetor;
+	}
+	
+	public String getIdActionFrame() {
+		return idActionFrame;
+	}
+	
+	public void setIdActionFrame(String idActionFrame) {
+		this.idActionFrame = idActionFrame;
+	}
+
+	/**
+	 * Retorna a trilha de contextos por onde o usuário passou. Por exemplo, se o usuário
+	 * pesquisou incidentes, visualizou o incidente e depois visualizou um texto do 
+	 * ministro, existirão dois contextos na trilha: incidentes e incidente.
+	 * 
+	 * @return a trilha de contextos
+	 */
+	public Stack<Context> getTrilha() {
+		return trilha;
+	}
+
+	/**
+	 * Seta o tamanho de página que deve ser utilizado pelo paginador na apresentação
+	 * de resultados paginados.
+	 * 
+	 * @param pageSize o tamanha da página
+	 */
+	public void setPageSize(Long pageSize) {
+		this.pageSize = pageSize.intValue();
+	}
+
+	/**
+	 * Retorna o número máximo de registros que serão exibidos em uma página da
+	 * tabela resultado da pesquisa avançada (o resultado sempre será paginado).
+	 * 
+	 * @return o tamanho da página
+	 */
+	public Long getPageSize() {
+		return pageSize.longValue();
+	}
+
+	/**
+	 * Retorna o objeto que armazena o contexto que deve ser exibido no momento.
+	 * 
+	 * @return o contexto corrente
+	 */
+	public Context getCurrentContext() {
+		return currentContext;
+	}
+
+	/**
+	 * Quando os campos de texto estiverem vazios, os campos utilizados na pesquisa
+	 * devem ser excluídos. 
+	 */
+	private void limparCamposNaoPreenchidos() {
+		// Quando a identificacao não estiver preenchida, os campos
+		// objetoIncidente, siglaProcesso, numeroProcesso e idObjetoIncidente
+		// devem ser excluídos da pesquisa.
+		if (!pesquisaAvancada.isNotBlank("identificacao")) {
+			pesquisaAvancada.remove("objetoIncidente");
+			pesquisaAvancada.remove("siglaProcesso");
+			pesquisaAvancada.remove("numeroProcesso");
+			pesquisaAvancada.remove("idObjetoIncidente");
+		}
+
+		// Quando o nomeListaIncidentes não estiver preenchido,
+		// o campo idListaIncidentes deve ser excluído da pesquisa.
+		if (!pesquisaAvancada.isNotBlank("nomeListaIncidentes")) {
+			pesquisaAvancada.remove("idListaIncidentes");
+		}
+
+		// Quando o nomeResponsavel não estiver preenchido,
+		// o campo idResponsavel deve ser excluído da pesquisa.
+		if (!pesquisaAvancada.isNotBlank("nomeResponsavel")) {
+			pesquisaAvancada.remove("idResponsavel");
+		}
+
+		// Quando o nomeCriador não estiver preenchido,
+		// o campo idCriador deve ser excluído da pesquisa.
+		if (!pesquisaAvancada.isNotBlank("nomeCriador")) {
+			pesquisaAvancada.remove("idCriador");
+		}
+		
+		// Quando o nomeListaTextos não estiver preenchido,
+		// o campo idListaTextos deve ser excluído da pesquisa.
+		if (!pesquisaAvancada.isNotBlank("nomeListaTextos")) {
+			pesquisaAvancada.remove("idListaTextos");
+		}
+
+		// Quando o nomeRelatorAtual não estiver preenchido,
+		// o campo idRelatorAtual deve ser excluído da pesquisa.
+		if (!pesquisaAvancada.isNotBlank("nomeRelatorAtual")) {
+			pesquisaAvancada.remove("idRelatorAtual");
+		}
+
+		// Quando o nomeMinistroTexto não estiver preenchido,
+		// o campo idMinistroTexto deve ser excluído da pesquisa.
+		if (!pesquisaAvancada.isNotBlank("nomeMinistroTexto")) {
+			pesquisaAvancada.remove("idMinistroTexto");
+		}
+		
+		// Campo não informado pelo usuário
+		if (pesquisaAvancada.isNotBlank("idSetorMinistroLogado")) {
+			pesquisaAvancada.remove("idSetorMinistroLogado");
+		}
+		
+		// Quando a lista de julgamento não estiver preenchida,
+		// o campo listaJulgamento deve ser excluído da pesquisa.
+		if (!pesquisaAvancada.isNotBlank("idListaJulgamento"))
+			pesquisaAvancada.remove("idListaJulgamento");
+	}
+
+	/**
+	 * Limpa as informações do objeto incidente da pesquisa avançada ao alterar o
+	 * valor do campo Processo na pesquisa avançada.
+	 */
+	public void limparObjetoIncidente() {
+		pesquisaAvancada.remove("objetoIncidente");
+		pesquisaAvancada.remove("siglaProcesso");
+		pesquisaAvancada.remove("numeroProcesso");
+		pesquisaAvancada.remove("idObjetoIncidente");
+	}
+	
+	/**
+	 * Ação disparada ao selecionar um objetoIncidente na sugestão de processos 
+	 * na pesquisa avançada.
+	 * @param dto
+	 */
+	public void selecionarObjetoIncidente(ObjetoIncidenteDto dto) {
+		limparObjetoIncidente();
+		pesquisaAvancada.put("objetoIncidente", dto);
+	}
+
+	public String recuperarDescricaoRepercussaoGeral(ObjetoIncidente<?> objetoIncidente) {
+		return objetoIncidenteService.recuperarDescricaoRepercussaoGeral(objetoIncidente);
+	}
+
+	public String recuperarUrlPecas(ObjetoIncidente<?> objetoIncidente) {
+		return globalFacesBean.getTipoAmbiente().getUrlPecas() + objetoIncidente.getPrincipal().getId();
+	}
+
+	public String recuperarUrlPecasSupremo(ObjetoIncidente<?> objetoIncidente) {
+		return globalFacesBean.getTipoAmbiente().getUrlPecasSupremo() + objetoIncidente.getPrincipal().getId();
+	}
+
+	public String recuperarUrlAcompanhamento(ObjetoIncidente<?> objetoIncidente) {
+		if (objetoIncidente != null)
+			return globalFacesBean.getTipoAmbiente().getUrlInternet() + objetoIncidente.getPrincipal().getId();
+		
+		return null;
+	}
+	
+	public String recuperarUrlAnexos(String hashArquivo) {
+		if (hashArquivo != null)
+			return globalFacesBean.getTipoAmbiente().getUrlAnexosSTFDigital() + hashArquivo;
+
+		
+		return null;
+	}
+	
+	public String recuperarUrlAcompanhamentoSTFDigital(ObjetoIncidente<?> objetoIncidente) {
+		if (objetoIncidente != null)
+			return globalFacesBean.getTipoAmbiente().getUrlAcompanhamentoSTFDigital() + objetoIncidente.getIdentificacao().replace(" ", "");
+		
+		return null;
+	}
+	
+	public String recuperarUrlPecasSTFDigital(ObjetoIncidente<?> objetoIncidente) {
+		return recuperarUrlAcompanhamentoSTFDigital(objetoIncidente) + "/pecas";
+	}
+
+	/**
+	 * Atualiza a página de pesquisa. Método disparado por um listener que verifica se o pedido de 
+	 * refresh foi solicitado por alguma aplicação externa, como o Assinador e o STFOffice.
+	 */
+	public void atualizarPagina() {
+		if (getCurrentContext() != null) {
+			if (getCurrentContext().getType().equals(ContextType.VIEW)
+					&& getCurrentContext().getActionController().getResourceClass().equals(TextoDto.class)) {
+				if (getCurrentContext().getResult().getSelecteds().size() > 0) {
+					atualizarTexto((TextoDto) getCurrentContext().getResult().getSelecteds().iterator().next());
+				} else {
+					voltar();
+					getCurrentContext().getResult().reset();
+				}
+			} else {
+				getCurrentContext().getResult().reset();
+			}
+		}
+	}
+
+	/**
+	 * Atualiza a página de pesquisa. Método disparado por um listener que verifica se o pedido de 
+	 * refresh foi solicitado por alguma aplicação externa, como o Assinador e o STFOffice.
+	 * É utilizado em situações específicas, como na criação de um texto, a partir de um controle
+	 * de votos, no contexto de visualização de textos.
+	 * @param textoId
+	 */
+	public void atualizarPagina(Long textoId) {
+		if (getCurrentContext() != null) {
+			if (textoId != null && textoId != 0L && getCurrentContext().getType().equals(ContextType.VIEW)
+					&& getCurrentContext().getActionController().getResourceClass().equals(TextoDto.class)) {
+				TextoDto dto = new TextoDto();
+				dto.setId(textoId);
+				atualizarTexto(dto);
+			} else {
+				atualizarPagina();
+			}
+		}
+	}
+
+	/**
+	 * Atualiza o texto modificado no refresh da página.
+	 * @param dto
+	 */
+	public void atualizarTexto(TextoDto dto) {
+		final TextoFacesBean textoFacesBean = (TextoFacesBean) ContextConfiguration.getFacesBean(TextoDto.class);
+		TextoDto texto = textoFacesBean.load(dto);
+
+		if (texto != null) {
+			currentContext.getResult().reset();
+		} else {
+			voltar();
+		}
+	}
+
+	public void limparAcaoAtual() {
+		actionHolder.clean();
+	}
+	
+	/**
+	 * Salva uma configuração de pesquisa.
+	 */
+	public void salvarConfiguracaoPesquisa() {
+		if (nomeConfiguracaoPesquisa == null || nomeConfiguracaoPesquisa.trim().length() <= 0) {
+			facesMessages.add("É necessário informar o nome da pesquisa.");
+		} else if (idTipoPesquisaRapida == null || idTipoPesquisaRapida.trim().length() <= 0) {
+			facesMessages.add("É necessário informar o tipo de pesquisa.");
+		} else if (pesquisaAvancada.isNotBlank("painelVisualizacao") && (Boolean) pesquisaAvancada.get("painelVisualizacao") && !idTipoPesquisaRapida.equals(TipoPesquisa.TEXTOS.toString())) {
+			facesMessages.add("O tipo de pesquisa permitido, quando a opção 'Abrir texto no painel de visualização' está marcada, é somente 'Textos'");
+		} else {
+			Principal principal = (Principal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+			
+			obterTiposTexto();
+			
+			configuracaoPesquisa = pesquisaService.salvarConfiguracaoPesquisa(
+					nomeConfiguracaoPesquisa, escopoConfiguracaoPesquisa,
+					TipoPesquisa.valueOf(idTipoPesquisaRapida).getClazz(),
+					pageSize, principal, pesquisaAvancada);
+
+			selecionarConfiguracaoPesquisa();
+		}
+	}
+	
+	/**
+	 * Carrega lista de configurações de pesquisa disponíveis para o usuário.
+	 * @return Lista de configurações de pesquisa
+	 */
+	private List<ConfiguracaoUsuario> carregarComboConfiguracaoPesquisa() {
+		List<ConfiguracaoUsuario> listaPesquisa = null;
+		
+		Principal principal = (Principal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+		if (principal.getMinistro() == null) {
+			return new ArrayList<ConfiguracaoUsuario>();
+		}
+		
+		try {
+			listaPesquisa = pesquisaService.pesquisarConfiguracoesPesquisa(
+							principal.getUsuario().getId(),
+							principal.getMinistro() == null ? null : principal.getMinistro().getSetor().getId(),
+							TipoConfiguracaoUsuario.TipoConfiguracaoUsuarioEnum.PESQUISA_AVANCADA.getCodigo(),
+							ConfiguracaoUsuario.PESQUISA_AVANCADA_XML);
+			
+			
+			// Remove as configurações salvas para um setor diferente do setor ativo no momento
+			List<ConfiguracaoUsuario> configuracoesRemovidas = new ArrayList<ConfiguracaoUsuario>();
+			for (ConfiguracaoUsuario confUsu : listaPesquisa) {
+				if (confUsu.getSetor() != null && !confUsu.getSetor().equals(principal.getMinistro().getSetor())) {
+					configuracoesRemovidas.add(confUsu);
+				}
+			}		
+			listaPesquisa.removeAll(configuracoesRemovidas);
+			
+			/**
+			 * ISSUE 1001. Verifica se o perfil possui permissão para
+			 * efetuar as pesquisas dos expedientes a serem assinados.
+			 * */
+			if(permissionChecker.hasPermission(principal, ActionIdentification.PESQUISAR_COMUNICACOES)){
+				if(listaPesquisa != null && !exibirPesquisaAvancada){
+					listaPesquisa.add(configuracaoExpedienteAutomatizado(listaPesquisa, principal));
+				}
+			}			
+		} catch (ServiceException e) {
+			logger.error(e.getMessage(), e);
+		}
+		
+		return listaPesquisa;
+	}
+	
+	/**
+	 * Acrescido, conforme ISSUE 1001.
+	 * Esta configuração é adicionada para todos os que possuem os perfis
+	 * MASTER e MINISTRO.
+	 * Serve para disponibilizar as comunicações a serem assinadas
+	 * por um ministro, para um determinado Setor.
+	 * @param listaPesquisa
+	 * @param principal
+	 * @return
+	 */
+	public ConfiguracaoUsuario configuracaoExpedienteAutomatizado(List<ConfiguracaoUsuario> listaPesquisa, Principal principal){
+		ConfiguracaoUsuario configuracaoUsuario = new ConfiguracaoUsuario();
+		configuracaoUsuario.setCodigoChave("EXPEDIENTE_AUTOMATIZADO");
+		configuracaoUsuario.setDataDesativacao(null);
+		configuracaoUsuario.setDescricao("EXPEDIENTES PARA ASSINATURA");
+		configuracaoUsuario.setId(-5L); // o valor -5 foi definido sem critério.
+		configuracaoUsuario.setSetor(null);
+		configuracaoUsuario.setTipoConfiguracaoUsuario(new TipoConfiguracaoUsuario());
+		configuracaoUsuario.setUsuario(principal.getUsuario());
+		configuracaoUsuario.setValor("");
+		return configuracaoUsuario;
+	}
+	
+	/**
+	 * Seleciona uma configuração de pesquisa, preenchendo os campos da pesquisa.
+	 * Caso a opção Nova Configuração seja selecionada, nenhuma configuração 
+	 * de pesquisa é recuperada.
+	 */
+	@SuppressWarnings("unchecked")
+	public void selecionarConfiguracaoPesquisa() {
+		if (configuracaoPesquisa != null && configuracaoPesquisa == -1 ) {
+			renderedNovaConfiguracaoPesquisa = true;
+			nomeConfiguracaoPesquisa = null;
+			escopoConfiguracaoPesquisa = null;
+			idTipoPesquisaRapida = null;
+		} else if (configuracaoPesquisa != null && configuracaoPesquisa > 0) {
+			renderedNovaConfiguracaoPesquisa = false;
+			PesquisaXMLBind pesquisaXMLBind = pesquisaService.recuperarObjetoPesquisaXMLBind(configuracaoPesquisa);
+			pesquisaAvancada = new Pesquisa();
+			pesquisaService.popularPesquisaAvancada(pesquisaAvancada, pesquisaXMLBind);
+			if (pesquisaXMLBind.getPageSize() != null) {
+				pageSize = pesquisaXMLBind.getPageSize();
+			}
+			
+			marcarTiposTexto(pesquisaAvancada);
+			
+			if (!exibirPesquisaAvancada) {
+				pesquisar(pesquisaXMLBind.getTipoPesquisa());
+			}
+			
+		/**
+		 * Pesquisa utilizada para o recuperar os Expedientes, conforme ISSUE 1001
+		 * O valor -5 foi definido aleatoriamente. Esse valor é o ID da Configuração
+		 * do Usuário (Classe ConfiguracaoUsuario, atributo ID).
+		 * */
+		} else if (configuracaoPesquisa != null && configuracaoPesquisa == -5){
+			renderedNovaConfiguracaoPesquisa = false;
+			Principal principal = (Principal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+			if ( principal.getMinistro().getSetor() != null ){
+				pesquisaAvancada = new Pesquisa();
+				pesquisaService.popularPesquisaComunicacao(pesquisaAvancada, principal.getMinistro().getSetor());				
+			}
+			/** Conforme definido na ISSUE 1001, QTDE_COMUNICACOES_POR_PAGINA = 300 **/			 
+			pageSize = 300;
+			if (!exibirPesquisaAvancada) {
+				pesquisar(ComunicacaoDto.class);
+			}
+			
+		} else {
+			renderedNovaConfiguracaoPesquisa = false;
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	private void marcarTiposTexto(Pesquisa pesquisa) {
+		getTiposTextoDto().clear();
+		if (pesquisa.isNotBlank("tiposTexto")) {
+			List<Long> tiposTexto = (List<Long>) pesquisa.get("tiposTexto");
+			for (TipoTextoDto tipoTexto : getTiposTextoDto()) {
+				if (tiposTexto.contains(tipoTexto.getId())) {
+					tipoTexto.setSelected(true);
+				}
+			}
+		}
+	}
+
+	/**
+	 * @param idConfiguracaoPesquisa
+	 */
+	public void selecionarConfiguracaoPesquisa(Long idConfiguracaoPesquisa) {
+		this.configuracaoPesquisa = idConfiguracaoPesquisa;
+		selecionarConfiguracaoPesquisa();
+	}
+	
+	/**
+	 * Exclui uma configuração de pesquisa.
+	 * @param idConfiguracaoPesquisa
+	 */
+	public void excluirConfiguracaoPesquisa(Long idConfiguracaoPesquisa) {
+		Principal principal = (Principal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		
+		pesquisaService.excluirConfiguracaoPesquisa(idConfiguracaoPesquisa, principal);
+	}
+
+	public void setOrdenacao(String ordenacao) {
+		pesquisaAvancada.put(Pesquisa.CHAVE_ORDENACAO, ordenacao);
+	}
+	
+	public void setPreferenciaFavoritos(String[] preferenciaFavoritos){
+		pesquisaAvancada.put(Pesquisa.CHAVE_FAVORITOS, preferenciaFavoritos);
+	}
+	
+	public void setTipoAmbiente(String[] tipoAmbiente){
+		pesquisaAvancada.put(Pesquisa.CHAVE_TIPO_AMBIENTE, tipoAmbiente);
+	}	
+
+	
+	public void limparCamposPesquisaRapida() {
+		if (pesquisaAvancada.isNotBlank("painelVisualizacao") && (Boolean) pesquisaAvancada.get("painelVisualizacao")) {
+			pesquisaAvancada.remove("nomeRelatorAtual");
+			pesquisaAvancada.remove("idTipoIncidente");
+			pesquisaAvancada.remove("originario");
+			pesquisaAvancada.remove("repercussaoGeral");
+			pesquisaAvancada.remove("controversiaOrigem");
+			pesquisaAvancada.remove("tipoProcesso");
+			pesquisaAvancada.remove("situacaoJulgamento");
+			pesquisaAvancada.remove("listaIncidentes");
+			pesquisaAvancada.remove("agendamento");
+			pesquisaAvancada.remove("colegiado");
+			pesquisaAvancada.remove("inicioDataFase");
+			pesquisaAvancada.remove("fimDataFase");
+			pesquisaAvancada.remove("idAssunto");
+			pesquisaAvancada.remove("descricaoAssunto");
+			pesquisaAvancada.remove("idCategoriaParte");
+			pesquisaAvancada.remove("nomeParte");
+			pesquisaAvancada.remove("idListaJulgamento");
+			pesquisaAvancada.remove("controleVoto");
+			setPageSize(Long.valueOf(DEFAULT_PAGE_SIZE));
+		}		
+	}
+
+	public String getOrdenacao() {
+		Object criterioOrdenacao = pesquisaAvancada.getParameters().get(Pesquisa.CHAVE_ORDENACAO);
+		if (criterioOrdenacao == null) {
+			return Pesquisa.ORDENACAO_DATA;
+		}
+		return criterioOrdenacao.toString();
+	}
+
+	public String getTipoRegistro() {
+		return tipoRegistro;
+	}
+
+	private <T extends Dto> void setTipoRegistro(Class<T> clazz) {
+		if (clazz.equals(TextoDto.class)) {
+			tipoRegistro = "texto(s)";
+		} else if (clazz.equals(ObjetoIncidenteDto.class)) {
+			tipoRegistro = "processo(s)";
+		} else if (clazz.equals(ComunicacaoDto.class)) {
+			tipoRegistro = "comunicação(ões)";
+		} else {
+			tipoRegistro = "lista(s)";
+		}
+	}
+
+	public String getNomeConfiguracaoPesquisa() {
+		return nomeConfiguracaoPesquisa;
+	}
+
+	public void setNomeConfiguracaoPesquisa(String nomeConfiguracaoPesquisa) {
+		this.nomeConfiguracaoPesquisa = nomeConfiguracaoPesquisa;
+	}
+
+	public String getEscopoConfiguracaoPesquisa() {
+		if (escopoConfiguracaoPesquisa == null) {
+			return "U"; // Por padrão, o escopo é por usuário
+		} else {
+			return escopoConfiguracaoPesquisa;
+		}
+	}
+
+	public void setEscopoConfiguracaoPesquisa(String escopoConfiguracaoPesquisa) {
+		this.escopoConfiguracaoPesquisa = escopoConfiguracaoPesquisa;
+	}
+
+	public List<ConfiguracaoUsuario> getConfiguracoesPesquisa() {
+		List<ConfiguracaoUsuario> configuracoesPesquisa = carregarComboConfiguracaoPesquisa();
+		
+		Collections.sort(configuracoesPesquisa, new Comparator<ConfiguracaoUsuario>() {
+
+			@Override
+			public int compare(ConfiguracaoUsuario o1, ConfiguracaoUsuario o2) {
+				return o1.getDescricao().compareTo(o2.getDescricao());
+			}
+		});
+		
+		return configuracoesPesquisa;
+	}
+	
+	public List<SelectItem> getItemsConfiguracaoPesquisa() {
+		List<ConfiguracaoUsuario> configuracoesPesquisa = getConfiguracoesPesquisa();
+		List<SelectItem> items = new ArrayList<SelectItem>();
+		for (ConfiguracaoUsuario configuracaoPesquisa : configuracoesPesquisa) {
+			items.add(new SelectItem(configuracaoPesquisa.getId(), configuracaoPesquisa.getDescricao()));
+		}
+		return items;
+	}
+	
+	public boolean isDisabledExcluirConfiguracaoPesquisa() {
+		return getConfiguracaoPesquisa() == null || getConfiguracaoPesquisa() < 0;
+	}
+
+	public Long getConfiguracaoPesquisa() {
+		return configuracaoPesquisa;
+	}
+
+	public void setConfiguracaoPesquisa(Long configuracaoPesquisa) {
+		this.configuracaoPesquisa = configuracaoPesquisa;
+	}	
+		
+	public boolean isRenderedNovaConfiguracaoPesquisa() {
+		return renderedNovaConfiguracaoPesquisa;
+	}
+
+	public String getIdTipoPesquisaRapida() {
+		return idTipoPesquisaRapida;
+	}
+
+	public void setIdTipoPesquisaRapida(String idTipoPesquisaRapida) {
+		this.idTipoPesquisaRapida = idTipoPesquisaRapida;
+	}
+	
+	public String getHostName() {
+    	try {
+			return InetAddress.getLocalHost().getHostName();
+		} catch (UnknownHostException e) {
+			return "unknown host";
+		}
+    }
+
+	public List<TipoTextoDto> getTiposTextoDto() {
+		List<TipoTexto> maisUtilizados = new ArrayList<TipoTexto>();
+		maisUtilizados.add(TipoTexto.DESPACHO);
+		maisUtilizados.add(TipoTexto.DECISAO_MONOCRATICA);
+		maisUtilizados.add(TipoTexto.EMENTA);
+		maisUtilizados.add(TipoTexto.ACORDAO);
+		maisUtilizados.add(TipoTexto.RELATORIO);
+		maisUtilizados.add(TipoTexto.VOTO);
+		
+		if (tiposTextoDto == null || tiposTextoDto.size() == 0) {
+			tiposTextoDto = new ArrayList<TipoTextoDto>();
+			for (TipoTexto tipoTexto : TipoTexto.values()) {
+				if (!maisUtilizados.contains(tipoTexto)) {
+					if (tipoTexto.getDescricao() != null && tipoTexto.getDescricao().trim().length() > 0) {
+						TipoTextoDto dto = new TipoTextoDto();
+						dto.setTipoTexto(tipoTexto);
+						tiposTextoDto.add(dto);
+					}
+				}
+			}
+			Collections.sort(tiposTextoDto, new Comparator<TipoTextoDto>() {
+
+				@Override
+				public int compare(TipoTextoDto o1, TipoTextoDto o2) {
+					return o1.getTipoTexto().getDescricao().compareToIgnoreCase(o2.getTipoTexto().getDescricao());
+				}
+				
+			});
+			int posicao = 0;
+			for (TipoTexto maisUtilizado : maisUtilizados) {
+				TipoTextoDto dto = new TipoTextoDto();
+				dto.setTipoTexto(maisUtilizado);
+				tiposTextoDto.add(posicao++, dto);
+			}
+		}
+		return tiposTextoDto;
+	}
+
+	public void setTiposTextoDto(List<TipoTextoDto> tiposTextoDto) {
+		this.tiposTextoDto = tiposTextoDto;
+	}
+	
+	public void selectAllTiposTexto() {
+		boolean check = !allCheckedTiposTexto();
+		for (TipoTextoDto tipoTexto : getTiposTextoDto()) {
+			tipoTexto.setSelected(check);
+		}
+	}
+	
+	private boolean allCheckedTiposTexto() {
+    	for (TipoTextoDto dto : getTiposTextoDto()) {
+    		if (!dto.isSelected()) {
+    			return false;
+    		}
+    	}
+    	return true;
+    }
+
+	@Create
+    public void init() {
+		Map<String, String> params = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap();
+		String exibirPesquisaAvancada = params.get("exibirPesquisaAvancada");
+		
+		if ("true".equals(exibirPesquisaAvancada))
+			this.exibirPesquisaAvancada = true;
+		else
+			this.exibirPesquisaAvancada = false;
+		
+		limpar();
+    }
+
+	public void selecionarTextosParaAssinar(Pesquisa pesquisa) {
+		pesquisaAvancada = pesquisa;
+		pageSize = 300; // Valor padrão também seguindo a pesquisa de Minhas Pesquisas
+		pesquisar(TextoDto.class);
+	}
+
+	public String[] getPreferenciaFavoritos() {
+		return (String[]) pesquisaAvancada.get(Pesquisa.CHAVE_FAVORITOS);
+	}
+
+	public String getTipoAmbiente() {
+		return (String) pesquisaAvancada.get(Pesquisa.CHAVE_TIPO_AMBIENTE);
+	}
+	
+	public void atualizarListasJulgamento() {
+		// Ministro
+		Principal principal = (Principal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		Ministro ministro = principal.getMinistro();
+
+		if (ministro != null) {
+			// Criação do filtro
+			ListaJulgamento listaJulgamentoExample = new ListaJulgamento();
+			Sessao sessao = new Sessao();
+			listaJulgamentoExample.setSessao(sessao);
+			
+			// Ministro
+			listaJulgamentoExample.setMinistro(ministro);
+			
+			// Colegiado
+			if (getPesquisaAvancada().get("colegiado") != null) {
+				Colegiado colegiado = new Colegiado();
+				colegiado.setId(TipoColegiadoConstante.valueOfCodigoCapitulo(Integer.parseInt(String.valueOf(getPesquisaAvancada().get("colegiado")))).getSigla());
+				sessao.setColegiado(colegiado);
+			}
+			// Tipo de Ambiente
+			String tipoAmbiente = getTipoAmbiente();
+			sessao.setTipoAmbiente(tipoAmbiente);
+			
+			// Data inicial
+			Date dataInicio = (Date) getPesquisaAvancada().get("inicioDataSessaoJulgamento");
+
+			// Data final
+			Date dataFim = (Date) getPesquisaAvancada().get("fimDataSessaoJulgamento");
+			
+			if (dataInicio != null && dataFim != null) {
+				List<ListaJulgamento> resultado = listaJulgamentoService.pesquisarListasDeJulgamentoPorDataInicioSessao(listaJulgamentoExample, converterDate(dataInicio,0,0,0,0), converterDate(dataFim,23,59,59,0));
+				setListasJulgamento(resultado);
+			} else {
+				setListasJulgamento(new ArrayList<ListaJulgamento>());
+			}
+		}
+	}
+	
+	private static Date converterDate(final Date data, final int hora, final int minuto, final int segundo, final int ms ) {
+	    final GregorianCalendar gc = new GregorianCalendar();
+	    gc.setTime(data);
+	    gc.set(Calendar.HOUR_OF_DAY, hora);
+	    gc.set(Calendar.MINUTE, minuto);
+	    gc.set(Calendar.SECOND, segundo);
+	    gc.set(Calendar.MILLISECOND, ms);
+	    return gc.getTime();
+	}
+
+	public List<ListaJulgamento> getListasJulgamento() {
+		return listasJulgamento;
+	}
+	
+	public List<SelectItem> getListasJulgamentoPesquisa() {
+		SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
+		List<SelectItem> items = new ArrayList<SelectItem>();
+		
+		for (ListaJulgamento item : getListasJulgamento()) {
+			String nomeLista =  item.getNome();
+			nomeLista += " (";
+			
+			if (item.getSessao() != null) {
+				if (item.getSessao() != null && item.getSessao().getColegiado() != null && item.getSessao().getColegiado().getId() != null)
+					nomeLista += item.getSessao().getColegiado().getId();
+				else
+					nomeLista += "Turma não identificada";
+				
+				nomeLista += " - ";
+				
+				if (item.getSessao().getDataInicio() != null)
+					nomeLista += formatter.format(item.getSessao().getDataInicio());
+				else if (item.getSessao().getDataPrevistaInicio() != null)
+					nomeLista += formatter.format(item.getSessao().getDataPrevistaInicio());
+				else
+					nomeLista += "Data da Sessão não identificada";
+			} else {
+				nomeLista += "Sessão não identificada";
+			}
+			
+			nomeLista += ")";
+			items.add(new SelectItem(item.getId(), nomeLista));
+		}
+		return items;
+	}
+
+	public void setListasJulgamento(List<ListaJulgamento> listasJulgamento) {
+		this.listasJulgamento = listasJulgamento;
+	}
+	
+	public boolean verificarImpedimento(Long objetoIncidente) {
+		temImpedimento = false;
+		
+		Principal principal = (Principal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		
+		if(principal.getMinistro() == null) {
+			FacesMessages.instance().add(Severity.ERROR, "Atenção: Usuário não lotado em um gabinete ou presidência. Verificação de impedimento não realizada.");
+			return false;
+		}
+		
+		Long codigoMinistro =  principal.getMinistro().getId();
+		try {
+			if(Ministro.COD_MINISTRO_PRESIDENTE.equals(codigoMinistro)){
+				MinistroPresidente ministroPresidente = ministroPresidenteService.recuperarMinistroPresidenteAtual();
+				codigoMinistro = ministroPresidente.getId().getMinistro().getId();
+			}
+		
+			temImpedimento = impedimentoService.temImpedimento(codigoMinistro, objetoIncidente);
+			
+		} catch (ServiceException e) {
+			logger.error(e);
+			FacesMessages.instance().add(Severity.ERROR, e.getMessage());
+		}		
+		return temImpedimento;
+	}
+
+	public boolean isTemImpedimento() {
+		return temImpedimento;
+	}
+
+	public void setTemImpedimento(boolean temImpedimento) {
+		this.temImpedimento = temImpedimento;
+	}	
+}

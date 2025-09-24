@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:s="http://jboss.com/products/seam/taglib"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:rich="http://richfaces.org/rich"
+	xmlns:a="http://richfaces.org/a4j"
+	xmlns:c="http://java.sun.com/jstl/core"
+	xmlns:stf="http://www.stf.jus.br/custom-components">
+
+
+	<s:decorate id="atualizarMacrosAtalhos"
+		template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="principal" />
+		<ui:define name="descricao">Selecione o arquivo odt para o #{actionFacesBean.setorMinistro.nome}</ui:define>
+		<ui:define name="conteudo">
+			<a:outputPanel id="mensagemMacrosAtalhosPanel">
+				<stf:messages height="31px" styleClass="noBorder" />
+			</a:outputPanel>
+
+			<s:decorate template="/common/decorators/edit.xhtml"
+				style="margin-top: 5px">
+				<a:outputPanel id="panelUpload" >
+					<rich:fileUpload
+						fileUploadListener="#{actionFacesBean.uploadListener}"
+						maxFilesQuantity="1" id="upload" acceptedTypes="odt"
+						addControlLabel="Adicionar arquivo..."
+						cancelEntryControlLabel="Cancelar"
+						clearAllControlLabel="Limpar todos" clearControlLabel="Limpar"
+						doneLabel="Concluído" stopControlLabel="Parar"
+						stopEntryControlLabel="Parar">
+						<a:support event="onuploadcomplete"
+							action="#{actionFacesBean.concluir}"
+							oncomplete="showActionPanel('panelItem', #{actionFacesBean.definition.width}, #{actionFacesBean.definition.height})"
+							reRender="actionModalPanel" eventsQueue="ajaxQueue"
+							ignoreDupResponses="true"/>
+					</rich:fileUpload>
+				</a:outputPanel>
+			</s:decorate>
+		</ui:define>
+	</s:decorate>
+</ui:composition>

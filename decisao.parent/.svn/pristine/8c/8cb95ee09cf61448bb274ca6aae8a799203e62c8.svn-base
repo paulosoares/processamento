@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:s="http://jboss.com/products/seam/taglib"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:rich="http://richfaces.org/rich"
+	xmlns:a="http://richfaces.org/a4j"
+	xmlns:c="http://java.sun.com/jstl/core"
+	xmlns:stf="http://www.stf.jus.br/custom-components">
+
+	<s:decorate id="editarEspelhoProcesso"
+		template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="principal" />
+		<ui:define name="descricao">Espelho do Processo</ui:define>
+		
+		<ui:define name="conteudo">
+			<div style="max-height: 520px; overflow: auto; position: relative;">
+				<rich:tabPanel switchType="ajax">
+					<rich:tab label="Tema">
+						<div style="margin: 5px;">
+							<h:inputTextarea value="#{actionFacesBean.tema}" rows="30" cols="60"
+								style="width: 640px"
+								onkeyup="if(this.value.length>12000){this.value = this.value.substring(0, 12000); alert('O texto inserido é maior que o permitido para o campo. O texto excedente não será gravado.');} atualizaContadorCaracteres('editarEspelhoProcesso:contadorTema', this, 12000);" />
+							<div style="margin-bottom: 10px; color: red; font-weight: bold;">
+								Caracteres restantes:<h:outputText id="contadorTema" value="#{12000 - actionFacesBean.tema.length()}" style="margin-left: 2px;" />
+							</div>
+						</div>
+					</rich:tab>
+
+					<rich:tab label="Tese">
+						<div style="margin: 5px;">			
+							<h:inputTextarea value="#{actionFacesBean.tese}" rows="30" cols="60"
+								style="width: 640px"
+								onkeyup="if(this.value.length>2000){this.value = this.value.substring(0, 2000); alert('O texto inserido é maior que o permitido para o campo. O texto excedente não será gravado.');} atualizaContadorCaracteres('editarEspelhoProcesso:contadorTese', this, 2000);" />
+							<div style="margin-bottom: 10px; color: red; font-weight: bold;">
+								Caracteres restantes:<h:outputText id="contadorTese" value="#{2000 - actionFacesBean.tese.length()}" style="margin-left: 2px;" />
+							</div>
+						</div>
+					</rich:tab>
+					
+					<rich:tab label="Parecer da AGU" rendered="#{actionFacesBean.mostrarParecerAGU}">
+						<div style="margin: 5px;">
+							<h:inputTextarea value="#{actionFacesBean.agu}" rows="30" cols="60"
+								style="width: 640px"
+								onkeyup="if(this.value.length>1000){this.value = this.value.substring(0, 1000); alert('O texto inserido é maior que o permitido para o campo. O texto excedente não será gravado.');} atualizaContadorCaracteres('editarEspelhoProcesso:contadorParecerAGU', this, 1000);" />
+							<div style="margin-bottom: 10px; color: red; font-weight: bold;">
+								Caracteres restantes: <h:outputText id="contadorParecerAGU" value="#{1000 - actionFacesBean.agu.length()}" style="margin-left: 2px;" />
+							</div>
+						</div>
+					</rich:tab>
+					
+					<rich:tab label="Parecer da PGR">
+						<div style="margin: 5px;">
+							<h:inputTextarea value="#{actionFacesBean.pgr}" rows="30" cols="60"
+								style="width: 640px"
+								onkeyup="if(this.value.length>1000){this.value = this.value.substring(0, 1000); alert('O texto inserido é maior que o permitido para o campo. O texto excedente não será gravado.');} atualizaContadorCaracteres('editarEspelhoProcesso:contadorParecerPGR', this, 1000);" />
+							<div style="margin-bottom: 10px; color: red; font-weight: bold;">
+								Caracteres restantes: <h:outputText id="contadorParecerPGR" value="#{1000 - actionFacesBean.pgr.length()}" style="margin-left: 2px;" />
+							</div>
+						</div>
+					</rich:tab>
+		
+					<rich:tab label="Voto do Relator">
+						<div style="margin: 5px;">
+							<h:inputTextarea value="#{actionFacesBean.votoRelator}" rows="30"
+								cols="60" style="width: 640px"
+								onkeyup="if(this.value.length>1000){this.value = this.value.substring(0, 1000); alert('O texto inserido é maior que o permitido para o campo. O texto excedente não será gravado.');} atualizaContadorCaracteres('editarEspelhoProcesso:contadorVotoRelator', this, 1000);" />
+							<div style="margin-bottom: 10px; color: red; font-weight: bold;">
+								Caracteres restantes: <h:outputText id="contadorVotoRelator" value="#{1000 - actionFacesBean.votoRelator.length()}" style="margin-left: 2px;" />
+							</div>
+						</div>
+					</rich:tab>
+					
+					<rich:tab label="Votos">
+						<div style="margin: 5px;">
+							<h:inputTextarea value="#{actionFacesBean.votos}" rows="30"
+								cols="60" style="width: 640px"
+								onkeyup="if(this.value.length>4000){this.value = this.value.substring(0, 4000); alert('O texto inserido é maior que o permitido para o campo. O texto excedente não será gravado.');} atualizaContadorCaracteres('editarEspelhoProcesso:contadorVotos', this, 4000);" />
+							<div style="margin-bottom: 10px; color: red; font-weight: bold;">
+								Caracteres restantes: <h:outputText id="contadorVotos" value="#{4000 - actionFacesBean.votos.length()}" style="margin-left: 2px;" />
+							</div>
+						</div>
+					</rich:tab>
+		
+					<rich:tab label="Informações">
+						<div style="margin: 5px;">
+							<h:inputTextarea value="#{actionFacesBean.informacoes}" rows="30"
+								cols="60" style="width: 640px"
+								onkeyup="if(this.value.length>4000){this.value = this.value.substring(0, 4000); alert('O texto inserido é maior que o permitido para o campo. O texto excedente não será gravado.');} atualizaContadorCaracteres('editarEspelhoProcesso:contadorInformacoes', this, 4000);" />
+							<div style="margin-bottom: 10px; color: red; font-weight: bold;">
+								Caracteres restantes: <h:outputText id="contadorInformacoes" value="#{4000 - actionFacesBean.informacoes.length()}" style="margin-left: 2px;" />
+							</div>
+						</div>
+					</rich:tab>
+				</rich:tabPanel>
+			</div>
+		</ui:define>
+		
+		<ui:define name="botoes">
+			<a:commandButton value="Gravar"
+				action="#{actionFacesBean.execute}"
+				reRender="actionModalPanel"
+				oncomplete="showActionPanel('panelItem', #{actionFacesBean.definition.width}, #{actionFacesBean.definition.height})"
+				eventsQueue="ajaxQueue" ignoreDupResponses="true" />
+		</ui:define>
+	</s:decorate>
+
+	<s:decorate template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="warnings"/>
+		<ui:define name="descricao">
+			<h:graphicImage value="/common/images/warning.gif"/>&nbsp;&nbsp;Erro ao alterar o Espelho</ui:define> 
+		<ui:define name="conteudo">
+			<stf:messages level="INFO" />
+		</ui:define>
+		<ui:define name="botoes">
+           	<a:commandButton value="Voltar" action="#{actionFacesBean.voltar}" reRender="actionModalPanel" oncomplete="showActionPanel('panelItem', #{actionFacesBean.definition.width}, #{actionFacesBean.definition.height})" eventsQueue="ajaxQueue"
+							ignoreDupResponses="true"/>
+		</ui:define>
+	</s:decorate>
+</ui:composition>

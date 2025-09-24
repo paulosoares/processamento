@@ -1,0 +1,6 @@
+/* Correcoes para Internet Explorer */
+/* Rich modal */
+.dr-mpnl-shadow 							{ display: block; background: #000000; filter:alpha(opacity=40) !important; opacity: 0.4 !important; }
+
+/* Rich suggestion box */
+.dr-sb-shadow								{ display: block; background: #000000; filter:alpha(opacity=40); opacity: 0.4; border: none; padding: 1px; }

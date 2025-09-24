@@ -1,0 +1,158 @@
+<div id="main-view">
+	<div class="header navbar navbar-inverse escondido-ate-login">
+		<div class="header-seperation visible-xs visible-tablet">
+			<a href="#" class="pull-left btn-back-main" style="visibility: hidden;"><i class="fa fa-2x fa-arrow-circle-o-left"></i></a>
+		    <a href="index.jsp">
+		    	<img src="assets_stf/img/logo_black.png" class="logo"  data-src="assets_stf/img/logo_black.png"  />
+		    </a>
+	      	<ul class="nav pull-right notifcation-center">
+	      		<li class="dropdown">
+	      			<a href="javascript:void(0);" class="clicar-certificado dropdown-toggle active">
+	      				<div class="fa fa-certificate" style="color:#FFF" ></div>
+	      			</a>
+	      		</li>
+	      		<li class="dropdown" id="header_task_bar">
+	      			<a href="javascript:void(0);" id="clicar-ajuda" class="dropdown-toggle active">
+	      				<div class="fa fa-question" style="color:#FFF" ></div>
+	      			</a>
+	      		</li>
+	       		<li class="dropdown" id="header_task_bar"> 
+	            	<a href="" class="botaoLogout dropdown-toggle active">
+	                	<div class="fa fa-sign-out" style="color:#FFF"></div>
+	            	</a> 
+	       		</li>
+	      	</ul>
+		</div>     
+	    <div class="header-quick-nav">
+	    	<a href="#" class="pull-left btn-back-main" style="visibility: hidden;"><i class="fa fa-2x fa-arrow-circle-o-left"></i></a>
+	      	<a id="link-logo-white" class="pull-left " href="index.jsp">
+	      		<img src="assets_stf/img/logo.png" class="logo-white"  data-src="assets_stf/img/logo.png"/>
+	      	</a>
+			<div class="pull-right chat-toggler">
+	  				<a href="#">
+	     				<div class="user-details">
+	        				<div class="username"> Assinador para dispositivos móveis (<span class="versao-sistema"></span>)</div>
+	     				</div>
+	  				</a>
+	  				<ul class="nav pull-right notifcation-right">
+	  					<li class="dropdown">
+			      			<a href="javascript:void(0);" class="clicar-certificado dropdown-toggle active">
+		      					<div class="fa fa-certificate" style="color:#FFF" ></div>
+		      				</a>
+			      		</li>
+			       		<li class="dropdown" id="header_task_bar"> 
+			            	<a href="" class="botaoLogout dropdown-toggle active ">
+			                	<div class="fa fa-sign-out" style="color:#FFF"></div>
+			            	</a> 
+			       		</li>
+		      		</ul>
+			</div>
+		</div>
+	</div>
+	<div id="sistema-container" class="page-content escondido-ate-login" > 
+		<div class="content"> 
+			<div class="grid solid red" id="exibir-ajuda">
+				<div class="grid-body">
+					<div class="versao-sistema text-center"></div>
+					<h3 id="informacao-importante"><i class="fa fa-warning "></i> <strong>Informação importante:</strong> Esse é um sistema de assinatura digital conforme MP n° 2.200-2/2001 de 24/08/2001.</h3>
+				</div>
+			</div>
+	
+			<div class="grid solid" id="exibir-certificado" style="display: none; margin-bottom: 0px;">
+				<div class="col-sm-offset-2 col-sm-8"
+					style="background-color: white;">
+					<div class="grid simple horizontal red">
+						<div class="grid-body">
+							<div style="text-align: center;">
+								<div id="menu-cert-cadeia" class="well"
+									style="margin-top: 22px; text-align: left; padding: 10px;">
+									<div style="padding-bottom: 5px;">
+										<strong>Informações do certificado</strong>
+									</div>
+									<div id="menu-dados-certificado" style="background: white; padding: 15px;">
+									</div>
+									<div style="padding-top: 8px;">
+										<a id="excluir-certificado" href="javascript:void(0);">
+			      							<i class="fa fa-trash-o"></i>
+			      						</a>
+		      						</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			
+			<div class="profile-info">
+			    <header id="profile-cover" class="hidden-xs" >
+					<section id="usuario-resumo" class="row">
+						<div class="col-lg-8 col-md-8 col-sm-8">
+			            	<img id="usuario-imagem" alt="" class="img-circle pull-left" src="assets_stf/img/iconecurso/avatar_fake.png" data-src="assets_stf/img/iconecurso/avatar_fake.png" data-toggle="tooltip" data-placement="top" />
+			            		<div id="usuario-identificacao">
+			              			<h4 class="nomeMinistro"></h4>
+									<h5>Assinatura eletrônica</h5>
+			            		</div>
+			          	</div>
+			          	<div class="col-lg-4 col-md-4 col-sm-4">
+			          		<div class="form-group pull-right">
+								<select class="form-control col-centered select-setor" style="display: none;">
+		              			</select>
+								<label class="label-setor" style="display: none;"><b><span class="span-setor"></span></b></label>
+	              			</div>
+
+			            </div>
+			        </section>
+			    </header>
+			    <header id="profile-cover-xs" class="visible-xs" >
+			        <section id="usuario-resumo-xs" class="row">
+			          	<div class="col-xs-12">
+							<img id="usuario-imagem" alt="" class="img-circle" src="assets_stf/img/iconecurso/avatar_fake.png" data-src="assets_stf/img/iconecurso/avatar_fake.png" data-toggle="tooltip" data-placement="top" />
+							<div id="usuario-identificacao-xs">
+								<h4 class="nomeMinistro" id="nome-peticionador-header-xs"></h4>
+								<h5 id="cidade-peticionador-header-xs">Assinatura eletrônica</h5>
+							</div>
+			          	</div>
+				        <div class="clearfix"></div>
+				        <div class="col-xs-12">
+							<div class="form-group form-setor-xs">
+								<select class="form-control col-centered select-setor" style="display: none;">
+		              			</select>
+								<label class="label-setor" style="display: none;"><b><span class="span-setor"></span></b></label>
+	              			</div>
+			            </div>
+			        </section>
+			    </header>
+		    </div>
+		</div>
+	
+		<div class="row" id="painel-mensagens" style="display: none;">
+			<div class="col-md-12">
+				<div class="grid simple horizontal red">
+					<div class="grid-body">
+						<div style="text-align:center;">
+							<div id="success-panel" class="alert alert-success" style="display: none;">
+								<div id="msg-sucesso"></div>
+							</div>
+							<div id="error-panel" class="alert alert-error" style="display: none;">
+								<div id="msg-errors"></div>
+							</div>
+							<div id="warning-panel" class="alert alert-warning" style="display: none;">
+								<div class="msg-item-div">Alguns processos não puderam ser assinados. <a id="open-msg-warnings" href="#"></a>.</div>
+								<div id="msg-warnings" style="display:none"></div>								
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row" id="div-loader" style="display: none;">
+			<div class="col-md-12">
+				<div class="grid simple horizontal red">
+					<div class="grid-body text-center">
+						<img src="assets_stf/img/loader/Preloader_3_64.gif" class="loader" />
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

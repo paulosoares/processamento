@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:s="http://jboss.com/products/seam/taglib"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:rich="http://richfaces.org/rich"
+	xmlns:p="http://primefaces.prime.com.tr/ui"
+	xmlns:a="http://richfaces.org/a4j"
+	xmlns:c="http://java.sun.com/jstl/core"
+	xmlns:stf="http://www.stf.jus.br/custom-components">
+	
+	<rich:modalPanel id="panelLocalizacao" width="400" autosized="true" >
+		<f:facet name="header">
+			<div><label>Localização</label></div>
+		</f:facet>
+		
+		<div>
+			<s:decorate template="/common/decorators/display.xhtml">
+				<ui:define name="label">Origem:</ui:define>
+				<h:outputText styleClass="destaque"	value="#{incidenteFacesBean.deslocamentoAtual.secaoOrigem.descricao}" />
+			</s:decorate>
+			<s:decorate template="/common/decorators/display.xhtml">
+				<ui:define name="label">Destino:</ui:define>
+				<h:outputText styleClass="destaque" value="#{incidenteFacesBean.deslocamentoAtual.secaoDestino.descricao}" />
+			</s:decorate>
+			<s:decorate template="/common/decorators/display.xhtml">
+				<ui:define name="label">Usuário Origem:</ui:define>
+				<h:outputText styleClass="destaque" value="#{incidenteFacesBean.deslocamentoAtual.usuarioOrigem.nome}" />
+			</s:decorate>
+			<s:decorate template="/common/decorators/display.xhtml">
+				<ui:define name="label">Usuário Destino:</ui:define>
+				<h:outputText styleClass="destaque" value="#{incidenteFacesBean.deslocamentoAtual.usuarioDestino.nome}" />
+			</s:decorate>
+			<s:decorate template="/common/decorators/display.xhtml">
+				<ui:define name="label">Data Remessa:</ui:define>
+				<h:outputText styleClass="destaque" value="#{incidenteFacesBean.deslocamentoAtual.dataRemessa}" />
+			</s:decorate>
+			<s:decorate template="/common/decorators/display.xhtml">
+				<ui:define name="label">Data Recebimento:</ui:define>
+				<h:outputText styleClass="destaque" value="#{incidenteFacesBean.deslocamentoAtual.dataRecebimento}" />
+			</s:decorate>
+			<s:decorate template="/common/decorators/display.xhtml">
+				<ui:define name="label">Sala:</ui:define>
+				<h:outputText styleClass="destaque" value="#{incidenteFacesBean.deslocamentoAtual.numeroSala}" />
+			</s:decorate>
+			<s:decorate template="/common/decorators/display.xhtml">
+				<ui:define name="label">Armário:</ui:define>
+				<h:outputText styleClass="destaque" value="#{incidenteFacesBean.deslocamentoAtual.numeroArmario}" />
+			</s:decorate>
+			<s:decorate template="/common/decorators/display.xhtml">
+				<ui:define name="label">Estante:</ui:define>
+				<h:outputText styleClass="destaque" value="#{incidenteFacesBean.deslocamentoAtual.numeroEstante}" />
+			</s:decorate>
+			<s:decorate template="/common/decorators/display.xhtml">
+				<ui:define name="label">Prateleira:</ui:define>
+				<h:outputText styleClass="destaque" value="#{incidenteFacesBean.deslocamentoAtual.numeroPrateleira}" />
+			</s:decorate>
+			<s:decorate template="/common/decorators/display.xhtml">
+				<ui:define name="label">Coluna:</ui:define>
+				<h:outputText styleClass="destaque" value="#{incidenteFacesBean.deslocamentoAtual.numeroColuna}" />
+			</s:decorate>
+		</div>
+
+		<div style="padding-top: 5px;">
+			<a:commandButton style="padding-left: 0px;"
+				value="Fechar"
+				oncomplete="#{rich:component('panelLocalizacao')}.hide()"
+				immediate="true" eventsQueue="ajaxQueue" ignoreDupResponses="true" ajaxSingle="true" />		
+		</div>
+	</rich:modalPanel>
+	
+</ui:composition>

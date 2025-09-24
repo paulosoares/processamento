@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<datasources>
+	<local-tx-datasource>
+		<jndi-name>jdbc/estfdecisao2</jndi-name>
+		<driver-class>oracle.jdbc.OracleDriver</driver-class>
+		<connection-url>jdbc:oracle:thin:usuariodecisao/q%usuariodecisao14@bd-orcl-qual.stf.jus.br:1521/stfq</connection-url>
+		<!--<connection-url>jdbc:oracle:thin:usuariodecisao/d%usuariodecisao08@bd-orcl-des:1521:stfd</connection-url>-->
+		<!--<connection-url>jdbc:oracle:thin:usuariodecisao/sdf83%sd7j34@bd-orcl-hom:1521:stfh</connection-url>-->
+	</local-tx-datasource>
+</datasources>

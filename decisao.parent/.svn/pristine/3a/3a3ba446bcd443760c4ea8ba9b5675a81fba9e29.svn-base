@@ -1,0 +1,199 @@
+package br.jus.stf.estf.decisao.support.security;
+
+import java.util.List;
+import java.util.Set;
+
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.springframework.security.Authentication;
+import org.springframework.security.GrantedAuthority;
+
+import br.gov.stf.estf.entidade.localizacao.Setor;
+import br.gov.stf.estf.entidade.ministro.Ministro;
+import br.gov.stf.estf.entidade.usuario.GrupoUsuario;
+import br.gov.stf.estf.entidade.usuario.Usuario;
+import br.gov.stf.framework.security.user.User;
+
+/**
+ * Representa o usuário logado no sistema. Encapsula informações associadas
+ * ao usuário que serão importantes para execução dos serviço do 
+ * sistema.
+ * 
+ * @author Rodrigo Barreiros
+ * @see 28.05.2010
+ */
+public class Principal extends User {
+	
+	private static final long serialVersionUID = -5908588680605838775L;
+	
+	public enum TipoPerfil {
+		// Manter a ordem do mais abrangente para o mais restrito, com os perfis exclusivos em primeiro lugar.
+		// Observar que, caso o usuário possua um perfil exclusivo, não poderá possuir outro perfil
+		// exclusivo que esteja posicionado posteriormente nesta relação.
+		
+		// Perfis exclusivos ou principais
+		MASTER_ESTFDECISAO(true),
+		MINISTRO_ESTFDECISAO(true),
+		ADMINISTRADOR_ESTFDECISAO(true),
+		AVANCADO_ESTFDECISAO(true),
+		REVISAO_ESTFDECISAO(true),
+		BASICO_ESTFDECISAO(true),
+		CONSULTA_TODOS_GABINETES_ESTFDECISAO(true),
+		CONSULTA_ESTFDECISAO(true),
+		
+		MINISTRO_ESTFDECISAO_GMRW(true),
+		ADMINISTRADOR_ESTFDECISAO_GMRW(true),
+		AVANCADO_ESTFDECISAO_GMRW(true),
+		
+		// Perfis adicionais
+		EDITAR_TEXTO_DIGITAL(false),
+		AGENDAR_ESTFDECISAO(false),
+		ASSINAR_ESTFDECISAO(false),
+		BETA_ESTFDECISAO(false),
+		CONTINGENCIA_ESTFDECISAO(false),
+		CONTROLE_VOTOS_ESTFDECISAO(false),
+		EXPEDIENTE_ESTFDECISAO(false),
+		LIBERAR_PUBLICACAO_ESTFDECISAO(false),
+		MINUTA_ESTFDECISAO(false),
+		MINISTRO_ASSINATURA_CONTINGENCIAL_ESTFDECISAO(false),
+		NOVO_BROFFICE_ESTFDECISAO(false),
+		TESTAR_ASSINATURA_ESTFDECISAO(false),
+		TESTAR_ASSINATURA_EXPEDIENTE_ESTFDECISAO(false),
+		IMPRIMIR_ESPECIAL_ESTFDECISAO(false), 
+		DESBLOQUEAR_TEXTOS(false);
+		
+		private boolean exclusivo;
+
+		private TipoPerfil(boolean perfilExclusivo) {
+			this.exclusivo = perfilExclusivo;
+		}
+		
+		public boolean isExclusivo() {
+			return exclusivo;
+		}
+	}
+	
+	private Authentication authentication;
+	private Usuario usuario;
+	private Ministro ministro;
+	private Long idSetor;
+	private Set<Setor> setores;
+	private int sessoes = 1;
+	private List<GrantedAuthority> authorities;
+	private boolean setorRestringeTextoAoResponsavel;
+	private Set<GrupoUsuario> gruposEgabDoUsuario;
+	
+	/**
+	 * Verifica se o usuário corrente possui um determinado perfil.
+	 * 
+	 * @param tipoPerfil o perfil verificado
+	 * @return true, se sim, false, caso contrário
+	 */
+	public boolean hasRole(TipoPerfil tipoPerfil) {
+		for (GrantedAuthority authority : authentication.getAuthorities()) {
+			if (authority.getAuthority().endsWith(tipoPerfil.name())) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * Verifica se o usuário corrente possui o perfil "Master".
+	 * 
+	 * @return true, se sim, false, caso contrário
+	 */
+	public boolean isMaster() {
+		return hasRole(TipoPerfil.MASTER_ESTFDECISAO);
+	}
+	
+	public boolean isMinistroDecisao() {
+		return hasRole(TipoPerfil.MINISTRO_ESTFDECISAO);
+	}
+	
+	public boolean isAdministrador() {
+		return hasRole(TipoPerfil.ADMINISTRADOR_ESTFDECISAO);
+	}
+	
+	public void setAuthentication(Authentication authentication) {
+		this.authentication = authentication;
+	}
+	
+	public void setUsuario(Usuario usuario) {
+		this.usuario = usuario;
+	}
+	
+	public Usuario getUsuario() {
+		return usuario;
+	}
+	
+	public void setMinistro(Ministro ministro) {
+		this.ministro = ministro;
+	}
+	
+	public Ministro getMinistro() {
+		return ministro;
+	}
+	
+	public Long getIdSetor() {
+		return idSetor;
+	}
+
+	public void setIdSetor(Long idSetor) {
+		this.idSetor = idSetor;
+	}
+
+	public void setSetores(Set<Setor> setores) {
+		this.setores = setores;
+	}
+	
+	public Set<Setor> getSetores() {
+		return setores;
+	}
+	
+	public void addSessao() {
+		this.sessoes = sessoes + 1;
+	}
+	
+	public int getSessoes() {
+		return sessoes;
+	}
+	
+	public List<GrantedAuthority> getAuthorities() {
+		return authorities;
+	}
+
+	public void setAuthorities(List<GrantedAuthority> authorities) {
+		this.authorities = authorities;
+	}
+
+	/**
+	 * Flag que define se há restrição para textos em elaboração
+	 * @return boolean que informa se o setor restringe os textos em elaboração ao responsável pelo texto (pode ser um usuário ou um grupo do egab)
+	 */	
+	public boolean isSetorRestringeTextoAoResponsavel() {
+		return setorRestringeTextoAoResponsavel;
+	}
+
+	public void setSetorRestringeTextoAoResponsavel(boolean setorRestringeTextoAoResponsavel) {
+		this.setorRestringeTextoAoResponsavel = setorRestringeTextoAoResponsavel;
+	}
+
+	public boolean equals(Object other) {
+        if (!(other instanceof Principal)) return false;
+        Principal castOther = (Principal) other;
+        return new EqualsBuilder().append(authentication.getPrincipal(), castOther.authentication.getPrincipal()).isEquals();
+    }
+
+    public int hashCode() {
+        return new HashCodeBuilder().append(usuario).toHashCode();
+    }
+
+	public Set<GrupoUsuario> getGruposEgabDoUsuario() {
+		return gruposEgabDoUsuario;
+	}
+	
+	public void setGruposEgabDoUsuario(Set<GrupoUsuario> gruposEgabDoUsuario) {
+		this.gruposEgabDoUsuario = gruposEgabDoUsuario;
+	}
+}

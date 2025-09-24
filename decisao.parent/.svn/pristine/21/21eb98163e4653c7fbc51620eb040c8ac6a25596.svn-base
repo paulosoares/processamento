@@ -1,0 +1,508 @@
+package br.jus.stf.estf.decisao.objetoincidente.service.impl;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.List;
+import java.util.Set;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import br.gov.stf.estf.documento.model.service.ArquivoEletronicoService;
+import br.gov.stf.estf.documento.model.service.TextoService;
+import br.gov.stf.estf.entidade.documento.ArquivoEletronico;
+import br.gov.stf.estf.entidade.documento.Texto;
+import br.gov.stf.estf.entidade.documento.Texto.TipoRestricao;
+import br.gov.stf.estf.entidade.documento.TipoLiberacao;
+import br.gov.stf.estf.entidade.documento.TipoTexto;
+import br.gov.stf.estf.entidade.documento.tipofase.FaseTexto;
+import br.gov.stf.estf.entidade.julgamento.Colegiado;
+import br.gov.stf.estf.entidade.julgamento.ListaJulgamento;
+import br.gov.stf.estf.entidade.julgamento.Sessao;
+import br.gov.stf.estf.entidade.julgamento.Sessao.TipoAmbienteConstante;
+import br.gov.stf.estf.entidade.julgamento.Sessao.TipoJulgamentoVirtual;
+import br.gov.stf.estf.entidade.julgamento.TipoListaJulgamento;
+import br.gov.stf.estf.entidade.ministro.Ministro;
+import br.gov.stf.estf.entidade.ministro.Ocorrencia;
+import br.gov.stf.estf.entidade.processostf.Classe;
+import br.gov.stf.estf.entidade.processostf.IncidenteJulgamento;
+import br.gov.stf.estf.entidade.processostf.ObjetoIncidente;
+import br.gov.stf.estf.entidade.processostf.PreListaJulgamento;
+import br.gov.stf.estf.entidade.processostf.Processo;
+import br.gov.stf.estf.entidade.processostf.SituacaoMinistroProcesso;
+import br.gov.stf.estf.entidade.processostf.TipoIncidenteJulgamento;
+import br.gov.stf.estf.entidade.processostf.TipoJulgamento;
+import br.gov.stf.estf.entidade.usuario.Usuario;
+import br.gov.stf.estf.julgamento.model.service.ColegiadoService;
+import br.gov.stf.estf.julgamento.model.service.SessaoService;
+import br.gov.stf.estf.ministro.model.service.MinistroService;
+import br.gov.stf.estf.processostf.model.service.PreListaJulgamentoService;
+import br.gov.stf.estf.processostf.model.service.SituacaoMinistroProcessoService;
+import br.gov.stf.estf.processostf.model.service.TipoIncidenteJulgamentoService;
+import br.gov.stf.estf.processostf.model.service.exception.DuplicacaoChaveAntigaException;
+import br.gov.stf.estf.publicacao.compordj.builder.BuilderHelper;
+import br.gov.stf.framework.model.service.ServiceException;
+import br.jus.stf.estf.decisao.api.ReferendarDecisaoDto;
+import br.jus.stf.estf.decisao.api.ReferendarDecisaoResultadoDto;
+import br.jus.stf.estf.decisao.api.ReferendarDecisaoResultadoDto.TipoMensagem;
+import br.jus.stf.estf.decisao.objetoincidente.service.ObjetoIncidenteService;
+import br.jus.stf.estf.decisao.objetoincidente.service.ReferendarDecisaoService;
+import br.jus.stf.estf.decisao.objetoincidente.support.DadosAgendamentoDto;
+import br.jus.stf.estf.decisao.objetoincidente.support.TipoAgendamento;
+import br.jus.stf.estf.decisao.objetoincidente.support.TipoColegiadoAgendamento;
+import br.jus.stf.estf.decisao.pesquisa.domain.ObjetoIncidenteDto;
+import br.jus.stf.estf.decisao.pesquisa.domain.TextoDto;
+import br.jus.stf.estf.decisao.support.security.Principal;
+
+@Service("referendarDecisaoService")
+public class ReferendarDecisaoServiceImpl implements ReferendarDecisaoService {
+
+	@Qualifier("objetoIncidenteServiceLocal")
+	@Autowired
+	private ObjetoIncidenteService objetoIncidenteService;
+
+	@Autowired
+	private TextoService textoService;
+	
+	@Autowired
+	private PreListaJulgamentoService preListaJulgamentoService;
+
+	@Autowired
+	private TipoIncidenteJulgamentoService tipoIncidenteJulgamentoService;
+
+	@Autowired
+	private ArquivoEletronicoService arquivoEletronicoService;
+
+	@Autowired
+	protected br.jus.stf.estf.decisao.texto.service.TextoService textoServiceLocal;
+
+	@Autowired
+	private SituacaoMinistroProcessoService situacaoMinistroProcessoService;
+
+	@Autowired
+	private MinistroService ministroService;
+
+	@Autowired
+	private SessaoService sessaoService;
+
+	@Autowired
+	private ColegiadoService colegiadoService;
+	
+	@Override
+	public ReferendarDecisaoResultadoDto referendarDecisao(ReferendarDecisaoDto referendarDecisaoDto, Principal principal) throws ServiceException {
+		List<ReferendarDecisaoResultadoDto> resultados = referendarDecisao(Arrays.asList(referendarDecisaoDto), principal);
+
+		if (resultados != null && resultados.size() == 1)
+			return resultados.get(0);
+		else
+			return null;
+	}
+
+	@Override
+	@Transactional
+	public List<ReferendarDecisaoResultadoDto> referendarDecisao(List<ReferendarDecisaoDto> lista, Principal principal) throws ServiceException {
+
+		List<ReferendarDecisaoResultadoDto> resultados = new ArrayList<ReferendarDecisaoResultadoDto>();
+
+		List<TipoLiberacao> tiposLiberacaoNaoFazerNada = Arrays.asList(TipoLiberacao.SESSAO_VIRTUAL_EXTRAORDINARIA, TipoLiberacao.NAO_SE_APLICA);
+
+		if (lista != null && !lista.isEmpty()) {
+			for (ReferendarDecisaoDto dto : lista) {
+				ObjetoIncidente<?> oi = objetoIncidenteService.recuperarObjetoIncidentePorId(dto.getObjetoIncidente());
+				Ministro relator = ministroService.recuperarPorId(dto.getMinistro());
+
+				TipoLiberacao tipoLiberacao = null;
+
+				if (dto.getTipoLiberacao() != null && !dto.getTipoLiberacao().isEmpty()) {
+					tipoLiberacao = TipoLiberacao.valueOfSigla(dto.getTipoLiberacao());
+
+					Colegiado colegiado = null;
+
+					if (dto.getColegiado() != null)
+						colegiado = colegiadoService.recuperarPorId(dto.getColegiado());
+					
+					if (dto.getIgnorarCpc() == null)
+						dto.setIgnorarCpc(false);
+
+					List<TipoLiberacao> tiposPermitidos = Arrays.asList(TipoLiberacao.SESSAO_PRESENCIAL_ORDINARIA, TipoLiberacao.SESSAO_VIRTUAL_ORDINARIA);
+
+					try {
+						if (tiposPermitidos.contains(tipoLiberacao) && colegiado == null) {
+							String mensagem = String.format("Não é possível referendar uma decisão com liberação para %s sem informar um colegiado.", tipoLiberacao.getDescricao());
+							throw new ServiceException(mensagem);
+						} else if (TipoLiberacao.SESSAO_PRESENCIAL_ORDINARIA.equals(tipoLiberacao)) {
+							// criar referendo
+							IncidenteJulgamento referendo = criarReferendo(oi);
+
+							objetoIncidenteService.salvarAgendamentoProcesso(montarDadosDoAgendamentoPresencial(referendo, relator, colegiado, principal.getUsuario()));
+							resultados.add(gerarMensagemSucesso(oi, "O processo foi incluído no índice do(a) " + colegiado.getDescricao(), referendo));
+
+						} else if (TipoLiberacao.SESSAO_VIRTUAL_ORDINARIA.equals(tipoLiberacao)) {
+							// criar pré-lista
+							PreListaJulgamento preLista = criarPreLista(relator);
+							List<ObjetoIncidente<?>> listaReferendos = new ArrayList<ObjetoIncidente<?>>();
+
+							// criar referendo
+							IncidenteJulgamento referendo = criarReferendo(oi);
+							listaReferendos.add(referendo); // apenas um processo por lista
+
+							// criar textos
+							criarTextos(referendo, relator);
+
+							// incluir em pré-lista
+							preListaJulgamentoService.incluirObjetoIncidenteNaPreLista(preLista, referendo);
+
+							// marcar como revisado
+							preListaJulgamentoService.alterarProcessoParaRevisado(referendo, preLista, true, principal.getUsuario());
+
+							// liberar pré-lista
+							DadosAgendamentoDto dadosAgendamento = montarDadosDoAgendamentoVirtual(listaReferendos, colegiado, relator, tipoLiberacao, preLista, principal.getUsuario(), dto.getIgnorarCpc());
+							ListaJulgamento listaJulgamento = objetoIncidenteService.liberarListaParaJulgamento(dadosAgendamento);
+
+							// remover processos revisados
+							preListaJulgamentoService.removerProcessosRevisados(preLista);
+
+							// excluir pre-lista
+							preListaJulgamentoService.excluir(preLista);
+
+							resultados.add(gerarMensagemSucesso(oi, listaJulgamento, referendo));
+
+						} else if (tiposLiberacaoNaoFazerNada.contains(tipoLiberacao)) {
+							// não é para fazer nada
+
+						}
+					} catch (Exception e) {
+						e.printStackTrace();
+						String mensagem = e.getMessage();
+
+						if (mensagem == null)
+							mensagem = e.getCause().toString();
+
+						resultados.add(gerarMensagemFalha(oi, mensagem));
+					}
+				}
+
+			}
+		}
+
+		preListaJulgamentoService.flushSession();
+
+		return resultados;
+	}
+
+	private ReferendarDecisaoResultadoDto gerarMensagemSucesso(ObjetoIncidente<?> oi, String mensagem, IncidenteJulgamento referendo) {
+		return new ReferendarDecisaoResultadoDto(oi.getId(), TipoMensagem.SUCESSO, mensagem, null, referendo.getId());
+	}
+
+	private ReferendarDecisaoResultadoDto gerarMensagemFalha(ObjetoIncidente<?> oi, String mensagem) {
+		return new ReferendarDecisaoResultadoDto(oi.getId(), TipoMensagem.FALHA, mensagem, null, null);
+	}
+
+	private ReferendarDecisaoResultadoDto gerarMensagemSucesso(ObjetoIncidente<?> oi, ListaJulgamento listaJulgamento, IncidenteJulgamento referendo) {
+		Sessao sessao = listaJulgamento.getSessao();
+		Colegiado colegiado = sessao.getColegiado();
+
+		boolean isPresencial = TipoAmbienteConstante.PRESENCIAL.getSigla().equals(sessao.getTipoAmbiente());
+
+		SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+
+		String mensagem = null;
+
+		if (isPresencial)
+			mensagem = String.format("A lista [%s] foi liberada para julgamento presencial em %s, %s.", listaJulgamento.getNome(), sdf.format(sessao.getDataInicio()),
+							sessao.getColegiado().getDescricao());
+		else
+			mensagem = String.format("A lista [%s] foi liberada para julgamento virtual no período de %s a %s, %s.", listaJulgamento.getNome(), sdf.format(sessao.getDataPrevistaInicio()),
+							sdf.format(sessao.getDataPrevistaFim()), colegiado.getDescricao());
+
+		return new ReferendarDecisaoResultadoDto(oi.getId(), TipoMensagem.SUCESSO, mensagem, sessao.getId(), referendo.getId());
+	}
+
+	private DadosAgendamentoDto montarDadosDoAgendamentoPresencial(ObjetoIncidente<?> oi, Ministro relator, Colegiado colegiado, Usuario usuario) {
+		DadosAgendamentoDto dadosAgendamento = new DadosAgendamentoDto();
+		dadosAgendamento.setMinistro(relator);
+		dadosAgendamento.setObjetoIncidenteDto(ObjetoIncidenteDto.valueOf(oi));
+		dadosAgendamento.setTipoAgendamento(TipoAgendamento.INDICE);
+		dadosAgendamento.setUsuario(usuario);
+		dadosAgendamento.setSetorDoUsuario(relator.getSetor());
+		dadosAgendamento.setTipoColegiadoAgendamento(TipoColegiadoAgendamento.getById(colegiado.getId()));
+		return dadosAgendamento;
+	}
+
+	private DadosAgendamentoDto montarDadosDoAgendamentoVirtual(List<ObjetoIncidente<?>> lista, Colegiado colegiado, Ministro ministro, TipoLiberacao tipoLiberacao, PreListaJulgamento preLista,
+					Usuario usuario, Boolean ignorarCpc) throws ServiceException {
+
+		try {
+			Calendar dataLiberacaoCalendar = new GregorianCalendar();
+
+			Sessao sessaoVirtual = sessaoService.recuperarSessao(dataLiberacaoCalendar, colegiado, ignorarCpc, TipoJulgamentoVirtual.LISTAS_DE_JULGAMENTO);
+			sessaoVirtual = sessaoService.salvar(sessaoVirtual);
+			sessaoService.flushSession();
+			
+			DadosAgendamentoDto dadosAgendamento = new DadosAgendamentoDto();
+			dadosAgendamento.setMinistro(ministro);
+			dadosAgendamento.setMinistroDoGabinete(ministro);
+			dadosAgendamento.setUsuario(usuario);
+			dadosAgendamento.setTipoAgendamento(TipoAgendamento.PAUTA);
+			dadosAgendamento.setSetorDoUsuario(usuario.getSetor());
+			dadosAgendamento.setTipoColegiadoAgendamento(TipoColegiadoAgendamento.getById(colegiado.getId()));
+			dadosAgendamento.setSessao(sessaoVirtual);
+			dadosAgendamento.setTipoListaJulgamento(TipoListaJulgamento.LISTAS_DOS_RELATORES_REFERENDOS);
+			dadosAgendamento.setIdTipoAmbienteColegiadoEscolhido(TipoAmbienteConstante.VIRTUAL.getSigla());
+			dadosAgendamento.setAdmiteSustentacaoOral(true);
+			dadosAgendamento.setJulgamentoTese(false);
+			dadosAgendamento.setJulgamentoModulacao(false);
+			dadosAgendamento.setPreListaJulgamento(preLista);
+
+			if (TipoLiberacao.SESSAO_VIRTUAL_EXTRAORDINARIA.equals(tipoLiberacao))
+				dadosAgendamento.setSessaoExtraordinaria(true);
+			else
+				dadosAgendamento.setSessaoExtraordinaria(false);
+
+			dadosAgendamento.setListaObjetoIncidente(lista);
+
+			String nomeLista = objetoIncidenteService.montarNomeDaLista(dadosAgendamento);
+			dadosAgendamento.setNomeLista(nomeLista);
+
+			return dadosAgendamento;
+
+		} catch (Exception e) {
+			throw new ServiceException(e);
+		}
+	}
+	
+	private PreListaJulgamento criarPreLista(Ministro ministro) throws ServiceException {
+		PreListaJulgamento preLista = new PreListaJulgamento();
+		preLista.setNome("Lista de Referendos Automáticos");
+		preLista.setSetor(ministro.getSetor());
+		preLista = preListaJulgamentoService.salvar(preLista);
+		return preLista;
+	}
+
+	private IncidenteJulgamento criarReferendo(ObjetoIncidente<?> oi) throws ServiceException {
+
+		TipoIncidenteJulgamento tipoIncidenteJulgamento = tipoIncidenteJulgamentoService.recuperar(TipoIncidenteJulgamento.SIGLA_REFERENDO);
+
+		try {
+			Classe classe = ((Processo) oi.getPrincipal()).getClasseProcessual();
+
+			if (!textoServiceLocal.isTipoIncidenteJulgamentoPermitidoParaClasse(tipoIncidenteJulgamento, classe))
+				throw new ServiceException("O tipo de incidente 'referendo' não é permitido para a classe processual " + classe.getDescricao() + ".");
+
+			Integer sequenciaCadeia = textoServiceLocal.recuperarProximaSequenciaCadeia(oi.getId(), tipoIncidenteJulgamento.getId());
+
+			TipoJulgamento tipoJulgamento = textoServiceLocal.recuperarTipoJulgamento(tipoIncidenteJulgamento.getId(), Long.valueOf(sequenciaCadeia));
+
+			if (tipoJulgamento != null) {
+
+				IncidenteJulgamento incidenteJulgamento = textoServiceLocal.inserirIncidenteJulgamento(oi.getId(), tipoIncidenteJulgamento.getId(), sequenciaCadeia);
+				if (incidenteJulgamento != null) {
+					// INSERE A NOVA SITUACAO DO MINISTRO NO PROCESSO
+					Ministro ministroRelator = situacaoMinistroProcessoService.recuperarMinistroRelatorAtual(incidenteJulgamento);
+					SituacaoMinistroProcesso smp = new SituacaoMinistroProcesso();
+					smp.setMinistroRelator(ministroRelator);
+					smp.setObjetoIncidente(incidenteJulgamento);
+					smp.setOcorrencia(Ocorrencia.RELATOR);
+					smp.setDataOcorrencia(new Date());
+					smp.setRelatorAtual(false);
+					smp.setRelatorIncidenteAtual(true);
+					situacaoMinistroProcessoService.incluir(smp);
+				}
+
+				return incidenteJulgamento;
+			} else {
+				throw new ServiceException(String.format(
+								"Não está prevista no sistema a criação do incidente %s com número de sequência %d " + "por motivos de compatibilidade com o Módulo de Tratamento Textual.",
+								tipoIncidenteJulgamento.getDescricao(), sequenciaCadeia));
+			}
+		} catch (DuplicacaoChaveAntigaException e) {
+			throw new ServiceException(String.format("Não foi possível criar o Incidente de Julgamento %s  por motivo de compatibilidade com o Módulo de Tratamento Textual.",
+							tipoIncidenteJulgamento.getDescricao()));
+		}
+	}
+
+	private void criarTextos(IncidenteJulgamento referendo, Ministro relator) throws ServiceException {
+		List<TipoTexto> tiposTexto = Arrays.asList(TipoTexto.EMENTA, TipoTexto.RELATORIO, TipoTexto.VOTO);
+
+		for (TipoTexto tipoTexto : tiposTexto) {
+			ArquivoEletronico arquivoEletronico = new ArquivoEletronico();
+			try {
+				arquivoEletronico.setConteudo(BuilderHelper.stringToRtf(""));
+			} catch (Exception e) {
+				throw new ServiceException(e.getMessage());
+			}
+			arquivoEletronico.setFormato("RTF");
+			arquivoEletronicoService.incluir(arquivoEletronico);
+
+			Texto texto = new Texto();
+			texto.setDataCriacao(new Date());
+			texto.setTipoFaseTextoDocumento(FaseTexto.EM_ELABORACAO);
+			texto.setMinistro(relator);
+			texto.setObjetoIncidente(referendo);
+			texto.setTipoTexto(tipoTexto);
+			texto.setPublico(false);
+			texto.setTextosIguais(false);
+			texto.setTipoRestricao(TipoRestricao.P);
+			texto.setArquivoEletronico(arquivoEletronico);
+			texto.setObservacao("Processo pautado automaticamente em razão de decisão monocrática proferida em " + new SimpleDateFormat("dd/MM/yyyy").format(new Date()));
+
+			texto = textoService.salvar(texto);
+		}
+	}
+	
+	@Override
+	@Transactional
+	public List<ReferendarDecisaoResultadoDto> referendarDecisoesMonocraticas(Set<TextoDto> textos, Principal principal) throws ServiceException {
+		List<ReferendarDecisaoResultadoDto> resultados = new ArrayList<ReferendarDecisaoResultadoDto>();
+
+		if (textos != null) {
+			for (TextoDto textoDto : textos) {
+				Texto decisaoMonocratica = textoService.recuperarPorId(textoDto.getId());
+				textoService.refresh(decisaoMonocratica);
+				if (TipoTexto.DECISAO_MONOCRATICA.equals(decisaoMonocratica.getTipoTexto())) {
+					ReferendarDecisaoDto referendarDecisaoDto = new ReferendarDecisaoDto(decisaoMonocratica.getObjetoIncidente().getId());
+					referendarDecisaoDto.setMinistro(decisaoMonocratica.getMinistro().getId()); // ministro do setor em vez do ministro da decisão monocrática
+
+					if (decisaoMonocratica.getColegiado() != null)
+						referendarDecisaoDto.setColegiado(decisaoMonocratica.getColegiado().getId());
+
+					if (decisaoMonocratica.getTipoLiberacao() != null)
+						referendarDecisaoDto.setTipoLiberacao(decisaoMonocratica.getTipoLiberacao().getSigla());
+
+					ReferendarDecisaoResultadoDto resultado = referendarDecisao(referendarDecisaoDto, principal);
+
+					// Salvar informações do referendo na decisão monocrática
+					if (resultado != null && TipoMensagem.SUCESSO.equals(resultado.getTipoMensagem())) {
+						Sessao sessao = null;
+						
+						if (resultado.getSessao() != null)
+							sessao = sessaoService.recuperarPorId(resultado.getSessao());
+
+						ObjetoIncidente<?> referendo = new Processo();
+						referendo.setId(resultado.getReferendo());
+
+						decisaoMonocratica.setInclusaoAutomatica(true);
+						decisaoMonocratica.setSessao(sessao);
+						decisaoMonocratica.setObjetoIncidenteReferendo(referendo);
+
+						textoService.salvar(decisaoMonocratica);
+						resultados.add(resultado);
+					}
+				}
+			}
+		}
+
+		return resultados;
+	}
+	
+	@Override
+	@Transactional
+	public List<ReferendarDecisaoResultadoDto> desfazerReferendarDecisaoMonocratica(TextoDto textoDto, Principal principal) throws ServiceException {
+		List<ReferendarDecisaoResultadoDto> resultados = new ArrayList<ReferendarDecisaoResultadoDto>();
+		
+		List<TipoLiberacao> tiposPermitidos = Arrays.asList(TipoLiberacao.SESSAO_PRESENCIAL_ORDINARIA, TipoLiberacao.SESSAO_VIRTUAL_ORDINARIA);
+
+
+		if (textoDto != null) {
+			Texto decisaoMonocratica = textoService.recuperarPorId(textoDto.getId());
+			textoService.refresh(decisaoMonocratica);
+			Long sessaoId = null;
+			
+			if (decisaoMonocratica.getSessao() != null)
+				sessaoId = decisaoMonocratica.getSessao().getId();
+
+			if (TipoTexto.DECISAO_MONOCRATICA.equals(decisaoMonocratica.getTipoTexto())) {
+				ObjetoIncidente<?> referendo = decisaoMonocratica.getObjetoIncidenteReferendo();
+
+				boolean liberadoAutomaticamente = Boolean.TRUE.equals(decisaoMonocratica.getInclusaoAutomatica()) && decisaoMonocratica.getTipoLiberacao() != null && referendo != null;
+
+				if (referendo == null) {
+					resultados.add(new ReferendarDecisaoResultadoDto(textoDto.getIdObjetoIncidente(), TipoMensagem.FALHA, "Decisão monocrática não vinculada a referendo.", sessaoId,null)); // situação impossível?
+				} else if (decisaoMonocratica.getInclusaoAutomatica() == null || decisaoMonocratica.getInclusaoAutomatica() == false) {
+					resultados.add(new ReferendarDecisaoResultadoDto(textoDto.getIdObjetoIncidente(), TipoMensagem.FALHA, "Decisão monocrática não foi incluída automaticamente.", sessaoId,referendo.getId()));
+				} else if (decisaoMonocratica.getTipoLiberacao() == null || !tiposPermitidos.contains(decisaoMonocratica.getTipoLiberacao())) {
+					resultados.add(new ReferendarDecisaoResultadoDto(textoDto.getIdObjetoIncidente(), TipoMensagem.FALHA, "Tipo de liberação não permitido.", sessaoId,referendo.getId()));
+				} else if (liberadoAutomaticamente) {
+					try {
+						referendo = objetoIncidenteService.deproxy(referendo);
+						// cancelar liberacao para julgamento
+						ObjetoIncidenteDto objetoIncidenteDto = new ObjetoIncidenteDto();
+						objetoIncidenteDto.setId(referendo.getId());
+						objetoIncidenteService.cancelarAgendamentoDoProcesso(objetoIncidenteDto, principal, null, null, null);
+						/*
+						 * // apagarTextos Texto ementa = textoService.recuperar(referendo,
+						 * TipoTexto.EMENTA, ministro); Texto relatorio =
+						 * textoService.recuperar(referendo, TipoTexto.RELATORIO, ministro); Texto voto
+						 * = textoService.recuperar(referendo, TipoTexto.VOTO, ministro);
+						 * 
+						 * textoService.excluirTodos(Arrays.asList(ementa, relatorio, voto));
+						 * 
+						 * // Apagar andamentos
+						 * andamentoProcessoService.excluirTodosOsAndamentos(referendo);
+						 * 
+						 * // apagar sit_min List<SituacaoMinistroProcesso> situacoes =
+						 * situacaoMinistroProcessoService.pesquisar(referendo, null); for
+						 * (SituacaoMinistroProcesso smp : situacoes) if
+						 * (smp.getObjetoIncidente().equals(referendo))
+						 * situacaoMinistroProcessoService.excluir(smp);
+						 * 
+						 * // apagarReferendo incidenteJulgamentoService.excluir((IncidenteJulgamento)
+						 * referendo);
+						 */
+
+						if (TipoLiberacao.SESSAO_VIRTUAL_ORDINARIA.equals(decisaoMonocratica.getTipoLiberacao()))
+							resultados.add(new ReferendarDecisaoResultadoDto(textoDto.getIdObjetoIncidente(), TipoMensagem.SUCESSO, "O andamento de RETIRADO DE PAUTA foi lançado automaticamente.", sessaoId, referendo.getId()));
+
+						if (TipoLiberacao.SESSAO_PRESENCIAL_ORDINARIA.equals(decisaoMonocratica.getTipoLiberacao()))
+							resultados.add(new ReferendarDecisaoResultadoDto(textoDto.getIdObjetoIncidente(), TipoMensagem.SUCESSO, "O andamento RETIRADO DE MESA foi lançado automaticamente.", sessaoId, referendo.getId()));
+					} catch (Exception e) {
+						resultados.add(new ReferendarDecisaoResultadoDto(textoDto.getIdObjetoIncidente(), TipoMensagem.FALHA, e.getMessage(), null, referendo.getId()));
+					}
+				}
+			}
+		}
+
+		return resultados;
+	}
+	
+	@Override
+	@Transactional
+	public List<ReferendarDecisaoResultadoDto> desfazerReferendarDecisao(List<ReferendarDecisaoDto> lista, Principal principal) throws ServiceException {
+		List<ReferendarDecisaoResultadoDto> resultados = new ArrayList<ReferendarDecisaoResultadoDto>();
+
+		if (lista != null && !lista.isEmpty()) {
+			for (ReferendarDecisaoDto dto : lista) {
+				ObjetoIncidente<?> referendo = objetoIncidenteService.recuperarObjetoIncidentePorId(dto.getObjetoIncidente());
+				
+				if (referendo == null) {
+					resultados.add(new ReferendarDecisaoResultadoDto(null, TipoMensagem.FALHA, "Referendo não encontrado.", null, dto.getObjetoIncidente()));
+				} else {
+					List<Texto> decisoesMonocraticas = textoService.recuperarTextosReferendo(referendo.getId());
+					
+					if (decisoesMonocraticas != null && !decisoesMonocraticas.isEmpty()) {
+						if (decisoesMonocraticas.size() == 1) {
+							Texto decisaoMonocratica = decisoesMonocraticas.get(0);
+							TextoDto textoDto = new TextoDto();
+							textoDto.setId(decisaoMonocratica.getId());
+							return desfazerReferendarDecisaoMonocratica(textoDto, principal);
+						} else {
+							resultados.add(new ReferendarDecisaoResultadoDto(null, TipoMensagem.FALHA, "Foi encontrada mais de uma decisão monocrática para o referendo informado.", null, referendo.getId()));
+						}
+					} else {
+						resultados.add(new ReferendarDecisaoResultadoDto(null, TipoMensagem.FALHA, "Não foi encontrada decisão monocrática para o referendo informado.", null, referendo.getId()));
+					}
+				}
+			}
+		} else {
+			resultados.add(new ReferendarDecisaoResultadoDto(null, TipoMensagem.FALHA, "É necessário informar ao menos um referendo.", null, null));
+		}
+		return resultados;
+	}
+
+}

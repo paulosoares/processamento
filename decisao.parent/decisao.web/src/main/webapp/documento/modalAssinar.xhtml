@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:s="http://jboss.com/products/seam/taglib"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:rich="http://richfaces.org/rich"
+	xmlns:a="http://richfaces.org/a4j"
+	xmlns:c="http://java.sun.com/jstl/core"
+	xmlns:stf="http://www.stf.jus.br/custom-components">
+
+	<rich:modalPanel id="assinaturaPanelItem" autosized="true"
+		width="500"
+		height="200"
+		showWhenRendered="true"
+		style="text-align: left; padding: 0px;">
+		<f:facet name="header">
+			<h:panelGroup>
+				<h:outputText value="Assinatura Automática" />
+			</h:panelGroup>
+		</f:facet>
+		<h:form id="assinaturaActionForm" styleClass="edit" prependId="false" enctype="multipart/form-data" >
+			<h:panelGrid style="width: 100%;" cellpadding="0" cellspacing="0" border="0" columns="1">
+				<c:choose>
+					<c:when test="#{assinarDigitalmenteDocumentosAutomaticamenteFacesBean.hasErrors()}">
+						<div>
+							<p class="result-info"><i>Não foi possível assinar automaticamente.</i></p>
+						</div>
+					</c:when>
+					<c:when test="#{assinarDigitalmenteDocumentosAutomaticamenteFacesBean.hasWarnings() and assinarDigitalmenteDocumentosAutomaticamenteFacesBean.enviouAlgumParaOAssinador}">
+						<div>
+							<p class="result-info"><i>Alguns documentos foram enviados para o assinador.</i></p>
+						</div>
+						<div class="vermelho">Entretanto os documentos abaixo não podem ser assinados e não foram enviados:</div>						
+					</c:when>
+					<c:when test="#{assinarDigitalmenteDocumentosAutomaticamenteFacesBean.hasWarnings() and not assinarDigitalmenteDocumentosAutomaticamenteFacesBean.enviouAlgumParaOAssinador}">
+						<div>
+							<p class="result-info"><i>Não foi possível assinar automaticamente.</i></p>
+						</div>
+						<div class="vermelho">Os documentos abaixo não podem ser assinados:</div>
+					</c:when>
+				</c:choose>
+				<s:div styleClass="actionBody">
+					<stf:messages  level="ALL"/>
+				</s:div>
+			</h:panelGrid>
+			<div class="action-buttons">
+				<a:commandButton id="assinaturaClose"
+					value="Fechar" action="#{principalFacesBean.atualizarPagina()}"
+					reRender="resultPanel, actionModalPanel" immediate="true"
+					oncomplete="Richfaces.hideModalPanel('assinaturaPanelItem')"
+					ajaxSingle="true" >
+					<rich:componentControl for="panelItem" attachTo="close"
+						operation="hide" event="onclick" />
+				</a:commandButton>
+			</div>
+	
+		</h:form>
+	
+	</rich:modalPanel>
+</ui:composition>

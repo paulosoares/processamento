@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:s="http://jboss.com/products/seam/taglib"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:rich="http://richfaces.org/rich"
+	xmlns:a="http://richfaces.org/a4j"
+	xmlns:c="http://java.sun.com/jstl/core"
+	xmlns:stf="http://www.stf.jus.br/custom-components">
+
+	<s:decorate template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="principal" />
+		<ui:define name="descricao">Os textos serão liberados para publicação. Caso deseje liberar para RTJ, marque o item abaixo.
+			<c:if test="#{actionFacesBean.exibirTextoSigilosoOculto}">
+				<div class="vermelhoCentralizado">Atenção: Processo sigiloso. Somente o Chefe de Gabinete 
+				pode liberar textos para publicação nesta situação.
+				</div>
+			</c:if>
+			<c:if test="#{actionFacesBean.exibirMensagemReferendo}">
+				<div class="vermelhoCentralizado">Atenção: havendo indicação de referendo em sessão colegiada, o incidente será, 
+				automaticamente, agendado para julgamento.</div>
+			</c:if>
+		</ui:define>
+		<ui:define name="conteudo">
+			<s:decorate template="/common/decorators/edit.xhtml">
+				<ui:define name="label">Observação:</ui:define>
+				<h:inputTextarea value="#{actionFacesBean.observacao}"
+					rows="5" cols="60" style="width: 300px" onkeyup="this.value = this.value.substring(0, 500);"/>
+			</s:decorate>
+			<br />
+			<h:selectBooleanCheckbox id="chkRTJ" value="#{actionFacesBean.rtj}" />
+			<span>Publicação na RTJ</span>
+		</ui:define>
+		<ui:define name="botoes">
+			<a:commandButton value="Liberar para publicação"
+				action="#{actionFacesBean.validateAndExecute}"
+				reRender="actionModalPanel"
+				oncomplete="showActionPanel('panelItem', #{actionFacesBean.definition.width}, #{actionFacesBean.definition.height})"
+				eventsQueue="ajaxQueue" ignoreDupResponses="true" />
+		</ui:define>
+	</s:decorate>
+
+	<s:decorate template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="warnings" />
+		<ui:define name="descricao">Verifique as informações abaixo antes de prosseguir.</ui:define>
+		<ui:define name="conteudo">
+			<c:if test="#{actionFacesBean.existemTextosNaoSeraoLiberados}">
+				<div>
+					<div class="vermelho">Atenção! Não será possível liberar os
+						textos abaixo para publicação:</div>
+					<stf:messages level="WARN, ERROR" />
+				</div>
+			</c:if>
+			<div>
+				<div>Os seguintes textos estão em lista de textos iguais. Esta
+					operação afetará todos os textos da lista que pertencem ao
+					gabinete.</div>
+				<stf:messages level="INFO" />
+				<div>Total de textos iguais:
+					#{actionFacesBean.textosIguaisAdicionados.size}</div>
+			</div>
+
+		</ui:define>
+		<ui:define name="botoes">
+			<a:commandButton value="Confirmar Liberação"
+				action="#{actionFacesBean.confirmarLiberacao}" reRender="actionModalPanel"
+				oncomplete="showActionPanel('panelItem', #{actionFacesBean.definition.width}, #{actionFacesBean.definition.height})"
+				eventsQueue="ajaxQueue" ignoreDupResponses="true" />
+			<a:commandButton value="Voltar" action="#{actionFacesBean.voltar}"
+				reRender="actionModalPanel"
+				oncomplete="showActionPanel('panelItem', #{actionFacesBean.definition.width}, #{actionFacesBean.definition.height})"
+				eventsQueue="ajaxQueue" ignoreDupResponses="true" />
+
+		</ui:define>
+	</s:decorate>
+	
+	<s:decorate template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="confirmacaoPeca" />
+		<ui:define name="descricao">Você está prestes a liberar o acesso à peça vinculada a
+					processo que tramita em Segredo de Justiça. Deseja continuar?</ui:define>
+		<ui:define name="conteudo">
+			<div style="margin-bottom: 40px;"></div>
+		</ui:define>
+		<ui:define name="botoes">
+			<a:commandButton value="Continuar"
+				action="#{actionFacesBean.confirmarLiberacaoAcessoPeca}" reRender="actionModalPanel"
+				oncomplete="showActionPanel('panelItem', #{actionFacesBean.definition.width}, #{actionFacesBean.definition.height})"
+				eventsQueue="ajaxQueue" ignoreDupResponses="true" />
+
+		</ui:define>
+	</s:decorate>
+	
+	<s:decorate template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="confirmacaoTexto" />
+		<ui:define name="descricao">Ao "liberar para publicação" o texto ficará acessível a
+					todos os usuários internos com permissão de acesso ao eSTF-Decisão.
+					Deseja continuar?</ui:define>
+		<ui:define name="conteudo">
+			<div style="margin-bottom: 40px;"></div>
+		</ui:define>
+		<ui:define name="botoes">
+			<a:commandButton value="Sim"
+				action="#{actionFacesBean.execute}" reRender="actionModalPanel"
+				oncomplete="showActionPanel('panelItem', #{actionFacesBean.definition.width}, #{actionFacesBean.definition.height})"
+				eventsQueue="ajaxQueue" ignoreDupResponses="true" />
+
+		</ui:define>
+	</s:decorate>
+
+	<s:decorate template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="final" />
+		<ui:define name="descricao">Resultado da operação:</ui:define>
+		<ui:define name="conteudo">
+			<c:if test="#{actionFacesBean.existeTextoValido}">
+				<div>
+				<div>Operação realizada com sucesso para os seguintes textos:</div>
+				<stf:messages level="INFO" passed="true"/></div>
+			</c:if>
+			<c:if test="#{actionFacesBean.existeTextoNaoProcessado}">
+				<div>
+				<div class="vermelho">Os seguintes textos não puderam ser
+				liberados para publicação! Caso façam parte de lista de textos
+				iguais, os demais textos destas listas também não foram liberados.</div>
+				<stf:messages level="WARN,ERROR" /></div>
+			</c:if>
+		</ui:define>
+	</s:decorate>
+
+
+</ui:composition>

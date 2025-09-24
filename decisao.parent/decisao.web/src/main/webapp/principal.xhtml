@@ -1,0 +1,1384 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:s="http://jboss.com/products/seam/taglib"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:rich="http://richfaces.org/rich"
+	xmlns:p="http://primefaces.prime.com.tr/ui"
+	xmlns:a="http://richfaces.org/a4j"
+	xmlns:c="http://java.sun.com/jstl/core"
+	xmlns:stf="http://www.stf.jus.br/custom-components"
+	template="/common/decorators/template.xhtml">
+
+	<ui:define name="body">
+		<!-- Mensagens Gerais -->
+		<a:outputPanel id="messagesPanel">
+			<h:messages id="mensagens" showDetail="true" showSummary="false"
+				infoClass="info" infoStyle="color: green;" warnClass="erro"
+				warnStyle="color: green;" errorClass="erro" errorStyle="color: red;"
+				layout="table" rendered="#{showGlobalMessages != 'false' and assinarDigitalmenteDocumentosAutomaticamenteFacesBean.showModalMessages == 'false'}" />
+		</a:outputPanel>
+		
+		
+		
+		<script type="text/javascript">
+			//<![CDATA[
+				//verifica se o evento foi um enter, se foi, retorna false
+				function noEnter(event){
+					var tecla = event.which;
+			        if (tecla == null)
+			           tecla = event.keyCode;
+					return !(tecla && tecla == 13)
+				}
+
+				function noCtrlJ(event) {
+					event = event || window.event;
+					if(event.ctrlKey && event.keyCode == 74) { 
+						//previne Ctrl+j do leitor óptico 
+						return false;
+					}
+				}
+				
+				//verifica se dentro da string digitada, possui algum número, se tiver, exibe o suggestionBox
+				function exibirSuggestionBoxPesquisaProcesso(campoProcesso, suggestionBox ){
+					var valor = campoProcesso.value;
+					var possui = false;
+					
+					for( i = 0; i < valor.length; i++) {
+						//possui valor entre 0 e 9
+						if(valor.charCodeAt(i) >= 48 && valor.charCodeAt(i) <= 57 ) {
+							possui = true;						
+							break;							
+						}
+					}
+
+					if(possui) {
+						suggestionBox.callSuggestion(true);
+					} else {
+						suggestionBox.hide();
+					}
+				}
+
+				function changeShowSearchForm() {
+					var pesquisa = document.getElementById('objetoIncidenteSearchForm:pesquisaAvancada');
+					if (pesquisa.style.display == "none") {
+						pesquisa.style.display = "block";
+					} else {
+						pesquisa.style.display = "none";
+					}
+				}
+
+				function checkAll(ids, size, headerId, page) {
+					var field = null;
+					for (i = (page - 1) * size; i < page * size; i++) {
+						field = document.getElementById(headerId+i+':check');
+						field.checked = contains(ids, field.className);
+					}
+				}
+				
+				function contains(a, obj){
+					for(var i = 0; i < a.length; i++) {
+						if (a[i] == obj) {
+							return true;
+						}
+					}
+					return false;
+				}
+				/*
+					Alterei a função para que o IE passe a reconhecer os caracteres de
+					\r e \n, o Firefox interpreta um ENTER como somente \n, já o IE
+					o interpreta como \r\n. Porém, o IE só funciona quando é passado 
+					os valores hexadecimal as teclas.
+					Os caracteres\x0D é para CARRIAGE RETURN, o \x0A é para ENTER.
+					Esses caracteres são representados por \r\n.
+				*/				
+				function validaCaracter(field) {
+					var re = /[\x0D\x0A'+''*''\/''='@#$%&<>;:'?''.'!'"'¨§°ºª\b]/g;
+					if (re.test(field.value)) {
+						field.value = field.value.replace(re,"");
+					}
+				}
+			//]]> 		
+		</script>
+		<h:form id="objetoIncidenteSearchForm" styleClass="edit"
+			style="margin: 10px 0px 0px 0px">
+			<c:choose>
+				<!-- Inicio Pesquisa basica -->
+				<c:when test="#{principalFacesBean.exibirPesquisaPrincipal}">
+					<s:div id="pesquisaPrincipal">
+						<div class="prop">
+						<div class="name" style="width: auto !important">Processo</div>
+						<div class="value">
+							<h:inputText id="identificacaoProcesso"
+								value="#{principalFacesBean.pesquisaPrincipal.parameters['identificacao']}"
+								onkeydown="return noCtrlJ(event);"
+								onkeypress="return noEnter(event);"
+								onclick="exibirSuggestionBoxPesquisaProcesso(this, #{rich:component('sgBoxProcessoPesquisaPrincipal')});"
+								style="width: 200px" /> 
+							<rich:suggestionbox
+								id="sgBoxProcessoPesquisaPrincipal"
+								suggestionAction="#{incidenteFacesBean.search}"
+								for="identificacaoProcesso" var="result" minChars="1"
+								fetchValue="#{result.identificacao}"
+								nothingLabel="Nenhum registro encontrado."
+								eventsQueue="ajaxQueue"
+								ignoreDupResponses="true">
+
+								<a:support action="#{principalFacesBean.executar(result)}"
+									ajaxSingle="true" event="onselect" reRender="messagesPanel, resultPanel, panelMenuAssinar"
+									eventsQueue="ajaxQueue" ignoreDupResponses="true" />
+	
+								<h:column>
+									<h:outputText rendered="#{result.eletronico}" value="e"
+										styleClass="vermelho" />
+									<h:outputText value="#{result.identificacao}"
+										styleClass="oiSuggestion" />
+									<h:outputText value=" » " />
+									<h:outputText value="#{result.nomeRelator}"
+										styleClass="#{(result.idRelator != userFacesBean.principal.ministro.id)? 'oiSuggestion':'green'}" />
+								</h:column>
+							</rich:suggestionbox> 
+							
+							<s:button id="reset" value="Limpar" action="limpar"
+								style="vertical-align: middle" /> 
+							
+							<a href="pesquisaAvancada">Pesquisa Avançada</a>
+							
+							<s:link 
+								value="Pesquisa de texto pelo STF-Digital" 
+								onclick="window.open('https://digital.stf.jus.br/informacoes/pesquisa/pesquisa-texto-gabinete')"
+								includePageParams="false"
+								propagation="none" 
+								styleClass="revisarListas"/>
+								
+						<h:form id="revisarListasForm" styleClass="edit">
+							<a:commandButton value="Revisar Listas"
+							action="/revisarListas.xhtml"
+							actionListener="#{principalFacesBean.limparAcaoAtual}"
+							rendered="#{userFacesBean.usuarioPodeRevisarListas}" 
+							eventsQueue="ajaxQueue" 
+							styleClass="linkPersonalizado"
+							style="margin-left: 10px;"
+							ignoreDupResponses="true"/> 	
+						</h:form>
+								
+						</div>
+						<h:panelGroup id="panelMenuAssinar" rendered="#{userFacesBean.usuarioPodeAssinar}" styleClass="#{principalFacesBean.algumDocumentoSelecionado ? 'panel-disabled' : ''}">
+							<div style="float:right">
+								<h:commandButton value="Assinar" disabled="#{principalFacesBean.algumDocumentoSelecionado}"
+								action="#{assinarDigitalmenteDocumentosAutomaticamenteFacesBean.assinarDocumentosAutomaticamente()}"
+								styleClass="action-button action-button-near-arrow-down" /> 
+								<rich:dropDownMenu id="assinarPanel" event="onmouseover" styleClass="action-button-arrow-down" disabled="#{principalFacesBean.algumDocumentoSelecionado}">
+									<f:facet name="label">
+										<div class="label-arrow-down">&#160;&#9660;</div>
+									</f:facet>
+								    <rich:menuItem submitMode="none">
+										<h:commandLink value="Selecionar Textos para Assinatura" action="#{assinarDigitalmenteDocumentosAutomaticamenteFacesBean.selecionarTextosParaAssinar()}" />
+									</rich:menuItem>
+									<rich:menuItem submitMode="none">
+										<h:commandLink value="Assinar Textos (#{assinarDigitalmenteDocumentosAutomaticamenteFacesBean.getTotalTextosParaAssinar()})"
+											action="#{assinarDigitalmenteDocumentosAutomaticamenteFacesBean.assinarTextosAutomaticamente()}" />
+									</rich:menuItem>
+									<rich:menuItem submitMode="none">
+										<h:commandLink value="Assinar Expedientes (#{assinarDigitalmenteDocumentosAutomaticamenteFacesBean.getTotalComunicacoesParaAssinar()})"
+											action="#{assinarDigitalmenteDocumentosAutomaticamenteFacesBean.assinarComunicacoesAutomaticamente()}" />
+									</rich:menuItem>
+								</rich:dropDownMenu>
+							</div>
+						</h:panelGroup>
+						<div style="float: right;">
+						<a:outputPanel id="minhasPesquisas">
+							<rich:dropDownMenu event="onmouseover" 
+								styleClass="inline-menu-label" style="float: right;" 
+								rendered="#{not empty principalFacesBean.configuracoesPesquisa}">
+								<f:facet name="label">
+									<h:outputText value="Minhas Pesquisas" />
+								</f:facet>
+						    	<c:forEach items="#{principalFacesBean.configuracoesPesquisa}"
+									var="configuracaoPesquisa">
+									<rich:menuItem submitMode="none">
+										<a:commandLink value="#{configuracaoPesquisa.descricao}" action="#{principalFacesBean.selecionarConfiguracaoPesquisa(configuracaoPesquisa.id)}"
+													reRender="resultPanel, panelMenuAssinar" eventsQueue="ajaxQueue" ignoreDupResponses="true"/>
+									</rich:menuItem>
+								</c:forEach>
+							</rich:dropDownMenu>
+						</a:outputPanel>
+						</div>
+						<div class="clear"></div>
+						</div>
+					</s:div>
+				</c:when>
+				<!-- Fim Pesquisa basica -->
+
+				<!-- Inicio Pesquisa avancada -->
+				<c:otherwise>
+					<div style="width: 100%; margin-bottom: 7px; display: block;">
+						<div style="clear: both; float: left; margin-bottom: 7px;">
+							<s:link view="/principal.xhtml" value="« Voltar para Pesquisa Principal" includePageParams="false" propagation="none" />
+						</div>
+						<div style="float: right; margin-bottom: 7px;">
+							<a href="#" onclick="changeShowSearchForm();">Ocultar/Exibir Formulário de Pesquisa</a>
+						</div>
+					</div>
+					
+						
+					<s:div id="pesquisaAvancada" style="margin: 0px; clear: both; display: block;">
+						<div class="layout-3col" style="border-right: 2px solid #007CC2;">
+						<div class="input-group">
+						<h3>Processo</h3>
+
+						<s:decorate template="/common/decorators/display.xhtml">
+							<ui:define name="label">Processo/Classe</ui:define>
+							<h:inputText id="identificacaoProcesso"
+								onblur="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Area Processo - Processo/Classe', this.value);"
+								value="#{principalFacesBean.pesquisaAvancada.parameters['identificacao']}"
+								onkeydown="return noCtrlJ(event);"
+								onkeypress="return noEnter(event);"
+								onclick="exibirSuggestionBoxPesquisaProcesso(this, #{rich:component('sgBoxProcessoPesquisaAvancada')});">
+								<a:support event="onchange"
+									action="#{principalFacesBean.limparObjetoIncidente()}"
+									eventsQueue="ajaxQueue" ignoreDupResponses="true" />
+							</h:inputText>
+							<rich:suggestionbox id="sgBoxProcessoPesquisaAvancada"
+								suggestionAction="#{incidenteFacesBean.search}"
+								for="identificacaoProcesso" var="result"
+								fetchValue="#{result.identificacao}"
+								nothingLabel="Nenhum registro encontrado." width="400"
+								ignoreDupResponses="true" eventsQueue="ajaxQueue"
+								minChars="1">
+
+								<a:support
+									action="#{principalFacesBean.selecionarObjetoIncidente(result)}"
+									ajaxSingle="true" event="onselect"
+									eventsQueue="ajaxQueue" ignoreDupResponses="true" />
+
+								<h:column>
+									<h:outputText rendered="#{result.eletronico}" value="e"
+										styleClass="vermelho" />
+									<h:outputText value="#{result.identificacao}"
+										styleClass="oiSuggestion" />
+									<h:outputText value=" » " />
+									<h:outputText value="#{result.nomeRelator}"
+										styleClass="#{(result.idRelator != userFacesBean.principal.ministro.id)? 'oiSuggestion':'green'}" />
+								</h:column>
+							</rich:suggestionbox>
+						</s:decorate> 
+						<s:decorate template="/common/decorators/display.xhtml" id="nomeRelatorAtualDec">
+							<ui:define name="label">Ministro</ui:define>
+							<h:inputText id="nomeRelatorAtual"
+								onblur="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Area Processo - Ministro', this.value);"
+								value="#{principalFacesBean.pesquisaAvancada.parameters['nomeRelatorAtual']}"
+								onfocus="#{rich:component('suggestionBoxMinRelId')}.callSuggestion(true)"
+								disabled="#{principalFacesBean.pesquisaAvancada.parameters['painelVisualizacao']}" />
+							<rich:suggestionbox id="suggestionBoxMinRelId"
+								suggestionAction="#{incidenteFacesBean.searchMinistros}"
+								for="nomeRelatorAtual" var="result" fetchValue="#{result.nome}"
+								nothingLabel="Nenhum registro encontrado." width="300" 
+								eventsQueue="ajaxQueue" ignoreDupResponses="true">
+
+								<a:support
+									action="#{principalFacesBean.pesquisaAvancada.put('idRelatorAtual', result.id)}"
+									ajaxSingle="true" event="onselect" reRender="resultPanel"
+									eventsQueue="ajaxQueue" ignoreDupResponses="true" />
+
+								<h:column>
+									<h:outputText value="#{result.nome}"
+										styleClass="#{(result.id != userFacesBean.principal.ministro.id)? 'oiSuggestion':'green'}" />
+								</h:column>
+							</rich:suggestionbox>
+						</s:decorate>
+						<s:decorate template="/common/decorators/display.xhtml">
+							<ui:define name="label">Incidente Processual</ui:define>
+							<h:selectOneMenu 
+								onblur="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Area Processo - Incidente Processual', this.value);" 
+								value="#{principalFacesBean.pesquisaAvancada.parameters['idTipoIncidente']}"
+								disabled="#{principalFacesBean.pesquisaAvancada.parameters['painelVisualizacao']}">
+								<f:selectItem itemValue="-1" itemLabel="Selecione..." />
+								<s:selectItems value="#{incidenteFacesBean.tiposIncidente}" var="tipoIncidente" itemValue="#{tipoIncidente.id}" label="#{tipoIncidente.descricao}" />
+								<f:convertNumber />
+							</h:selectOneMenu>
+						</s:decorate> 
+						<s:decorate template="/common/decorators/display.xhtml" id="originarioDec">
+							<ui:define name="label">Originário</ui:define>
+							<h:selectOneMenu id="originario"
+								onblur="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Area Processo - Originário', this.value);"
+								value="#{principalFacesBean.pesquisaAvancada.parameters['originario']}"
+								style="width: 110px"
+								disabled="#{principalFacesBean.pesquisaAvancada.parameters['painelVisualizacao']}">
+								<f:selectItem itemValue="" itemLabel="Todos" />
+								<f:selectItem itemValue="S" itemLabel="Sim" />
+								<f:selectItem itemValue="N" itemLabel="Não" />
+							</h:selectOneMenu>
+						</s:decorate> 
+						<s:decorate template="/common/decorators/display.xhtml" id="repercussaoGeralDec">
+							<ui:define name="label">Repercussão Geral</ui:define>
+							<h:selectOneMenu id="repercussaoGeral"
+								onblur="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Area Processo - Repercussão Geral', this.value);"
+								value="#{principalFacesBean.pesquisaAvancada.parameters['repercussaoGeral']}"
+								style="width: 110px"
+								disabled="#{principalFacesBean.pesquisaAvancada.parameters['painelVisualizacao']}">
+								<f:selectItem itemValue="" itemLabel="Todos" />
+								<f:selectItem itemValue="S" itemLabel="Sim" />
+								<f:selectItem itemValue="N" itemLabel="Não" />
+							</h:selectOneMenu>
+						</s:decorate> 
+						<s:decorate template="/common/decorators/display.xhtml" id="controversiaOrigemDec">
+							<ui:define name="label">Controvérsia Indicada pela Origem</ui:define>
+							<h:selectOneMenu id="controversiaOrigem"
+								onblur="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Area Processo - Controvérsia Indicada pela Origem' , this.value);"
+								value="#{principalFacesBean.pesquisaAvancada.parameters['controversiaOrigem']}"
+								style="width: 110px"
+								disabled="#{principalFacesBean.pesquisaAvancada.parameters['painelVisualizacao']}">
+								<f:selectItem itemValue="" itemLabel="Todos" />
+								<f:selectItem itemValue="S" itemLabel="Sim" />
+								<f:selectItem itemValue="N" itemLabel="Não" />
+							</h:selectOneMenu>
+						</s:decorate> 
+						<s:decorate template="/common/decorators/display.xhtml" id="tipoProcessoDec">
+							<ui:define name="label">Tipo de Processo</ui:define>
+							<h:selectOneMenu id="tipoProcesso"
+								onblur="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Area Processo - Tipo de Processo', this.value);"
+								value="#{principalFacesBean.pesquisaAvancada.parameters['tipoProcesso']}"
+								style="width: 110px"
+								disabled="#{principalFacesBean.pesquisaAvancada.parameters['painelVisualizacao']}">
+								<f:selectItem itemValue="" itemLabel="Todos" />
+								<f:selectItem itemValue="E" itemLabel="Eletrônico" />
+								<f:selectItem itemValue="F" itemLabel="Físico" />
+							</h:selectOneMenu>
+						</s:decorate> 
+						<s:decorate template="/common/decorators/display.xhtml" id="situacaoJulgamentoDec">
+							<ui:define name="label">Situação Julgamento</ui:define>
+							<h:selectOneMenu id="situacaoJulgamento"
+								onblur="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Area Processo - Situação Julgamento' , this.value);"
+								value="#{principalFacesBean.pesquisaAvancada.parameters['situacaoJulgamento']}"
+								style="width: 110px"
+								disabled="#{principalFacesBean.pesquisaAvancada.parameters['painelVisualizacao']}">
+								<f:selectItem itemValue="" itemLabel="Selecione..." />
+								<s:selectItems value="#{incidenteFacesBean.tiposSituacaoJulgamento}" var="tipoSituacao" itemValue="#{tipoSituacao.sigla}" label="#{tipoSituacao.descricao}" />
+							</h:selectOneMenu>
+						</s:decorate>
+						<s:decorate template="/common/decorators/display.xhtml" id="listaIncidentesDec">
+							<ui:define name="label">Lista</ui:define>
+							<h:inputText id="listaIncidentes"
+								onblur="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Area Processo - Lista', this.value);"
+								value="#{principalFacesBean.pesquisaAvancada.parameters['nomeListaIncidentes']}" 
+								disabled="#{principalFacesBean.pesquisaAvancada.parameters['painelVisualizacao']}"/>
+							<rich:suggestionbox
+								suggestionAction="#{listaIncidentesFacesBean.search}"
+								for="listaIncidentes" var="result" fetchValue="#{result.nome}"
+								nothingLabel="Nenhuma Lista encontrada." width="300"
+								eventsQueue="ajaxQueue" ignoreDupResponses="true">
+
+								<a:support
+									action="#{principalFacesBean.pesquisaAvancada.put('idListaIncidentes', result.id)}"
+									ajaxSingle="true" event="onselect" reRender="resultPanel"
+									eventsQueue="ajaxQueue" ignoreDupResponses="true" />
+
+								<h:column>
+									<h:outputText value="#{result.nome}" />
+								</h:column>
+							</rich:suggestionbox>
+						</s:decorate> 
+						<s:decorate template="/common/decorators/display.xhtml">
+							<ui:define name="label">Observação</ui:define>
+							<h:inputTextarea
+								onblur="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Area Processo - Observação' , this.value);"
+								value="#{principalFacesBean.pesquisaAvancada.parameters['observacaoProcesso']}"
+								style="height: 2.8em"
+								onkeypress="return noEnter(event);" />
+						</s:decorate>	
+						</div>
+						
+						<div class="input-group">
+							<h3>Julgamento</h3>
+								
+							<s:decorate template="/common/decorators/display.xhtml" id="colegiadoDec">
+								<ui:define name="label">Colegiado</ui:define>
+								<h:selectOneMenu id="colegiado"
+									onblur="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Area Julgamento - Colegiado', this.value);"
+									value="#{principalFacesBean.pesquisaAvancada.parameters['colegiado']}"
+									style="width: 180px"
+									disabled="#{principalFacesBean.pesquisaAvancada.parameters['painelVisualizacao']}">
+									<f:selectItem itemValue="" itemLabel="" />
+									<f:selectItem itemValue="2" itemLabel="Plenário" />
+									<f:selectItem itemValue="3" itemLabel="Primeira Turma" />
+									<f:selectItem itemValue="4" itemLabel="Segunda Turma" />
+									<f:convertNumber />
+									<a:support event="onchange" action="#{principalFacesBean.atualizarListasJulgamento}" reRender="listaJulgamento"/>
+								</h:selectOneMenu>
+							</s:decorate>
+							
+							<s:decorate template="/common/decorators/display.xhtml" id="agendamentoDec">
+								<ui:define name="label">Agendamento</ui:define>
+								<h:selectOneMenu id="agendamento"
+									onblur="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Area Julgamento - Agendamento', this.value);"
+									value="#{principalFacesBean.pesquisaAvancada.parameters['agendamento']}"
+									style="width: 110px"
+									disabled="#{principalFacesBean.pesquisaAvancada.parameters['painelVisualizacao']}">
+									<f:selectItem itemValue="" itemLabel="" />
+									<f:selectItem itemValue="1" itemLabel="Pauta" />
+									<f:selectItem itemValue="2" itemLabel="Índice" />
+									<a:support event="onchange" eventsQueue="true" ignoreDupResponses="true" reRender="panelColegiado"/>
+								</h:selectOneMenu>
+							</s:decorate>
+							
+							<s:decorate template="/common/decorators/display.xhtml" id="pautaExtraDec">
+								<ui:define name="label">Pauta Extra</ui:define>
+								<h:selectOneMenu id="pautaExtra"
+									onblur="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Area Julgamento - Pauta Extra' , this.value);"
+									value="#{principalFacesBean.pesquisaAvancada.parameters['pautaExtra']}"
+									style="width: 110px"
+									disabled="#{principalFacesBean.pesquisaAvancada.parameters['painelVisualizacao']}">
+									<f:selectItem itemValue="" itemLabel="Todos" />
+									<f:selectItem itemValue="S" itemLabel="Sim" />
+									<f:selectItem itemValue="N" itemLabel="Não" />
+								</h:selectOneMenu>
+							</s:decorate> 
+							
+							<s:decorate template="/common/decorators/display.xhtml">
+								<ui:define name="label">Data Sessão</ui:define>
+								<rich:calendar value="#{principalFacesBean.pesquisaAvancada.parameters['inicioDataSessaoJulgamento']}"
+											   onblur="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Area Julgamento - Data Sessão De', this.value);"
+											   required="false"
+											   inputSize="10"
+											   popup="true"
+											   datePattern="#{datePattern == null ? 'dd/MM/yyyy' : datePattern}"
+											   showWeeksBar="false"
+											   showFooter="true"
+											   firstWeekDay="0"
+											   zindex="999"
+											   onexpand="jQuery(this).detach().appendTo('body');"
+											   verticalOffset="3"
+											   id="inicioDataSessaoJulgamento"
+											   disabled="#{principalFacesBean.pesquisaAvancada.parameters['painelVisualizacao']}">
+									<f:facet name="header">
+										<h:panelGrid columns="3" width="100%" columnClasses="rich-calendar-tool, rich-calendar-month">
+											<h:outputText value="{previousMonthControl}" style="font-weight:bold;"/>
+											<h:outputText value="{currentMonthControl}" style="font-weight:bold;"/>
+											<h:outputText value="{nextMonthControl}" style="font-weight:bold;"/>
+								        </h:panelGrid>
+							    	</f:facet>
+									<f:facet name="weekDay">
+										<h:outputText value="{weekDayLabelShort}"/>
+									</f:facet>
+									<a:support event="onchanged" action="#{principalFacesBean.atualizarListasJulgamento()}" reRender="listaJulgamento"/>
+								</rich:calendar>
+								<span style="font-weight: bold; margin: 0px 3px;">a</span>
+								<rich:calendar value="#{principalFacesBean.pesquisaAvancada.parameters['fimDataSessaoJulgamento']}"
+											   onblur="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Area Julgamento - Data Sessão A', this.value);"
+											   required="false"
+											   inputSize="10"
+											   popup="true"
+											   datePattern="#{datePattern == null ? 'dd/MM/yyyy' : datePattern}"
+											   showWeeksBar="false"
+											   showFooter="true"
+											   firstWeekDay="0"
+											   zindex="999"
+											   onexpand="jQuery(this).detach().appendTo('body');"
+											   verticalOffset="3"
+											   id="fimDataSessaoJulgamento"
+											   disabled="#{principalFacesBean.pesquisaAvancada.parameters['painelVisualizacao']}">
+									<f:facet name="header">
+										<h:panelGrid columns="3" width="100%" columnClasses="rich-calendar-tool, rich-calendar-month">
+											<h:outputText value="{previousMonthControl}" style="font-weight:bold;"/>
+											<h:outputText value="{currentMonthControl}" style="font-weight:bold;"/>
+											<h:outputText value="{nextMonthControl}" style="font-weight:bold;"/>
+								        </h:panelGrid>
+							    	</f:facet>
+									<f:facet name="weekDay">
+										<h:outputText value="{weekDayLabelShort}"/>
+									</f:facet>
+									<a:support event="onchanged" action="#{principalFacesBean.atualizarListasJulgamento()}" reRender="listaJulgamento"/>
+								</rich:calendar>
+							</s:decorate>
+							 
+							<s:decorate id="painelTipoAmbiente" template="/common/decorators/display.xhtml" >
+								<ui:define name="label">Tipo de Ambiente</ui:define>
+								<h:selectOneRadio id="painelTipoAmbiente"
+									onblur="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Area Julgamento - Tipo de Ambiente' , this.value);"
+									value="#{principalFacesBean.pesquisaAvancada.parameters['tipoAmbiente']}" >
+									<f:selectItem itemValue="F" itemLabel="Presencial"/>
+									<f:selectItem itemValue="V" itemLabel="Virtual" />
+									<a:support event="onchange" action="#{principalFacesBean.atualizarListasJulgamento}" reRender="listaJulgamento"/>
+								</h:selectOneRadio>
+							</s:decorate>
+							
+							<s:decorate template="/common/decorators/display.xhtml" id="listaJulgamentoDec">
+								<ui:define name="label">Lista de Julgamento</ui:define>
+								<h:selectOneMenu id="listaJulgamento"
+									onblur="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Area Julgamento - Lista de Julgamento' , this.value);"
+									value="#{principalFacesBean.pesquisaAvancada.parameters['idListaJulgamento']}"
+									style="width: 210px"
+									disabled="#{principalFacesBean.pesquisaAvancada.parameters['painelVisualizacao']}">
+									<f:selectItems value="#{principalFacesBean.listasJulgamentoPesquisa}" />
+									<a:support event="onchange" eventsQueue="true" ignoreDupResponses="true"/>
+									<f:convertNumber />
+								</h:selectOneMenu>
+							</s:decorate> 							
+															
+							<s:decorate template="/common/decorators/display.xhtml" id="controleVotoDec">
+								<ui:define name="label">Controle de voto</ui:define>
+								<h:selectOneMenu id="controleVoto"
+									onblur="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Area Julgamento - Controle de Voto', this.value);"
+									value="#{principalFacesBean.pesquisaAvancada.parameters['controleVoto']}"
+									style="width: 110px"
+									disabled="#{principalFacesBean.pesquisaAvancada.parameters['painelVisualizacao']}">
+									<f:selectItem itemValue="" itemLabel="Todos" />
+									<f:selectItem itemValue="S" itemLabel="Sim" />
+									<f:selectItem itemValue="N" itemLabel="Não" />
+								</h:selectOneMenu>
+							</s:decorate>
+							
+						</div>
+						
+						</div>
+
+						<div class="layout-3col" style="border-right: 2px solid #007CC2;">
+						<h3>Texto</h3>
+
+						<s:decorate template="/common/decorators/display.xhtml">
+							<ui:define name="label">Ministro</ui:define>
+							<h:inputText id="nomeMinistroTexto"
+								onblur="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Area Texto - Ministro' , this.value);"
+								value="#{principalFacesBean.pesquisaAvancada.parameters['nomeMinistroTexto']}"
+								onfocus="#{rich:component('suggestionBoxMinTxtId')}.callSuggestion(true)" />
+							<rich:suggestionbox id="suggestionBoxMinTxtId"
+								suggestionAction="#{incidenteFacesBean.searchMinistros}"
+								for="nomeMinistroTexto" var="result" fetchValue="#{result.nome}"
+								nothingLabel="Nenhum registro encontrado." width="300"
+								eventsQueue="ajaxQueue" ignoreDupResponses="true">
+
+								<a:support
+									action="#{principalFacesBean.pesquisaAvancada.put('idMinistroTexto', result.id)}"
+									ajaxSingle="true" event="onselect" reRender="resultPanel"
+									eventsQueue="ajaxQueue" ignoreDupResponses="true" />
+
+								<h:column>
+									<h:outputText value="#{result.nome}"
+										styleClass="#{(result.id != userFacesBean.principal.ministro.id)? 'oiSuggestion':'green'}" />
+								</h:column>
+							</rich:suggestionbox>
+						</s:decorate> 
+						<s:decorate template="/common/decorators/display.xhtml">
+							<ui:define name="label">Tipo de Texto</ui:define>
+							<a:outputPanel id="panelTiposTexto">
+								<div class="tipoTextoDiv">
+									<div class="largura91" style="border: 1px solid #006699; border-top: none; border-bottom: none; border-left: none;">
+										<rich:dataTable	id="tbTipoTexto"
+											var="dto"
+											value="#{principalFacesBean.tiposTextoDto}"
+											rowClasses="dr-table-row-odd, dr-table-row-even"
+											styleClass="data-table">
+											<rich:column styleClass="dr-table-col-center" headerClass="dr-table-col-center largura20px, dr-table-subheadercell-nobordertop">
+												<f:facet name="header">
+													<a:commandButton image="/common/images/setabaixo.gif"
+														action="#{principalFacesBean.selectAllTiposTexto}"
+														title="Página atual" eventsQueue="ajaxQueue"
+														ignoreDupResponses="true"
+														reRender="panelTiposTexto" />
+												</f:facet>
+												<h:selectBooleanCheckbox styleClass="Checkbox"
+													onblur="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Area Texto - Tipo de Texto', '#{dto.tipoTexto.descricao}');"
+													value="#{dto.selected}" />
+											</rich:column>
+											<rich:column styleClass="dr-table-lastcol" headerClass="dr-table-subheadercell-nobordertop">
+												<h:outputText value="#{dto.tipoTexto.descricao}" />
+											</rich:column>
+										</rich:dataTable>
+									</div>
+								</div>
+							</a:outputPanel>
+						</s:decorate> 
+						<s:decorate template="/common/decorators/display.xhtml">
+							<ui:define name="label">Data Inclusão</ui:define>
+							<stf:calendar 
+								onblur="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Area Texto - Data de Inclusão Inicio', this.value);"
+								value="#{principalFacesBean.pesquisaAvancada.parameters['inicioDataInclusao']}" 
+								id="inicioDataInclusao" 
+								disabled="false" />
+							<span style="font-weight: bold; margin: 0px 3px;">a</span>
+							<stf:calendar 
+								onblur="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Area Texto - Data de Inclusão Fim' , this.value);"
+								value="#{principalFacesBean.pesquisaAvancada.parameters['fimDataInclusao']}" 
+								id="fimDataInclusao"/>
+						</s:decorate> 
+						<s:decorate template="/common/decorators/display.xhtml">
+							<ui:define name="label">Data Sessão</ui:define>
+							<stf:calendar 
+								onblur="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Area Texto - Data Sessão Inicio', this.value);"
+								value="#{principalFacesBean.pesquisaAvancada.parameters['inicioDataSessao']}" 
+								id="inicioDataSessao"/>
+							<span style="font-weight: bold; margin: 0px 3px;">a</span>
+							<stf:calendar 
+								onblur="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Area Texto - Data Sessão Fim' , this.value);"
+								value="#{principalFacesBean.pesquisaAvancada.parameters['fimDataSessao']}" 
+								id="fimDataSessao"/>
+						</s:decorate> 
+						<s:decorate template="/common/decorators/display.xhtml">
+							<ui:define name="label">Textos Iguais</ui:define>
+							<h:selectOneMenu id="textosIguais"
+								value="#{principalFacesBean.pesquisaAvancada.parameters['textosIguais']}"
+								onblur="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Area Texto - Textos Iguais', this.value);">
+								<f:selectItem itemValue="" itemLabel="Todos" />
+								<f:selectItem itemValue="S" itemLabel="Sim" />
+								<f:selectItem itemValue="N" itemLabel="Não" />
+							</h:selectOneMenu>
+						</s:decorate> 
+						<s:decorate template="/common/decorators/display.xhtml">
+							<ui:define name="label">Fase</ui:define>
+							<h:selectOneMenu 
+								onblur="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Area Texto - Fase' , this.value);"
+								id="faseTexto"	
+								value="#{principalFacesBean.pesquisaAvancada.parameters['idFaseTexto']}">
+								<f:selectItem itemValue="" itemLabel="Selecione..." />
+								<f:selectItems value="#{textoFacesBean.fasesTexto}" />
+								<a:support event="onchange" eventsQueue="true" ignoreDupResponses="true" reRender="panelFase"/>
+								<f:convertNumber />
+							</h:selectOneMenu>
+						</s:decorate>
+						<a:outputPanel id="panelFase">
+							<s:decorate id="dataFase" template="/common/decorators/display.xhtml" rendered="#{principalFacesBean.pesquisaAvancada.parameters['idFaseTexto'] > 0}">
+								<ui:define name="label">Data Fase</ui:define>
+								<stf:calendar
+									onblur="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Area Texto - Data Fase Início' , this.value);"
+									value="#{principalFacesBean.pesquisaAvancada.parameters['inicioDataFase']}"
+									id="inicioDataFase"
+									disabled="#{principalFacesBean.pesquisaAvancada.parameters['painelVisualizacao']}" />
+								<span style="font-weight: bold; margin: 0px 3px;">a</span>
+								<stf:calendar
+									onblur="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Area Texto - Data Fase Fim' , this.value);"
+									value="#{principalFacesBean.pesquisaAvancada.parameters['fimDataFase']}"
+									id="fimDataFase"
+									disabled="#{principalFacesBean.pesquisaAvancada.parameters['painelVisualizacao']}" />
+							</s:decorate>
+							<s:decorate id="ultimaFase" template="/common/decorators/display.xhtml" rendered="#{principalFacesBean.pesquisaAvancada.parameters['idFaseTexto'] > 0}">
+								<ui:define name="label">Última Fase</ui:define>
+								<h:selectBooleanCheckbox
+									onblur="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Area Texto - Última Fase' , this.value);"
+									value="#{principalFacesBean.pesquisaAvancada.parameters['ultimaFase']}"
+									disabled="#{principalFacesBean.pesquisaAvancada.parameters['painelVisualizacao']}" />
+							</s:decorate>
+						</a:outputPanel>
+						<s:decorate template="/common/decorators/display.xhtml">
+							<ui:define name="label">Responsável</ui:define>
+							<h:inputText id="nomeResponsavel"
+								onblur="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Area Texto - Responsável' , this.value);"
+								value="#{principalFacesBean.pesquisaAvancada.parameters['nomeResponsavel']}" />
+							<rich:suggestionbox suggestionAction="#{responsavelFacesBean.search}"
+								for="nomeResponsavel" var="result" fetchValue="#{result.nome}"
+								nothingLabel="Nenhum registro encontrado." width="300" 
+								eventsQueue="ajaxQueue" ignoreDupResponses="true">
+
+								<a:support
+									action="#{principalFacesBean.pesquisaAvancada.put('idResponsavel', result.id)}"
+									ajaxSingle="true" event="onselect" reRender="resultPanel"
+									eventsQueue="ajaxQueue" ignoreDupResponses="true" />
+
+								<h:column>
+									<h:outputText value="#{result.nome}" />
+								</h:column>
+							</rich:suggestionbox>
+						</s:decorate>
+						<s:decorate template="/common/decorators/display.xhtml">
+							<ui:define name="label">Usuário de Criação</ui:define>
+							<h:inputText id="nomeCriador"
+								onblur="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Area Texto - Usuário Criação' , this.value);"
+								value="#{principalFacesBean.pesquisaAvancada.parameters['nomeCriador']}" />
+							<rich:suggestionbox suggestionAction="#{criadorFacesBean.search}"
+								for="nomeCriador" var="result" fetchValue="#{result.nome}"
+								nothingLabel="Nenhum registro encontrado." width="300" 
+								eventsQueue="ajaxQueue" ignoreDupResponses="true">
+
+								<a:support
+									action="#{principalFacesBean.pesquisaAvancada.put('idCriador', result.id)}"
+									ajaxSingle="true" event="onselect" reRender="resultPanel"
+									eventsQueue="ajaxQueue" ignoreDupResponses="true" />
+
+								<h:column>
+									<h:outputText value="#{result.nome}" />
+								</h:column>
+							</rich:suggestionbox>
+						</s:decorate>
+						<s:decorate template="/common/decorators/display.xhtml">
+							<ui:define name="label">Lista</ui:define>
+							<h:inputText id="listaTextos"
+								onblur="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Area Texto - Lista' , this.value);"
+								value="#{principalFacesBean.pesquisaAvancada.parameters['nomeListaTextos']}" />
+							<rich:suggestionbox
+								suggestionAction="#{listaTextosFacesBean.search}"
+								for="listaTextos" var="result" fetchValue="#{result.nome}"
+								nothingLabel="Nenhuma Lista encontrada." width="300"
+								eventsQueue="ajaxQueue" ignoreDupResponses="true">
+
+								<a:support
+									action="#{principalFacesBean.pesquisaAvancada.put('idListaTextos', result.id)}"
+									ajaxSingle="true" event="onselect" reRender="resultPanel"
+									eventsQueue="ajaxQueue" ignoreDupResponses="true" />
+
+								<h:column>
+									<h:outputText value="#{result.nome}" />
+								</h:column>
+							</rich:suggestionbox>
+						</s:decorate> 
+						<s:decorate template="/common/decorators/display.xhtml">
+							<ui:define name="label">Observação</ui:define>
+							<h:inputTextarea
+								onblur="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Area Texto - Observação', this.value);"
+								value="#{principalFacesBean.pesquisaAvancada.parameters['observacao']}"
+								style="height: 2.8em"
+								onkeypress="return noEnter(event);" />
+						</s:decorate>						
+						<s:decorate template="/common/decorators/display.xhtml">
+							<ui:define name="label">Palavra chave</ui:define>
+							<h:inputTextarea
+								onblur="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Area Texto - Palavra Chave', this.value);"
+								value="#{principalFacesBean.pesquisaAvancada.parameters['palavraChave']}"
+								style="height: 2.8em"
+								onkeypress="return noEnter(event);"
+								disabled="true"/>
+								<div>A pesquisa por palavra chave do eSTF-Decisão parou de funcionar porque a base de textos cresceu demasiadamente e as tecnologias utilizadas não suportam o tamanho atingido. Para efetuar a pesquisa, utilize o eSTF-Digital,  
+								<s:link 
+								value=" clicando aqui." 
+								onclick="window.open('https://digital.stf.jus.br/informacoes/pesquisa/pesquisa-texto-gabinete')" />
+								</div>
+						</s:decorate>
+						</div>
+
+						<div class="layout-3col">
+						<div class="input-group">
+						<h3>Assunto</h3>
+
+						<s:decorate template="/common/decorators/display.xhtml" id="idAssuntoDec">
+							<ui:define name="label">Código</ui:define>
+							<h:inputText id="idAssunto"
+								onblur="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Area Assunto - Código' , this.value);"
+								value="#{principalFacesBean.pesquisaAvancada.parameters['idAssunto']}"
+								disabled="#{principalFacesBean.pesquisaAvancada.parameters['painelVisualizacao']}" />
+						</s:decorate> 
+						<s:decorate template="/common/decorators/display.xhtml" id="descricaoAssuntoDec">
+							<ui:define name="label">Descrição</ui:define>
+							<h:inputText id="descricaoAssunto"
+								onblur="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Area Assunto - Descrição', this.value);"
+								value="#{principalFacesBean.pesquisaAvancada.parameters['descricaoAssunto']}"
+								disabled="#{principalFacesBean.pesquisaAvancada.parameters['painelVisualizacao']}" />
+						</s:decorate></div>
+
+						<div class="input-group">
+						<h3>Parte</h3>
+
+						<s:decorate template="/common/decorators/display.xhtml" id="idCategoriaParteDec">
+							<ui:define name="label">Categoria</ui:define>
+							<h:selectOneMenu id="idCategoriaParte"
+								onblur="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Area Parte - Categoria' , this.value);"
+								value="#{principalFacesBean.pesquisaAvancada.parameters['idCategoriaParte']}"
+								disabled="#{principalFacesBean.pesquisaAvancada.parameters['painelVisualizacao']}">
+								<f:selectItem itemValue="-1" itemLabel="Selecione..." />
+								<f:selectItems value="#{incidenteFacesBean.categoriasParte}" />
+								<f:convertNumber />
+							</h:selectOneMenu>
+						</s:decorate> 
+						<s:decorate template="/common/decorators/display.xhtml" id="nomeParteDec">
+							<ui:define name="label">Nome</ui:define>
+							<h:inputTextarea
+								onblur="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Area Parte - Nome', this.value);"
+								id="nomeParte"
+								value="#{principalFacesBean.pesquisaAvancada.parameters['nomeParte']}"
+								style="height: 2.8em"
+								onkeypress="return noEnter(event);"
+								disabled="#{principalFacesBean.pesquisaAvancada.parameters['painelVisualizacao']}" />
+						</s:decorate></div>
+						
+							<div class="input-group">
+								<h3>Outras opções</h3>
+								<s:decorate template="/common/decorators/display.xhtml">
+									<ui:define name="label">Ordenação</ui:define>
+									<h:selectOneRadio id="idOrdenacao"
+										onblur="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Area Outras opções - Ordenação', this.value);"
+										value="#{principalFacesBean.ordenacao}"
+										styleClass="label" title="Pesquisa de textos: ordenação por sigla/número do processo ou data da última modificação do texto. Pesquisa de processos: ordenação por sigla/número do processo ou data de autuação."
+										disabled="#{principalFacesBean.pesquisaAvancada.parameters['painelVisualizacao']}">
+										<f:selectItem itemValue="OCP" itemLabel="Processo" />
+										<f:selectItem itemValue="OD" itemLabel="Data" />
+									</h:selectOneRadio>
+								</s:decorate>
+								<s:decorate id="painelFavoritosPrimeiro" template="/common/decorators/display.xhtml" >
+									<ui:define name="label">Favoritos</ui:define>
+									<h:selectManyCheckbox 
+										onblur="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Area Outras opções - Favoritos', this.value);"
+										id="painelFavoritosPrimeiro"
+										value="#{principalFacesBean.preferenciaFavoritos}" >
+										<f:selectItem itemValue="FAP" itemLabel="Apenas"/>
+										<f:selectItem itemValue="FPR" itemLabel="Primeiro" />
+									</h:selectManyCheckbox>
+								</s:decorate>
+								<s:decorate id="painelVisualizacaoDec" template="/common/decorators/display.xhtml" >
+									<ui:define name="label">Abrir texto no painel de visualização</ui:define>
+									<h:selectBooleanCheckbox 
+										onblur="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Area Outras opções - Abrir texto no painel de visualização' , this.value);"
+										id="painelVisualizacao"
+										value="#{principalFacesBean.pesquisaAvancada.parameters['painelVisualizacao']}" >
+										<a:support action="#{principalFacesBean.limparCamposPesquisaRapida}" reRender="objetoIncidenteSearchForm, " event="onclick" eventsQueue="ajaxQueue" ignoreDupResponses="true" />
+									</h:selectBooleanCheckbox>
+								</s:decorate>
+								
+							</div>
+							
+							<div class="input-group">
+								<h3>Minhas Pesquisas</h3>
+								
+								<s:decorate template="/common/decorators/display.xhtml">
+									<ui:define name="label">Configuração</ui:define>
+									<h:selectOneMenu 
+										onblur="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Area Minhas Pesquisas - Configuração', this.value);"
+										id="configuracaoPesquisa"
+										value="#{principalFacesBean.configuracaoPesquisa}" style="width: 170px;">
+										<f:selectItem itemValue="" itemLabel="Selecione..." />
+										<f:selectItem itemValue="-1" itemLabel="Nova Configuração" />
+										<f:selectItems  value="#{principalFacesBean.itemsConfiguracaoPesquisa}"/>
+										<a:support action="#{principalFacesBean.selecionarConfiguracaoPesquisa}" event="onchange" reRender="objetoIncidenteSearchForm" eventsQueue="ajaxQueue" ignoreDupResponses="true" />
+										<f:convertNumber />
+									</h:selectOneMenu>
+									<a:commandButton value="Excluir"
+										action="#{principalFacesBean.excluirConfiguracaoPesquisa(principalFacesBean.configuracaoPesquisa)}"
+										reRender="objetoIncidenteSearchForm, messagesPanel" eventsQueue="ajaxQueue"
+										ignoreDupResponses="true"
+										disabled="#{principalFacesBean.disabledExcluirConfiguracaoPesquisa}" />
+								</s:decorate>
+								<a:outputPanel id="configuracaoPesquisa">
+									<h:panelGroup rendered="#{principalFacesBean.renderedNovaConfiguracaoPesquisa}">
+										<s:decorate template="/common/decorators/display.xhtml" >
+											<ui:define name="label">Nome</ui:define>
+											<h:inputText 
+												onblur="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Area Configuração - Nome Configuração Pesquisa' , this.value);"
+												id="nomeConfiguracaoPesquisa"
+												value="#{principalFacesBean.nomeConfiguracaoPesquisa}" />
+										</s:decorate>
+										<s:decorate template="/common/decorators/display.xhtml">
+											<ui:define name="label">Por</ui:define>
+											<h:selectOneRadio 
+												onblur="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Area Configuração - Por' , this.value);"
+												id="escopoConfiguracaoPesquisa"
+												value="#{principalFacesBean.escopoConfiguracaoPesquisa}"
+												styleClass="label" >
+												<f:selectItem itemValue="U" itemLabel="Usuário" />
+												<f:selectItem itemValue="S" itemLabel="Setor" />
+											</h:selectOneRadio>
+										</s:decorate>
+										<s:decorate template="/common/decorators/display.xhtml">
+											<ui:define name="label">Tipo de Pesquisa</ui:define>
+											<h:selectOneMenu 
+												onblur="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Area Configuração - Tipo de Pesquisa' , this.value);"
+												id="tipoPesquisa"
+												value="#{principalFacesBean.idTipoPesquisaRapida}"
+												styleClass="label" 
+												style="width: 170px;">
+												<f:selectItem itemValue="" itemLabel="Selecione..." />
+												<f:selectItem itemValue="PROCESSOS" itemLabel="Processos" />
+												<f:selectItem itemValue="TEXTOS" itemLabel="Textos" />
+												<f:selectItem itemValue="LISTAS_TEXTOS" itemLabel="Listas de Textos" />
+												<f:selectItem itemValue="LISTAS_PROCESSOS" itemLabel="Listas de Processos" />
+											</h:selectOneMenu>
+										</s:decorate>
+										<s:decorate template="/common/decorators/display.xhtml">
+											<a:commandButton value="Salvar"
+												action="#{principalFacesBean.salvarConfiguracaoPesquisa}"
+												reRender="objetoIncidenteSearchForm, messagesPanel" eventsQueue="ajaxQueue"
+												ignoreDupResponses="true" />
+										</s:decorate>
+									</h:panelGroup>
+								</a:outputPanel>
+						</div>
+						</div>
+						<div class="clear"></div>
+
+						<div class="actionButtons"
+							style="clear: both; vertical-align: top; margin-top: 20px;">
+							<h:selectOneMenu id="pageSizeSelector"
+								value="#{principalFacesBean.pageSize}"
+								disabled="#{principalFacesBean.pesquisaAvancada.parameters['painelVisualizacao']}">
+								<f:selectItem itemValue="25" itemLabel="25 por página" />
+								<f:selectItem itemValue="50" itemLabel="50 por página" />
+								<f:selectItem itemValue="100" itemLabel="100 por página" />
+								<f:selectItem itemValue="300" itemLabel="300 por página" />
+								<f:convertNumber type="number" />
+							</h:selectOneMenu> 
+							<a:commandButton 
+								onclick="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Clique - Processos', this.value);"
+								value="Processos" id="btnPesquisaProcessos"
+								action="#{principalFacesBean.pesquisar('br.jus.stf.estf.decisao.pesquisa.domain.ObjetoIncidenteDto')}"
+								reRender="messagesPanel, resultPanel" eventsQueue="ajaxQueue"
+								ignoreDupResponses="true"
+								disabled="#{principalFacesBean.pesquisaAvancada.parameters['painelVisualizacao']}" /> 
+							<a:commandButton 
+								onclick="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Clique - Textos' , this.value);"
+								value="Textos" id="btnPesquisaTextos"
+								action="#{principalFacesBean.pesquisar('br.jus.stf.estf.decisao.pesquisa.domain.TextoDto')}"
+								reRender="messagesPanel, resultPanel" eventsQueue="ajaxQueue"
+								ignoreDupResponses="true" /> 
+							<a:commandButton 
+								onclick="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Clique - Listas de Processos', this.value);"
+								value="Listas de Processos" id="btnPesquisaListasProcessos"
+								action="#{principalFacesBean.pesquisar('br.jus.stf.estf.decisao.pesquisa.domain.ListaIncidentesDto')}"
+								reRender="messagesPanel, resultPanel" eventsQueue="ajaxQueue"
+								ignoreDupResponses="true" 
+								disabled="#{principalFacesBean.pesquisaAvancada.parameters['painelVisualizacao']}"/> 
+							<a:commandButton 
+								onclick="ga('send', 'event', 'Pesquisa avançada - #{userFacesBean.principal.usuario.setor.sigla}','Clique - Listas de Textos' , this.value);"
+								value="Listas de Textos" id="btnPesquisaListasTextos"
+								action="#{principalFacesBean.pesquisar('br.jus.stf.estf.decisao.pesquisa.domain.ListaTextosDto')}"
+								reRender="messagesPanel, resultPanel" eventsQueue="ajaxQueue"
+								ignoreDupResponses="true" 
+								disabled="#{principalFacesBean.pesquisaAvancada.parameters['painelVisualizacao']}"/> 
+							<s:button id="reset" value="Limpar"
+								action="limpar" includePageParams="true" eventsQueue="ajaxQueue"
+								ignoreDupResponses="true">
+								<f:param name="exibirPesquisaAvancada" value="true" />
+							</s:button>
+						</div>
+					</s:div>
+					
+				</c:otherwise>
+				<!-- Fim Pesquisa avancada -->
+			</c:choose>
+		</h:form>
+		<c:set value="#{refreshController}" var="refresher"/>
+		<a:push interval="2000"
+			action="#{principalFacesBean.atualizarPagina(refresher.textoId)}"
+			reRender="resultPanel, actionModalPanel, panelMenuAssinar, assinaturaModalPanel"
+			eventProducer="#{refresher.adicionarListenerRefresh}"
+			immediate="true"
+			ajaxSingle="true"
+			eventsQueue="ajaxQueue"
+			id="pushPesquisaTextoProcesso" />
+		<!-- Inicio Painel de resultados -->
+		<h:form id="resultPanel">
+			<rich:panel styleClass="panel-outset result-panel" style="clear: both;">
+				<div class="dr-pnl-h rich-panel-header">
+					<div style="float: left">
+						<a:commandLink value="« Voltar para Lista" action="#{principalFacesBean.voltarAtualizando}" reRender="resultPanel"
+							rendered="#{not empty principalFacesBean.trilha}" style="margin-right: 8px; font-weight: bold;" eventsQueue="ajaxQueue" ignoreDupResponses="true"/>
+						<a:commandButton value="Novo Texto"
+							action="#{actionHolder.setAction(principalFacesBean.getAcaoNovoTexto(principalFacesBean.currentContext))}"
+							reRender="actionModalPanel" 
+							rendered="#{userFacesBean.usuarioPodeCriarTexto}"
+							oncomplete="Richfaces.showModalPanel('panelItem');" 
+							styleClass="action-button action-button-110px" 
+							eventsQueue="ajaxQueue" 
+							ignoreDupResponses="true"/> 
+		
+						<rich:dropDownMenu id="actionPanel" event="onmouseover" styleClass="inline-menu-label" >
+							<f:facet name="label">
+								<h:outputText value="Mais Ações" />
+							</f:facet>
+						    <c:forEach items="#{principalFacesBean.actions}"
+								var="action">
+								<rich:menuItem submitMode="none">
+									<c:choose>
+										<c:when test="#{not action.definition.report}">
+											<a:commandLink value="#{action.definition.name}" action="#{actionHolder.setAction(action)}"
+												onclick="ga('send', 'event', 'Monitoramento de Ações - #{userFacesBean.principal.usuario.setor.sigla}','Ação - ' + this.innerText, '#{userFacesBean.principal.usuario.nome}');" 
+												reRender="actionModalPanel" oncomplete="Richfaces.showModalPanel('panelItem');" eventsQueue="ajaxQueue" ignoreDupResponses="true"/>
+										</c:when>
+										<c:otherwise>
+											<h:commandLink value="#{action.definition.name}" action="#{action.report}" 
+											onclick="ga('send', 'event', 'Monitoramento de Ações - #{userFacesBean.principal.usuario.setor.sigla}','Ação - ' + this.innerText, '#{userFacesBean.principal.usuario.nome}');" />
+										</c:otherwise>
+									</c:choose>
+								</rich:menuItem>
+							</c:forEach>
+						</rich:dropDownMenu>
+					</div>
+					
+					<s:div style="float: right; margin-top: 5px;" rendered="#{principalFacesBean.currentContext.result.rowCount > 0}">
+						<div id="queryTime" style="float: left"></div>
+						<stf:datascroller id="dataScroller" for="resultTable"
+							reRender="actionPanel, dataScroller, dataScroller2"
+							style="float:left; vertical-align: middle; margin-left: 5px"
+							pages="#{principalFacesBean.currentContext.result.rowCount} #{principalFacesBean.tipoRegistro}"
+							page="#{principalFacesBean.currentContext.pageIndex}" />
+					</s:div>
+					<div class="clear"></div>
+				</div>
+
+				<s:div
+					rendered="#{not empty principalFacesBean.currentContext and principalFacesBean.currentContext.result.rowCount == 0}">
+					<p class="result-warning"><i>Nenhum registro encontrado
+					para os termos de sua consulta.</i></p>
+				</s:div>
+
+				<s:div
+					rendered="#{not empty principalFacesBean.currentContext and principalFacesBean.currentContext.result.rowCount > 0}"
+					style="margin-bottom: 30px;">
+					<ui:include src="#{principalFacesBean.currentContext.page}" />
+					<div class="dr-pnl-h rich-panel-header">
+						<s:div style="float: right; margin-top: 5px;" rendered="#{principalFacesBean.currentContext.result.rowCount > 0}">
+							<stf:datascroller id="dataScroller2" for="resultTable"  
+								reRender="actionPanel, dataScroller, dataScroller2"
+								style="float:left; vertical-align: middle; margin-left: 5px"
+								pages="#{principalFacesBean.currentContext.result.rowCount} #{principalFacesBean.tipoRegistro}"
+								page="#{principalFacesBean.currentContext.pageIndex}" />
+						</s:div>
+					</div> 
+				</s:div>
+				
+			</rich:panel>
+		</h:form>
+		<!-- Fim Painel de resultados -->
+
+		<a:outputPanel id="actionModalPanel">
+			<rich:modalPanel id="panelItem" autosized="true"
+				rendered="#{actionHolder.action != null}"
+				width="#{actionHolder.action.definition.width}"
+				height="#{actionHolder.action.definition.height}"
+				style="text-align: left; padding: 0px;">
+				<f:facet name="header">
+					<h:panelGroup>
+						<h:outputText value="#{actionHolder.action.definition.name}" />
+					</h:panelGroup>
+				</f:facet>
+				<f:facet name="controls">
+					<h:panelGroup>
+						<h:graphicImage value="/common/images/close.gif"
+							style="cursor:pointer" id="hidelink" />
+						<rich:componentControl for="panelItem" attachTo="hidelink"
+							operation="hide" event="onclick" />
+					</h:panelGroup>
+				</f:facet>
+
+				<h:form id="actionForm" styleClass="edit" prependId="false" enctype="multipart/form-data" >
+
+					<ui:include src="#{actionHolder.action.definition.view}">
+						<ui:param name="actionFacesBean" value="#{actionHolder.action}" />
+					</ui:include>
+
+					<c:if test="#{actionHolder.action.definition.facet == 'success'}">
+						<div>
+							<p class="result-info"><i>Operação realizada com sucesso.</i></p>
+
+							<div class="action-buttons">
+								<a:commandButton id="close"
+									value="Fechar" action="#{principalFacesBean.atualizarPagina()}"
+									reRender="resultPanel, actionModalPanel, panelMenuAssinar" immediate="true"
+									ajaxSingle="true" rendered="#{actionHolder.action.refresh}" >
+									<rich:componentControl for="panelItem" attachTo="close"
+										operation="hide" event="onclick" />
+								</a:commandButton>
+								<a:commandButton
+									value="Fechar"
+									reRender="resultPanel, actionModalPanel, panelMenuAssinar" immediate="true"
+									ajaxSingle="true" rendered="#{not actionHolder.action.refresh}" >
+									<rich:componentControl for="panelItem" attachTo="close"
+										operation="hide" event="onclick" />
+								</a:commandButton>
+							</div>
+						</div>
+					</c:if>
+
+					<s:decorate template="/acoes/support/action.template.xhtml">
+						<ui:param name="facetName" value="errors" />
+						<ui:define name="descricao">#{actionHolder.action.definition.errorTitle}</ui:define>
+						<ui:define name="conteudo">
+							<stf:messages  level="ERROR"/>
+						</ui:define>
+					</s:decorate>
+
+				</h:form>
+
+			</rich:modalPanel>
+		</a:outputPanel>
+
+		<rich:modalPanel id="usersPanel" width="700" height="370"
+			resizeable="false" moveable="false">
+			<f:facet name="header">
+				<h:panelGroup>
+					<h:outputText
+						value="#{casAuthenticationProvider.users.size()} usuários online..." />
+				</h:panelGroup>
+			</f:facet>
+			<f:facet name="controls">
+				<h:panelGroup>
+					<h:graphicImage value="/common/images/close.gif"
+						style="cursor:pointer" id="usershidelink" />
+					<rich:componentControl for="usersPanel" attachTo="usershidelink"
+						operation="hide" event="onclick" />
+				</h:panelGroup>
+			</f:facet>
+			<h:form id="usersForm">
+				<div class="name" style="width: auto !important; display: block;">Nome do servidor: #{principalFacesBean.hostName}</div>
+				<rich:dataTable var="_principal" styleClass="simple-data-table"
+					value="#{casAuthenticationProvider.users}" rows="10" style="clear: both;">
+					<rich:column>
+						<f:facet name="header">Nome</f:facet>
+						<h:outputText value="#{_principal.usuario.nome}" />
+					</rich:column>
+					<rich:column>
+						<f:facet name="header">Setor</f:facet>
+						<h:outputText value="#{_principal.usuario.setor.nome}" />
+					</rich:column>
+					<rich:column>
+						<f:facet name="header">Sessões</f:facet>
+						<h:outputText value="#{_principal.sessoes}" />
+					</rich:column>
+					<f:facet name="footer">
+						<rich:datascroller id="usersDataScroller" fastControls="hide" align="right">
+							<f:facet name="first">
+								<h:outputText value="Primeira" />
+							</f:facet>
+							<f:facet name="first_disabled">
+								<h:outputText value="Primeira" />
+							</f:facet>
+							<f:facet name="previous">
+								<h:outputText value="Anterior" />
+							</f:facet>
+							<f:facet name="previous_disabled">
+								<h:outputText value="Anterior" />
+							</f:facet>
+							<f:facet name="last">
+								<h:outputText value="Última" />
+							</f:facet>
+							<f:facet name="last_disabled">
+								<h:outputText value="Última" />
+							</f:facet>
+							<f:facet name="next">
+								<h:outputText value="Próxima" />
+							</f:facet>
+							<f:facet name="next_disabled">
+								<h:outputText value="Próxima" />
+							</f:facet>
+						</rich:datascroller>
+					</f:facet>
+				</rich:dataTable>
+			</h:form>
+			<div class="action-buttons">
+				<a:commandButton value="Fechar"	onclick="#{rich:component('usersPanel')}.hide()"
+				style="margin-right: 0px;" eventsQueue="ajaxQueue" ignoreDupResponses="true"/>
+			</div>
+			
+		</rich:modalPanel>
+		
+		<a:outputPanel id="pnlHistoricoFase" >
+			<rich:modalPanel id="historicoFasesPanel" width="900" height="300" autosized="true" >
+				<f:facet name="header">
+					<div><label>Histórico de Fases</label></div>
+				</f:facet>
+				
+				<!-- Mensagens Gerais -->
+				<a:outputPanel id="messageshistoricoFasesPanel">
+					<h:messages id="mensagenshistoricoFases" showDetail="true" showSummary="false"
+						infoClass="info" infoStyle="color: green;" warnClass="erro"
+						warnStyle="color: green;" errorClass="erro" errorStyle="color: red;"
+						layout="table" rendered="#{showGlobalMessages != 'false'}" />
+				</a:outputPanel>				
+		
+				<h:form id="alterarFaseTextoForm" ajaxSubmit="true" prependId="false" ajaxSingle="true">
+			   		<c:if test="#{not empty textoFacesBean.listaFasesTextoProcesso}">
+			   			<div style="overflow: auto; height: 300px; margin-bottom: 10px;">
+				   			<div style="border: 1px solid #006699; border-top: none; width: 97%;">
+								<rich:dataTable var="_historico" value="#{textoFacesBean.listaFasesTextoProcesso}" rowClasses="dr-table-row-odd, dr-table-row-even"	styleClass="data-table">
+			        				<rich:column styleClass="dr-table-firstcol" width="90px">
+							            <f:facet name="header">Fase de Origem</f:facet>
+										<h:outputText value="#{_historico.faseOrigem.descricao}"/>
+							        </rich:column>
+							        <rich:column width="90px">
+							            <f:facet name="header">Fase de Destino</f:facet>
+										<h:outputText value="#{_historico.faseDestino.descricao}"/>
+							        </rich:column>
+							        <rich:column width="195px">
+							            <f:facet name="header">Usuário Logado</f:facet>
+										<h:outputText value="#{_historico.nomeUsuario}"/>
+							        </rich:column>
+							        <rich:column width="110px">
+							            <f:facet name="header">Data - Hora</f:facet>
+										<h:outputText value="#{_historico.dataFase}"/>
+							        </rich:column>
+							        <rich:column width="195px">
+							            <f:facet name="header">Observação</f:facet>
+										<h:outputText value="#{_historico.observacao}"/>
+							        </rich:column>							        
+							        <rich:column width="90px">
+							            <f:facet name="header">Usuário Certificado</f:facet>
+										<h:outputText value="#{_historico.assinadorCertificado}"/>
+							        </rich:column>
+							        <rich:column width="40px" styleClass="dr-table-lastcol" headerClass="dr-table-lastcol">
+							        	<h:panelGroup>
+							        	
+							       			<s:span rendered="#{textoFacesBean.isTextoRestritoAoUsuario(textoFacesBean.texto)}">
+												<img src="#{facesContext.externalContext.requestContextPath}/common/images/locked.png" title="Texto Restrito" style="margin-right: 3px"/>
+											</s:span>
+							        	
+											<h:commandLink action="#{textoFacesBean.visualizarVersaoFase(_historico)}" rendered="#{not textoFacesBean.isTextoRestritoAoUsuario(textoFacesBean.texto)}" >
+												<h:graphicImage value="/common/images/page_white_magnify.png" title="Visualizar versão do texto" style="magin-right: 3px;"/>
+											</h:commandLink>
+											
+											<a:commandLink action="#{textoFacesBean.restaurarVersaoHistFase(_historico)}" 
+													onclick="if (!confirm('Deseja realmente restaurar esta versão do texto? A operação não poderá ser revertida.')) return false;"
+													rendered="#{textoFacesBean.permitidoEditarRestaurar}" 
+													reRender="alterarFaseTextoForm, messageshistoricoFasesPanel">
+												<h:graphicImage value="/common/images/page_white_put.png" title="Restaurar" />
+											</a:commandLink>
+										</h:panelGroup>
+									</rich:column>
+		    					</rich:dataTable>
+		    				</div>
+		    			</div>
+					</c:if>
+					
+					<div class="action-buttons">	
+						<a:commandButton
+							value="Fechar"
+							action="#{principalFacesBean.atualizarPagina()}"
+							oncomplete="#{rich:component('historicoFasesPanel')}.hide()"
+							reRender="resultPanel"
+							immediate="true" eventsQueue="ajaxQueue" ignoreDupResponses="true" />										
+					</div>		
+				</h:form>
+			</rich:modalPanel>
+		</a:outputPanel>
+		
+		<a:outputPanel id="pnlInformacaoTexto" >
+			<rich:modalPanel id="informacaoTextoPanel" width="500" height="120" autosized="true" >
+				<f:facet name="header">
+					<div><label>Informações do Texto</label></div>
+				</f:facet>
+				
+				<!-- Mensagens Gerais -->
+				<a:outputPanel id="messagesinformacaoTextoPanel">
+					<h:messages id="mensagensinformacaoTexto" showDetail="true" showSummary="false"
+						infoClass="info" infoStyle="color: green;" warnClass="erro"
+						warnStyle="color: green;" errorClass="erro" errorStyle="color: red;"
+						layout="table" rendered="#{showGlobalMessages != 'false'}" />
+				</a:outputPanel>
+				
+			 	<a:form id="informacoesTextoForm" ajaxSubmit="true" prependId="false" ajaxSingle="true">
+				 	<c:if test="#{not empty textoFacesBean.textoInfoEditar}" >
+						<div>
+							<span style="font-weight: bold; padding-right:3px;">Responsável: </span>
+							<c:if test="#{not textoFacesBean.isEditavel(textoFacesBean.textoInfoEditar) and textoFacesBean.textoInfoEditar.ministro.id == userFacesBean.principal.ministro.id}" >
+								<span>#{textoFacesBean.textoInfoEditar.responsavel.nome}</span>
+							</c:if>
+							<c:if test="#{textoFacesBean.isEditavel(textoFacesBean.textoInfoEditar) and textoFacesBean.textoInfoEditar.ministro.id == userFacesBean.principal.ministro.id}" >
+								<h:inputText id="iptNomeResponsavel" value="#{textoFacesBean.responsavelParaEdicao}" size="60" maxlength="100" />
+								<rich:suggestionbox id="sgbNomeResponsavel"
+									for="iptNomeResponsavel"
+									var="sugestao"
+									fetchValue="#{sugestao.nome}"
+									nothingLabel="Nenhum registro encontrado."
+									suggestionAction="#{responsavelFacesBean.search}" 
+									width="250" height="150" 
+									eventsQueue="ajaxQueue" ignoreDupResponses="true">
+									<h:column>
+										<span class="oiSuggestion">#{sugestao.nome}</span>
+									</h:column>
+									<a:support event="onselect">
+										<f:setPropertyActionListener value="#{sugestao}" target="#{textoFacesBean.responsavelSugerido}"></f:setPropertyActionListener>
+									</a:support>
+								</rich:suggestionbox>
+							</c:if>
+						</div>
+						<br/>
+						<div>
+							<span style="font-weight: bold; padding-bottom: 50px">Tipo de Texto: </span>
+							<c:if test="#{not textoFacesBean.isEditarTipoTexto(textoFacesBean.textoInfoEditar)}" >
+								<span>#{textoFacesBean.textoInfoEditar.tipoTexto.descricao}</span>
+							</c:if>
+							<c:if test="#{textoFacesBean.isEditarTipoTexto(textoFacesBean.textoInfoEditar)}" >
+								<h:selectOneMenu value="#{textoFacesBean.idTipoTextoSelecionado}" id="somTipoTexto" style="width: 210px;" >
+									<f:selectItems value="#{textoFacesBean.itensTipoTexto}" />
+								</h:selectOneMenu>
+							</c:if>
+						</div>
+						<br/>
+						<div>
+							<span style="font-weight: bold; padding-right:7px;">Observação: </span>
+							<c:if test="#{not textoFacesBean.isEditavel(textoFacesBean.textoInfoEditar) and textoFacesBean.observacaoTexto != null}" >
+								<span>#{textoFacesBean.observacaoTexto}</span>
+							</c:if>
+							<c:if test="#{textoFacesBean.isEditavel(textoFacesBean.textoInfoEditar)}" >
+								<h:inputTextarea value="#{textoFacesBean.observacaoTexto}" cols="30" rows="4" onkeyup="validaCaracter(this); if(this.value.length>100){this.value = this.value.substring(0, 100);}"/>
+							</c:if>	
+						</div>
+						<br/>
+						<div class="action-buttons">
+							<a:commandButton value="Salvar Alterações"
+								action="#{textoFacesBean.salvarAlteracoesInformacaoTexto}"
+								reRender="informacoesTextoForm, messagesinformacaoTextoPanel"
+								eventsQueue="ajaxQueue" ignoreDupResponses="true"/>
+							<a:commandButton
+								value="Fechar"
+								action="#{principalFacesBean.atualizarPagina()}"
+								oncomplete="#{rich:component('informacaoTextoPanel')}.hide()"
+								rendered="#{textoFacesBean.refresh}"
+								reRender="resultPanel"
+								immediate="true" eventsQueue="ajaxQueue" ignoreDupResponses="true" ajaxSingle="true" />
+							<a:commandButton
+								value="Fechar"
+								oncomplete="#{rich:component('informacaoTextoPanel')}.hide()"
+								rendered="#{not textoFacesBean.refresh}"
+								reRender="resultPanel"
+								immediate="true" eventsQueue="ajaxQueue" ignoreDupResponses="true" ajaxSingle="true" />	
+						</div>
+					</c:if>
+					<c:if test="#{empty textoFacesBean.textoInfoEditar}" >
+						<div class="action-buttons">
+							<a:commandButton
+								value="Fechar"
+								action="#{principalFacesBean.atualizarPagina()}"
+								oncomplete="#{rich:component('informacaoTextoPanel')}.hide()"
+								rendered="#{textoFacesBean.refresh}"
+								reRender="resultPanel"
+								immediate="true" eventsQueue="ajaxQueue" ignoreDupResponses="true" ajaxSingle="true" />
+							<a:commandButton
+								value="Fechar"
+								oncomplete="#{rich:component('informacaoTextoPanel')}.hide()"
+								rendered="#{not textoFacesBean.refresh}"
+								reRender="resultPanel"
+								immediate="true" eventsQueue="ajaxQueue" ignoreDupResponses="true" ajaxSingle="true" />		
+						</div>
+					</c:if>					
+				</a:form>
+			</rich:modalPanel>
+	   	</a:outputPanel>	
+	   	
+		<rich:modalPanel id="helpPanel" width="400" height="140" autosized="false">
+			<f:facet name="header">
+				<div >
+					<label>Ajuda</label>
+				</div>
+			</f:facet>
+			<rich:panel style="height: 30px;">
+				<h:form style="text-align: center;">
+					<div style="margin: 5px 0; display: block;">
+						<a:commandLink onclick="window.open('ajuda/passo-a-passo.pdf', '_blank');" value="eSTF-Decisão - Passo-a-passo"/>
+					</div>
+					<div style="margin: 5px 0; display: block;">
+						<a:commandLink onclick="window.open('ajuda/STFOffice - Teclas de Atalho.pdf', '_blank');" value="STFOffice - Teclas de atalho"/>
+					</div>
+					<div style="margin: 5px 0; display: block;">
+						<a:commandLink onclick="window.open('http://intranet/repositorio/cms/intranetSti/intranetStiConteudoTextual/multimidia/Video_de_Tutorial_do_eSTFDecisao.swf', '_blank');" value="Vídeo Tutorial"/>
+					</div>
+				</h:form>
+			</rich:panel>
+			
+			<div class="action-buttons">
+				<a:commandButton
+					value="Fechar"
+					onclick="#{rich:component('helpPanel')}.hide()"
+					eventsQueue="ajaxQueue" ignoreDupResponses="true"/>
+			</div>
+		</rich:modalPanel>	 
+				
+		<a:outputPanel ajaxRendered="false" id="pnlTextosIguais" >
+			<ui:include src="/pesquisa/textosIguais.xhtml" />
+		</a:outputPanel>
+		
+		<a:outputPanel id="assinaturaModalPanel">
+			<h:panelGroup id="assinaturaModalPanelGroup"
+				rendered="#{assinarDigitalmenteDocumentosAutomaticamenteFacesBean.showModalMessages}">
+				<s:decorate template="/documento/modalAssinar.xhtml">
+				</s:decorate>
+			</h:panelGroup>
+		</a:outputPanel>
+	</ui:define>
+
+</ui:composition>

@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:s="http://jboss.com/products/seam/taglib"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:rich="http://richfaces.org/rich"
+	xmlns:a="http://richfaces.org/a4j"
+	xmlns:c="http://java.sun.com/jstl/core"
+	xmlns:stf="http://www.stf.jus.br/custom-components"
+	xmlns:fn="http://java.sun.com/jsp/jstl/functions">
+
+	<s:decorate id="adicionarProcessos" template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="principal" />
+		<ui:define name="descricao">
+			<h:outputText value="Processos destacados pelo ministro na mesma lista de julgamento do processo escolhido:" rendered="#{actionFacesBean.processos.size() > 0}" />
+		</ui:define>
+		<ui:define name="conteudo">
+
+			<s:div rendered="#{actionFacesBean.processos.size() == 0}">
+				<p class="result-info">
+					<i>Não há pedido de destaque para o processo selecionado.</i>
+				</p>
+			</s:div>
+			
+			<rich:dataTable id="tbProcessos" var="objetoIncidente" rendered="#{actionFacesBean.processos.size() > 0}"
+				value="#{actionFacesBean.processos}"
+				rowClasses="dr-table-row-odd, dr-table-row-even"
+				styleClass="data-table">
+
+				<rich:column>
+					<f:facet name="header">
+						<h:outputText value="Processo" />
+					</f:facet>
+					<h:outputText value="#{objetoIncidente.identificacao}" />
+				</rich:column>
+
+				<rich:column>
+					<f:facet name="header">
+						<h:outputText value="Lista" />
+					</f:facet>
+					<h:outputText value="#{actionFacesBean.listaJulgamento.nome}" />
+				</rich:column>
+
+				<rich:column>
+					<f:facet name="header">
+						<h:outputText value="Colegiado" />
+					</f:facet>
+					<h:outputText value="#{actionFacesBean.colegiado.descricao}" />
+				</rich:column>
+
+				<rich:column>
+					<f:facet name="header">
+						<h:outputText value="Sessão Virtual Anterior" />
+					</f:facet>
+					<h:outputText
+						value="#{actionFacesBean.listaJulgamento.sessao.dataInicio}">
+						<f:convertDateTime pattern="dd/MM/yyyy" />
+					</h:outputText>
+
+					<h:outputText value=" a " />
+
+					<h:outputText
+						value="#{actionFacesBean.listaJulgamento.sessao.dataFim}">
+						<f:convertDateTime pattern="dd/MM/yyyy" />
+					</h:outputText>
+				</rich:column>
+
+
+			</rich:dataTable>
+			<br />
+			<br />
+			<s:div rendered="#{actionFacesBean.processos.size() > 1}">
+				<h:outputText style="font-weight:bold" value="Cancelar o pedido de destaque:" />
+
+				<h:selectOneRadio value="#{actionFacesBean.cancelarTodos}" layout="pageDirection">
+					<f:selectItem itemValue="#{false}" itemLabel="APENAS do processo escolhido" />
+					<f:selectItem itemValue="#{true}" itemLabel="de TODOS os processos destacados pelo ministro na lista" />
+				</h:selectOneRadio>
+			</s:div>
+		</ui:define>
+
+		<ui:define name="botoes">
+			<a:commandButton value="Cancelar Pedido de Destaque" rendered="#{actionFacesBean.processos.size() > 0}"
+				id="cancelarPedidoDestaque" action="#{actionFacesBean.execute}"
+				reRender="actionModalPanel"
+				oncomplete="showActionPanel('panelItem', #{actionFacesBean.definition.width}, #{actionFacesBean.definition.height});"
+				eventsQueue="ajaxQueue" ignoreDupResponses="true" />
+		</ui:define>
+	</s:decorate>
+
+	<s:decorate template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="warnings" />
+		<ui:define name="descricao">
+			Operação realizada com sucesso!
+		</ui:define>
+		<ui:define name="conteudo">
+			<stf:messages level="INFO" />
+		</ui:define>
+	</s:decorate>
+</ui:composition>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:s="http://jboss.com/products/seam/taglib"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:rich="http://richfaces.org/rich"
+	xmlns:a="http://richfaces.org/a4j"
+	xmlns:c="http://java.sun.com/jstl/core"
+	xmlns:stf="http://www.stf.jus.br/custom-components">
+
+	<s:decorate template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="principal" />
+		<ui:define name="descricao">Preencha o cabeçalho da lista a ser exportada:</ui:define>
+		<ui:define name="conteudo">
+			<rich:editor 
+				value="#{actionFacesBean.cabecalhoLista}" 
+				theme="advanced"
+				width="300" height="250"
+				id="CabecalhoDaLista"
+				>
+				<f:param name="theme_advanced_buttons1" value="bold,italic,underline,separator,justifyleft,justifycenter,justifyright,separator,fontsizeselect" />			          
+    			<f:param name="theme_advanced_buttons2" value="cut,copy,paste,pastetext,pasteword,separator,undo,redo,separator,bullist,numlist" />
+    			<f:param name="theme_advanced_buttons3" value="" />
+			</rich:editor>			
+		</ui:define>
+		<ui:define name="botoes">
+			<h:outputLabel value="Formato" for="formatoRelatorio" styleClass="name" 
+				style="float: none" />
+			<h:selectOneMenu id="formatoRelatorio" value="#{actionFacesBean.formatoRelatorio}">
+				<s:enumItem enumValue="PDF" label="PDF" />
+				<s:enumItem enumValue="RTF" label="RTF" />
+			</h:selectOneMenu>
+		
+			<h:commandButton value="Gerar" action="#{actionFacesBean.execute}"/>
+		</ui:define>
+	</s:decorate>
+	
+	<s:decorate template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="final" />
+		<ui:define name="descricao">Resultado da operação:</ui:define>
+		<ui:define name="conteudo">
+			<c:if test="#{actionFacesBean.listaProcessada}">
+				<div>
+				<div>Operação realizada com sucesso!</div>
+				<stf:messages level="INFO" passed="true"/></div>
+			</c:if>
+			<c:if test="#{!actionFacesBean.listaProcessada}">
+				<div>
+				<div class="vermelho">Não foi possível gerar o PDF da lista selecionada!</div>
+				<stf:messages level="WARN,ERROR" /></div>
+			</c:if>
+		</ui:define>
+	</s:decorate>
+
+
+</ui:composition>

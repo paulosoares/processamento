@@ -1,0 +1,313 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:s="http://jboss.com/products/seam/taglib"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:rich="http://richfaces.org/rich"
+	xmlns:a="http://richfaces.org/a4j"
+	xmlns:c="http://java.sun.com/jstl/core"
+	xmlns:stf="http://www.stf.jus.br/custom-components">
+	
+
+	<s:decorate template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="principal" />		
+		<ui:param name="esconderBotoes" value="true" />
+		<ui:define name="descricao">Listas de Julgamento Liberadas:</ui:define>
+		
+		<ui:define name="conteudo">
+			<stf:messages level="ALL" height="auto" id="mensagens" />
+			<br />
+			<a:outputPanel id="panelTiposTexto">
+				<div class="data-table-outer data-table-outer_width">
+					<div class="largura91" style="border: 1px solid #006699; border-top: none; border-bottom: none; border-left: none;">
+							<rich:dataTable	id="tbListaJulgamento"
+								var="lista"
+								value="#{actionFacesBean.listasListaJulgamentoUI}"
+								sortMode="single"
+								selectionMode="multi"
+								rowClasses="dr-table-row-odd, dr-table-row-even"
+								style="white-space: nowrap"
+								styleClass="data-table">
+								<rich:column styleClass="dr-table-col-center" headerClass="dr-table-col-center largura35px dr-table-subheadercell-nobordertop" style="#{(lista.instancia.tipoListaJulgamento.id eq 5) ? 'background-color: SkyBlue' : ''}#{(lista.instancia.tipoListaJulgamento.id eq 10) ? 'background-color: LightGoldenRodYellow' : ''}">
+									<f:facet name="header">
+										<a:commandButton image="/common/images/setabaixo.gif"
+											action="#{actionFacesBean.selectAll}"
+											title="Página atual" eventsQueue="ajaxQueue"
+											ignoreDupResponses="true"
+											reRender="panelTiposTexto" />
+									</f:facet>
+									<h:selectBooleanCheckbox styleClass="Checkbox"
+										value="#{lista.selected}" />
+								</rich:column>
+								<rich:column headerClass="dr-table-subheadercell-nobordertop" styleClass="align-center" style="#{(lista.instancia.tipoListaJulgamento.id eq 5) ? 'background-color: SkyBlue' : ''}#{(lista.instancia.tipoListaJulgamento.id eq 10) ? 'background-color: LightGoldenRodYellow' : ''}">
+					                <h:graphicImage url="/common/images/passed.gif" rendered="#{lista.situacao.codigo == 'E'}" title="#{lista.situacao.descricao}"/>
+									<h:graphicImage url="/common/images/warning.png" rendered="#{lista.situacao.codigo == 'M'}" title="#{lista.situacao.descricao}"/>
+									<h:graphicImage url="/common/images/error.png" rendered="#{lista.situacao.codigo == 'N'}" title="#{lista.situacao.descricao}"/>
+								</rich:column>
+								<rich:column  sortBy="#{lista.nome}" headerClass="dr-table-subheadercell-nobordertop" style="#{(lista.instancia.tipoListaJulgamento.id eq 5) ? 'background-color: SkyBlue' : ''}#{(lista.instancia.tipoListaJulgamento.id eq 10) ? 'background-color: LightGoldenRodYellow' : ''}">
+					                <f:facet name="header">
+					                    <h:outputText value="Lista"/>
+					                </f:facet>
+									<h:outputText value="#{lista.nome}" id="nomeLista"/>
+									<rich:toolTip for="nomeLista" rendered="#{(lista.instancia.tipoListaJulgamento.id eq 5) &amp;&amp; (!empty lista.instancia.ministroVistor)}" value="Ministro Vistor: #{lista.instancia.ministroVistor.nome}"/>
+								</rich:column>
+								
+								<rich:column  sortBy="#{lista.descricaoTipoLista}" headerClass="dr-table-subheadercell-nobordertop" style="#{(lista.instancia.tipoListaJulgamento.id eq 5) ? 'background-color: SkyBlue' : ''}#{(lista.instancia.tipoListaJulgamento.id eq 10) ? 'background-color: LightGoldenRodYellow' : ''}">
+					                <f:facet name="header">
+					                    <h:outputText value="Tipo"/>
+					                </f:facet>
+									<h:outputText id="descricaoTipoLista" value="#{lista.descricaoTipoLista}" />
+									<rich:toolTip for="descricaoTipoLista" rendered="#{(lista.instancia.tipoListaJulgamento.id eq 5) &amp;&amp; (!empty lista.instancia.ministroVistor)}" value="Ministro Vistor: #{lista.instancia.ministroVistor.nome}"/>
+								</rich:column>								
+								
+								<rich:column  sortBy="#{lista.ambiente}" headerClass="dr-table-subheadercell-nobordertop" style="#{(lista.instancia.tipoListaJulgamento.id eq 5) ? 'background-color: SkyBlue' : ''}#{(lista.instancia.tipoListaJulgamento.id eq 10) ? 'background-color: LightGoldenRodYellow' : ''}">
+					                <f:facet name="header">
+					                    <h:outputText value="Ambiente"/>
+					                </f:facet>
+									<h:outputText value="#{lista.ambiente}" id="ambiente"/>
+									<rich:toolTip for="ambiente" rendered="#{(lista.instancia.tipoListaJulgamento.id eq 5) &amp;&amp; (!empty lista.instancia.ministroVistor)}" value="Ministro Vistor: #{lista.instancia.ministroVistor.nome}"/>
+								</rich:column>
+								
+								<rich:column  sortBy="#{lista.colegiado}" headerClass="dr-table-subheadercell-nobordertop" style="#{(lista.instancia.tipoListaJulgamento.id eq 5) ? 'background-color: SkyBlue' : ''}#{(lista.instancia.tipoListaJulgamento.id eq 10) ? 'background-color: LightGoldenRodYellow' : ''}">
+					                <f:facet name="header">
+					                    <h:outputText value="Julgador"/>
+					                </f:facet>
+									<h:outputText value="#{lista.colegiado}" id="colegiado"/>
+									<rich:toolTip for="colegiado" rendered="#{(lista.instancia.tipoListaJulgamento.id eq 5) &amp;&amp; (!empty lista.instancia.ministroVistor)}" value="Ministro Vistor: #{lista.instancia.ministroVistor.nome}"/>
+								</rich:column>
+								<rich:column  sortBy="#{lista.sessao}" headerClass="dr-table-subheadercell-nobordertop" style="#{(lista.instancia.tipoListaJulgamento.id eq 5) ? 'background-color: SkyBlue' : ''}#{(lista.instancia.tipoListaJulgamento.id eq 10) ? 'background-color: LightGoldenRodYellow' : ''}">
+					                <f:facet name="header">
+					                    <h:outputText value="Sessão"/>
+					                </f:facet>
+									<h:outputText value="#{lista.dataSessao}" id="dataSessao">
+										<f:convertDateTime pattern="dd/MM/yy 'às' HH:mm" timeZone="GMT-3"/>
+									</h:outputText>
+									<rich:toolTip for="dataSessao" rendered="#{(lista.instancia.tipoListaJulgamento.id eq 5) &amp;&amp; (!empty lista.instancia.ministroVistor)}" value="Ministro Vistor: #{lista.instancia.ministroVistor.nome}"/>
+								</rich:column>
+								<rich:column  headerClass="dr-table-subheadercell-nobordertop" style="#{(lista.instancia.tipoListaJulgamento.id eq 5) ? 'background-color: SkyBlue' : ''}#{(lista.instancia.tipoListaJulgamento.id eq 10) ? 'background-color: LightGoldenRodYellow' : ''}">
+					                <f:facet name="header">
+					                    <h:outputText value="Liberação"/>
+					                </f:facet>
+									<h:outputText value="#{lista.descricaoAndamentoLiberacao}" id="liberacao"/>	
+									<rich:toolTip for="liberacao" rendered="#{(lista.instancia.tipoListaJulgamento.id eq 5) &amp;&amp; (!empty lista.instancia.ministroVistor)}" value="Ministro Vistor: #{lista.instancia.ministroVistor.nome}"/>																		
+								</rich:column>
+								<rich:column headerClass="dr-table-subheadercell-nobordertop" styleClass="align-center" style="#{(lista.instancia.tipoListaJulgamento.id eq 5) ? 'background-color: SkyBlue' : ''}#{(lista.instancia.tipoListaJulgamento.id eq 10) ? 'background-color: LightGoldenRodYellow' : ''}">
+					                <f:facet name="header">
+					                    <h:outputText value="Ação"/>
+					                </f:facet>
+					                <a:commandButton image="/common/images/page_white_edit.png" 
+					                		action="#{actionFacesBean.listarProcessos(lista.instancia)}"
+					                		eventsQueue="ajaxQueue"
+											ignoreDupResponses="true"
+											oncomplete="Richfaces.showModalPanel('panelItem')"
+											reRender="actionModalPanel"
+					                		title="Editar lista" style="padding-right: 5px"/>
+					                <a:commandButton image="/common/images/cancel.png" rendered="#{lista.instancia.tipoListaJulgamento.id ne 5}"
+			                				title="Excluir lista"
+			                				onclick="if(!confirm('Tem certeza que deseja excluir a lista #{lista.nome} - #{lista.colegiado}?')) return false;" 
+			                				action="#{actionFacesBean.excluirLista(lista.instancia)}"
+			                				eventsQueue="ajaxQueue"
+											ignoreDupResponses="true"
+											oncomplete="Richfaces.showModalPanel('panelItem')"
+											reRender="actionModalPanel" />
+								</rich:column>								
+							</rich:dataTable>
+					</div>
+				</div>
+			</a:outputPanel>
+			<h:panelGrid id="grid" columns="2" style="margin-top: 5px" width="100%">
+				<h:panelGrid width="680px">
+					<h:panelGroup>
+						<h:selectBooleanCheckbox id="mostrarPartes" class="revisarCheckbox" value="#{actionFacesBean.mostrarPartes}" />
+						<h:outputLabel value="Incluir Partes" for="mostrarPartes" />
+					</h:panelGroup>
+					<h:panelGroup>							
+						<h:selectBooleanCheckbox id="mostrarEmenta" class="revisarCheckbox" value="#{actionFacesBean.mostrarEmenta}" />
+						<h:outputLabel value="Incluir Ementa" for="mostrarEmenta" />
+					</h:panelGroup>
+					<h:panelGroup>
+						<h:selectBooleanCheckbox id="mostrarObservacao" class="revisarCheckbox" value="#{actionFacesBean.mostrarObservacao}" />
+						<h:outputLabel value="Incluir Observação" for="mostrarObservacao" />				
+					</h:panelGroup>	
+					<h:panelGroup>
+						<h:selectBooleanCheckbox id="mostrarVotoVista" class="revisarCheckbox" value="#{actionFacesBean.mostrarVotoVista}" />
+						<h:outputLabel value="Incluir Voto Vista" for="mostrarVotoVista" />				
+					</h:panelGroup>
+				</h:panelGrid>
+				
+				<h:panelGrid>
+					<h:panelGroup>
+						<div style="margin: 10px 0px 10px 5px">
+							<span style="background-color: SkyBlue;width: 100px;border: 1px solid black;padding: 5px 0px 5px 50px;" ></span>
+							<span style="margin-left: 10px;">Listas de Devoluções de Vistas</span>
+						</div>
+					</h:panelGroup>
+					
+					<h:panelGroup>
+						<h:outputText value="" />
+					</h:panelGroup>
+					
+					<h:panelGroup>
+						<div style="margin: 10px 0px 10px 5px">
+							<span style="background-color: LightGoldenRodYellow;width: 100px;border: 1px solid black;padding: 5px 0px 5px 50px;" ></span>
+							<span style="margin-left: 10px;">Listas de Destaques Cancelados</span>
+						</div>
+					</h:panelGroup>
+				</h:panelGrid>
+				
+			</h:panelGrid>
+						
+		</ui:define>
+		<ui:define name="botoesPersonalizados">
+			<div class="action-buttons">
+				<a:commandButton 
+					id="btnImprimir"
+				    value="Imprimir"
+					action="#{actionFacesBean.imprimir}"
+					reRender="actionModalPanel"
+					oncomplete="#{actionFacesBean.arquivoPronto ? 'jQuery(\'.btn-imprimir\').click();' : ''} Richfaces.showModalPanel('panelItem');" 
+					eventsQueue="ajaxQueue"
+					ignoreDupResponses="true" />
+					
+				<a:commandButton
+				 	id="btnEmail"
+				 	value="Enviar e-mail" 
+					action="#{actionFacesBean.mail}"
+					reRender="actionModalPanel"					
+					oncomplete="Richfaces.showModalPanel('panelItem')" 
+					eventsQueue="ajaxQueue"
+					ignoreDupResponses="true" />
+			
+				<h:form>
+					<h:commandButton 
+						id="btnImprimirh"
+						class="btn-imprimir"
+						value="Imprimir H" 
+						action="#{actionFacesBean.imprimir}"
+						reRender="actionModalPanel"
+						oncomplete="Richfaces.showModalPanel('panelItem');"
+						eventsQueue="ajaxQueue"
+						ignoreDupResponses="true" />
+										
+					<h:commandButton 
+						value="Fechar" 
+						action="#{actionFacesBean.fechar(revisarListasFacesBean)}"
+						ignoreDupResponses="true">
+							
+		            	<rich:componentControl for="panelItem" attachTo="close" operation="hide" event="onclick"/>
+		            </h:commandButton>
+	            </h:form>
+			</div>
+		</ui:define>
+	</s:decorate>
+
+	<s:decorate template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="final" />
+		<ui:param name="esconderBotoes" value="true" />	
+		<ui:define name="descricao">Processos da #{actionFacesBean.listaJulgamento.nome}:</ui:define>
+		
+		<ui:define name="conteudo">
+			<stf:messages level="ALL" height="auto"/>
+			<h:outputLabel value="Cabeçalho:" />
+			<br />	
+			
+			<c:if test="#{!actionFacesBean.apresentarCabecalhoDoVistor}">
+			<rich:editor value="#{actionFacesBean.listaJulgamento.cabecalho}" theme="advanced" width="300" height="100" id="CabecalhoDaLista">
+				<f:param name="theme_advanced_buttons1" value="bold,italic,underline,separator,justifyleft,justifycenter,justifyright,separator,fontsizeselect,cut,copy,paste,pastetext,pasteword,separator,undo,redo,separator,bullist,numlist" />			          
+	   			<f:param name="theme_advanced_buttons2" value="" />
+	   			<f:param name="theme_advanced_buttons3" value="" />			   			
+			</rich:editor>
+			</c:if>
+			<c:if test="#{actionFacesBean.apresentarCabecalhoDoVistor}">
+			<rich:editor value="#{actionFacesBean.listaJulgamento.cabecalhoVistor}" theme="advanced" width="300" height="100" id="CabecalhoDaLista">
+				<f:param name="theme_advanced_buttons1" value="bold,italic,underline,separator,justifyleft,justifycenter,justifyright,separator,fontsizeselect,cut,copy,paste,pastetext,pasteword,separator,undo,redo,separator,bullist,numlist" />			          
+	   			<f:param name="theme_advanced_buttons2" value="" />
+	   			<f:param name="theme_advanced_buttons3" value="" />			   			
+			</rich:editor>
+			</c:if>
+			
+			<br />
+			<a:outputPanel id="panelTipoLista">
+				<s:decorate template="/common/decorators/edit.xhtml" rendered="#{not empty actionFacesBean.tipoListaJulgamento}">
+					<ui:define name="label">Tipo Lista:</ui:define>
+					<h:selectOneMenu value="#{actionFacesBean.idTipoListaJulgamento}" style="width: 330px;">
+						<f:selectItem itemLabel="Alterar tipo de lista..." />
+						<f:selectItems value="#{actionFacesBean.tipoListaJulgamento}" />
+					</h:selectOneMenu>
+				</s:decorate>
+			</a:outputPanel>
+			<div class="float-right">
+			<a:commandButton
+				value="Gravar Cabeçalho"
+				title="Gravar Cabeçalho" 
+				action="#{actionFacesBean.gravarCabecalho}"
+				oncomplete="Richfaces.showModalPanel('panelItem')" 
+				eventsQueue="ajaxQueue"
+				/>
+			</div>
+			<div class="clear-both prop"><br /></div>
+			<hr />
+			<a:outputPanel id="panelTiposTexto">
+				<div class="data-table-outer data-table-outer__small">
+					<div class="largura91" style="border: 1px solid #006699; border-top: none; border-bottom: none; border-left: none;">
+						<rich:dataTable	id="tbListaProcesso"
+							var="processo"
+							value="#{actionFacesBean.listaDeProcessos}"
+							sortMode="single"
+							selectionMode="multi"
+							rowClasses="dr-table-row-odd, dr-table-row-even"
+							styleClass="data-table lista-de-processos">
+							<rich:column  sortBy="" headerClass="dr-table-subheadercell-nobordertop">
+				                <f:facet name="header">
+				                    <h:outputText value="Item"/>
+				                </f:facet>
+								<h:outputText value="#{processo.ordemNaLista}" styleClass="item-#{processo.ordemNaLista}" />
+							</rich:column>
+							<rich:column  sortBy="" headerClass="dr-table-subheadercell-nobordertop">
+				                <f:facet name="header">
+				                    <h:outputText value="Processo"/>
+				                </f:facet>
+								<h:outputText value="#{processo.identificacaoLista}" />
+							</rich:column>
+							<rich:column headerClass="dr-table-subheadercell-nobordertop" styleClass="align-center">
+					                <f:facet name="header">
+					                    <h:outputText value="Ação"/>
+					                </f:facet>
+					                <a:commandButton image="/common/images/cancel.png" rendered="#{actionFacesBean.listaJulgamento.tipoListaJulgamento.id ne 5}"
+			                				title="Excluir processo" 
+			                				type="button"
+			                				onclick="if(!confirm('Tem certeza que deseja excluir o processo da lista?')) return false;" 
+			                				action="#{actionFacesBean.excluirProcesso(processo)}"
+			                				eventsQueue="ajaxQueue"
+											ignoreDupResponses="true"
+											reRender="tbListaProcesso"
+											 />
+								</rich:column>
+						</rich:dataTable>
+					</div>
+				</div>
+			</a:outputPanel>
+		</ui:define>
+		<ui:define name="botoesPersonalizados">
+			<div class="action-buttons">
+				<h:form>
+					<h:commandButton value="Voltar" id="btnVoltar"
+						action="#{actionFacesBean.voltar(revisarListasFacesBean)}"
+						ignoreDupResponses="true"
+						 />
+					<h:commandButton 
+						value="Fechar" 
+						action="#{actionFacesBean.fechar(revisarListasFacesBean)}"
+						ignoreDupResponses="true">
+							
+		            	<rich:componentControl for="panelItem" attachTo="close" operation="hide" event="onclick"/>
+		            </h:commandButton>
+	            </h:form>
+			</div>
+		</ui:define>
+	</s:decorate>
+	
+</ui:composition>

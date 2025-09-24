@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:s="http://jboss.com/products/seam/taglib"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:rich="http://richfaces.org/rich"
+	xmlns:p="http://primefaces.prime.com.tr/ui"
+	xmlns:a="http://richfaces.org/a4j"
+	xmlns:c="http://java.sun.com/jstl/core"
+	xmlns:stf="http://www.stf.jus.br/custom-components">
+
+	<rich:modalPanel id="panelInformacaoPauta" width="800" height="580">
+		<f:facet name="header">
+			<h:outputText value="Informações de Pauta do Processo #{incidenteFacesBean.objetoIncidente.identificacao}" />
+		</f:facet>
+		
+		<div style="overflow: auto; height: 500px">
+			<!-- INÍCIO Área responsável pelas informações de cabeçalho do Processo -->
+			<div class="layout-1col" style="margin-top: 15px;">
+				<s:decorate template="/common/decorators/display.xhtml">
+					<ui:define name="label">Processo: </ui:define>
+					<h:outputText styleClass="destaque" value="#{incidenteFacesBean.objetoIncidente.identificacao}" />
+				</s:decorate>
+				<s:decorate template="/common/decorators/display.xhtml">
+					<ui:define name="label">Colegiado:</ui:define>
+					<h:outputText styleClass="destaque" value="#{incidenteFacesBean.colegiadoConsultaPauta}" />
+				</s:decorate>
+				<s:decorate template="/common/decorators/display.xhtml">
+					<ui:define name="label">Sugestão de data de julgamento:</ui:define>
+					<h:outputText styleClass="destaque" value="#{incidenteFacesBean.informacaoPautaProcesso.dataJulgamentoSugerida}" />
+				</s:decorate>
+				<s:decorate template="/common/decorators/display.xhtml">
+					<ui:define name="label">Data prevista para julgamento:</ui:define>
+					<h:outputText styleClass="destaque" value="#{incidenteFacesBean.dataPrevistaJulgamento}" />
+				</s:decorate>
+			</div>
+			<!-- FIM Área responsável pelas informações de cabeçalho do Processo -->
+			
+			<!-- INÍCIO Área responsável pelas informações de Pauta Temática -->
+			<div class="layout-1col" style="margin-top: 15px;">
+				<h3>PAUTA TEMÁTICA</h3>
+				<s:decorate template="/common/decorators/display.xhtml">
+					<ui:define name="label">Pauta: </ui:define>
+					<h:outputText styleClass="destaque" value="#{incidenteFacesBean.informacaoPautaProcesso.subtemaPauta.temaPauta.pautaPlenario.descricao}" />
+				</s:decorate>
+				<s:decorate template="/common/decorators/display.xhtml">
+					<ui:define name="label">Tema: </ui:define>
+					<h:outputText styleClass="destaque" value="#{incidenteFacesBean.informacaoPautaProcesso.subtemaPauta.temaPauta.descricao}" />
+				</s:decorate>
+				<s:decorate template="/common/decorators/display.xhtml">
+					<ui:define name="label">Subtema: </ui:define>
+					<h:outputText styleClass="destaque" value="#{incidenteFacesBean.informacaoPautaProcesso.subtemaPauta.descricao}" />
+				</s:decorate>
+			</div>
+			<!-- FIM Área responsável pelas informações de Pauta Temática -->
+			
+			<!-- INÍCIO Área responsável pelas informações de Assunto -->
+			<div class="layout-1col" style="margin-top: 15px;">
+				<h3>ASSUNTO</h3>
+				<c:if test="#{not empty objetoIncidenteParaVisualizar.principal.assuntos}">
+					<a:outputPanel id="opAssunto" styleClass="MolduraInterna">
+						<rich:dataTable id="tabAssuntos" var="ass" 
+							value="#{incidenteFacesBean.objetoIncidente.principal.assuntos}"
+							rendered="#{not empty incidenteFacesBean.objetoIncidente.principal.assuntos}" width="100%" >
+							<rich:column style="text-align: right; width: 100px">
+								<h:outputText styleClass="Padrao" value="#{ass.id} - "/>
+							</rich:column>
+							<rich:column style="text-align: left;">
+								<h:outputText styleClass="Padrao" value="#{ass.descricaoCompleta}"/>
+							</rich:column>
+						</rich:dataTable>
+					</a:outputPanel>
+				</c:if>
+			</div>
+			<!-- FIM Área responsável pelas informações de Assunto -->
+			
+			<!-- INÍCIO Área responsável pelas informações de Espelho -->
+			<div class="layout-1col" style="margin-top: 15px;">
+				<h3>ESPELHO</h3>
+				<c:forEach items="#{incidenteFacesBean.itensEspelho}" var="itemEspelho" varStatus="loop">
+					<h:panelGrid border="1">
+						<div style="font-weight:bold; padding:15px 5px 0 30px; text-align:left; vertical-align:top; width:130px; font-size: 1em">
+							#{loop.index + 1}. #{itemEspelho.nome}
+						</div>
+						<h:panelGrid style="margin-left:50px; margin-top:5px;">
+							<h:outputText escape="false" value="#{itemEspelho.conteudo}"/>
+						</h:panelGrid>
+						<rich:dataTable var="decisao" 
+							value="#{incidenteFacesBean.decisoes}"
+							rendered="#{not empty incidenteFacesBean.decisoes and itemEspelho.nome == 'Informações'}" width="100%"
+							style="padding: 15px 0;">
+							<rich:column style="text-align: left; padding-left: 77px;">
+								<h:outputText styleClass="Padrao" value="#{decisao}"/>
+							</rich:column>
+						</rich:dataTable>
+					</h:panelGrid>
+				</c:forEach>
+			</div>
+			<!-- FIM Área responsável pelas informações de Espelho -->
+			
+			<!-- INÍCIO Área responsável pelas informações de Processos Vinculados -->
+			<div class="layout-1col" style="margin-top: 15px;">
+				<h3>PROCESSOS VINCULADOS</h3>
+				<c:if test="#{not empty incidenteFacesBean.processosVinculados}">
+					<a:outputPanel id="panelProcessosVinculados">
+						<s:decorate template="/common/decorators/edit.xhtml">
+							<div style="width: 500px;">
+								<div style="border: 1px solid #006699; border-top: none;">
+									<rich:dataTable id="tbProcessosVinculados"
+										var="processoVinculado"
+										value="#{incidenteFacesBean.processosVinculados}"
+										rowClasses="dr-table-row-odd, dr-table-row-even"
+										styleClass="data-table">
+										<rich:column>
+											<f:facet name="header">
+												<h:outputText value="Processo" />
+											</f:facet>
+											<h:outputText value="#{processoVinculado.objetoIncidente.identificacao}" />
+										</rich:column>
+										<rich:column styleClass="dr-table-lastcol"
+											headerClass="dr-table-lastcol">
+											<f:facet name="header">
+												<h:outputText value="Vinculação" />
+											</f:facet>
+											<h:outputText value="#{processoVinculado.vinculacao.descricao}" />
+										</rich:column>
+									</rich:dataTable>
+								</div>
+							</div>
+						</s:decorate>
+					</a:outputPanel>
+				</c:if>
+			</div>
+			<!-- FIM Área responsável pelas informações de Processos Vinculados -->
+			
+			<!-- INÍCIO Área responsável pelas informações de Sustentação Oral -->
+			<div class="layout-1col" style="margin-top: 15px;">
+				<h3>SUSTENTAÇÃO ORAL</h3>
+				<c:if test="#{not empty incidenteFacesBean.sustentacoesOrais}">
+					<a:outputPanel id="panelSustentacaoOral">
+						<s:decorate template="/common/decorators/edit.xhtml">
+							<div style="text-align: center; width: 500px;">
+								<div style="border: 1px solid #006699; border-top: none;">
+									<rich:dataTable id="tbPartesSustentacaoOral"
+										var="sustentacaoOral"
+										value="#{incidenteFacesBean.sustentacoesOrais}"
+										rowClasses="dr-table-row-odd, dr-table-row-even"
+										styleClass="data-table">
+										<rich:column>
+											<f:facet name="header">
+												<h:outputText value="Parte" />
+											</f:facet>
+											<h:outputText value="#{sustentacaoOral.nomeParte}" />
+										</rich:column>
+										<rich:column>
+											<f:facet name="header">
+												<h:outputText value="Advogado" />
+											</f:facet>
+											<h:outputText value="#{sustentacaoOral.nomeAdvogado}" />
+										</rich:column>
+										<rich:column styleClass="dr-table-lastcol" headerClass="dr-table-lastcol">
+											<f:facet name="header">
+												<h:outputText value="Observação" />
+											</f:facet>
+											<h:outputText value="#{sustentacaoOral.observacao}" />
+										</rich:column>
+									</rich:dataTable>
+								</div>
+							</div>
+						</s:decorate>
+					</a:outputPanel>
+				</c:if>
+			</div>
+			<!-- FIM Área responsável pelas informações de Sustentação Oral -->
+			
+			<!-- INÍCIO Área responsável pelas informações de Ministros Impedidos -->
+			<div class="layout-1col" style="margin-top: 15px;">
+				<h3>IMPEDIMENTOS</h3>
+				<c:if test="#{not empty incidenteFacesBean.listaMinistrosImpedidos}">
+					<a:outputPanel id="opMinistrosImpedidos">
+						<s:decorate template="/common/decorators/edit.xhtml">
+							<div style="text-align: center; width: 500px;">
+								<div style="border: 1px solid #006699; border-top: none;">
+									<rich:dataTable id="dtDocumentosExternos"
+										value="#{incidenteFacesBean.listaMinistrosImpedidos}"
+										var="ministro"
+										rowClasses="dr-table-row-odd, dr-table-row-even"
+										styleClass="data-table">
+										<rich:column>
+											<f:facet name="header">
+												<h:outputText value="Ministro(s) Impedido(s)" />
+											</f:facet>
+											<h:outputText value="#{ministro.id.ministro.nome}" />
+										</rich:column>
+									</rich:dataTable>
+								</div>
+							</div>
+						</s:decorate>
+					</a:outputPanel>
+				</c:if>
+			</div>
+			<!-- FIM Área responsável pelas informações de Ministros Impedidos -->
+			
+			<!-- INÍCIO Área responsável pelas informações de Repercussão Geral -->
+			<div class="layout-1col" style="margin-top: 15px;">
+				<h3>REPERCUSSÃO GERAL</h3>
+				<c:if test="#{not empty incidenteFacesBean.temaRepercussaoGeral}">
+					<h:outputText value="#{incidenteFacesBean.temaRepercussaoGeral}" />
+				</c:if>
+			</div>
+			<!-- FIM Área responsável pelas informações de Repercussão Geral -->
+			
+			<!-- INÍCIO Área responsável pelas informações de Documentos Vinculados -->
+			<div class="layout-1col" style="margin-top: 15px;">
+				<h3>DOCUMENTOS VINCULADOS</h3>
+				<c:if test="#{not empty incidenteFacesBean.listaDocumentosExternosVinculados}">
+					<a:outputPanel id="opDocumentosExternos">
+						<s:decorate template="/common/decorators/edit.xhtml">
+							<div style="text-align: center; width: 500px;">
+								<div style="border: 1px solid #006699; border-top: none;">
+									<rich:dataTable id="dtDocumentosExternos"
+										var="pecaInformacaoPauta"
+										value="#{incidenteFacesBean.listaDocumentosExternosVinculados}"
+										rowClasses="dr-table-row-odd, dr-table-row-even"
+										styleClass="data-table">
+										<rich:column>
+											<f:facet name="header">
+												<h:outputText value="Descrição do Documento" />
+											</f:facet>
+											<h:outputText value="#{pecaInformacaoPauta.descricao}" />
+										</rich:column>
+										<rich:column>
+											<h:commandLink
+												action="#{incidenteFacesBean.printPecaInformacaoPauta(pecaInformacaoPauta)}"
+												rendered="#{not empty pecaInformacaoPauta.id}">
+												<h:graphicImage value="/common/images/page_white_magnify.png"
+													title="Abrir Documento" style="margin-right: 3px" />
+											</h:commandLink>
+										</rich:column>
+									</rich:dataTable>
+								</div>
+								<div class="action-buttons">
+									<h:commandLink id="baixarTodos"
+									value="Baixar Todos" style="margin-right: 0px !important;" 
+									action="#{incidenteFacesBean.baixarTodos()}" />
+								</div>
+							</div>
+						</s:decorate>
+					</a:outputPanel>
+				</c:if>
+			</div>
+			<!-- FIM Área responsável pelas informações de Documentos Vinculados -->
+			
+			<!-- INÍCIO Área responsável pelas Informações Adicionais -->			
+			<div class="layout-1col" style="margin-top: 15px;">
+				<h3>INFORMAÇÕES ADICIONAIS</h3>
+				<s:decorate template="/common/decorators/display.xhtml">
+					<ui:define name="label">Data Liberação: </ui:define>
+					<h:outputText styleClass="destaque" value="#{incidenteFacesBean.informacaoPautaProcesso.dataLiberacaoGabinete}" />
+				</s:decorate>
+				<s:decorate template="/common/decorators/display.xhtml">
+					<ui:define name="label">Data Distribuição: </ui:define>
+					<h:outputText value="#{incidenteFacesBean.dataDistribuicao}" />
+				</s:decorate>
+				<s:decorate template="/common/decorators/display.xhtml">
+					<ui:define name="label">Preferências: </ui:define>
+					<h:outputText value="#{incidenteFacesBean.preferencias}" />
+				</s:decorate>
+			</div>
+			<!-- FIM Área responsável pelas Informações Adicionais -->
+			
+			
+		</div>
+		<!-- Botão Fechar -->			
+		<div class="action-buttons">
+			<a:commandButton 
+				value="Fechar" style="margin-right: 0px !important;"
+				onclick="#{rich:component('panelInformacaoPauta')}.hide()"
+				eventsQueue="ajaxQueue" ignoreDupResponses="true" />
+		</div>
+		<!-- Botão Fechar -->
+	</rich:modalPanel>
+</ui:composition>

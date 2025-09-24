@@ -1,0 +1,29 @@
+/* Correcoes para Internet Explorer */
+/* Componentes de Formulario */
+input[type=button],
+input[type=submit], 
+button										{ width:auto; overflow:visible; background-color: #006699; padding: 2px 20px 3px 20px;
+											  border: 1px solid transparent; vertical-align: middle;}
+input[type=text],               			
+select										{ height: 1.6em; }
+
+input[disabled],
+select[disabled] 							{ background-color: #DDDDDD; }
+
+.dr-table									{ border-collapse: collapse !important; }
+.dr-table-firstcol							{ border-left: none !important; }
+
+.layout-1col								{ padding-right: 0px !important;}
+.layout-2col								{ width: 49%; padding-right: 5px;}
+.layout-2-3col								{ width: 66%; padding-right: 5px;} 
+.layout-3col								{ width: 32%; padding: 0px 5px 0px 5px;} 
+.layout-3col select							{ width: 194px; }
+.layout-3col .value 						{ width: 67%; box-sizing: border-box; -moz-box-sizing: border-box; -webkit-box-sizing: border-box; }
+
+.largura91									{ width: 91%;}
+
+.styledSelectBox							{ height: 1.6em; }
+.styledSelectBoxInner						{ background-position: 100% 30%; }
+.inline-menu-label							{ display:inline; padding-top: 4px; }
+
+.tipoTextoDiv								{ width: 214px; }

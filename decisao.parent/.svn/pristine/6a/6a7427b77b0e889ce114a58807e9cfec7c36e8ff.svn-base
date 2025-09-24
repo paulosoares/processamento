@@ -1,0 +1,2 @@
+# Impedindo que a mensagem de falha de transação apareça em alguns componentes de mensagem de erro
+org.jboss.seam.transaction.facesTransactionEvents.transactionFailedMessageEnabled=false

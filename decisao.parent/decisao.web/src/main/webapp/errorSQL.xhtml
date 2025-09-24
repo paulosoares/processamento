@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:s="http://jboss.com/products/seam/taglib"
+    xmlns:ui="http://java.sun.com/jsf/facelets"
+    xmlns:f="http://java.sun.com/jsf/core"
+    xmlns:h="http://java.sun.com/jsf/html"
+    xmlns:rich="http://richfaces.org/rich"
+    template="/common/decorators/template.xhtml">
+
+    <ui:param name="showGlobalMessages" value="false"/>
+    <ui:define name="body">
+		<s:link value="« Voltar à página principal" action="#{principalFacesBean.limparAcaoAtual()}" view="/principal.xhtml" includePageParams="false" propagation="none"/>
+		<rich:panel styleClass="panel-outset" style="padding: 7px;padding-bottom: 10px;">
+			<div id="mainMessagePanel">
+				<div style="color: #1C4588; text-decoration: none;">
+				    Não foi possível realizar a ação solicitada. <br/><br/> 
+	          		Caso esteja realizando uma pesquisa avançada atente para as seguintes observações: <br/><br/>
+					1) <span style="font-weight:bold; color:#000099;">E, OU, NÃO, ADJ, PROX, MESMO e $ </span> são operadores utilizados nas pesquisas e devem ser utilizadas com atenção; <br /><br/>
+	            	2) Não utilize os conectores <span style="font-weight:bold; color:#000099;">"NÃO", "E", "OU" e "ADJ"</span> no início, no final ou sozinhas nas pesquisas. Exemplo: <span style="font-weight:bold; color:#000099;">NÃO</span> apresentou,  repercussão geral <span style="font-weight:bold; color:#000099;">E</span>; <br/><br/>
+					3) Para utilizar <span style="font-weight:bold; color:#000099;">"NÃO", "E", "OU"</span> e <span style="font-weight:bold; color:#000099;">"ADJ"</span> no início das pesquisas use-os com aspas duplas, pois assim eles não são considerados conectores;<br/><br/>
+					4) Evite combinações complexas com uso de parênteses, colchetes, aspas simples e chaves. Exemplo: {[12/09/2019(trabalhadores em geral)]}; <br/><br/>
+					5) Para pesquisar palavras com apóstrofo use-o deste modo: jato d´´agua (dois apóstrofos);<br/><br/>
+	            	6) Vários operadores podem ser usados simultaneamente Exemplos:<br/><br/>  
+	            	 	* aposenta<span style="font-weight:bold; color:#000099;">$ E</span> tempo <span style="font-weight:bold; color:#000099;">ADJ2</span> serviço <span style="font-weight:bold; color:#000099;">E</span> conta<br/><br/>
+	            	 	* aposentadoria <span style="font-weight:bold; color:#000099;">E</span> (deputado <span style="font-weight:bold; color:#000099;">OU</span> parlamentar <span style="font-weight:bold; color:#000099;">OU</span> congressista)<br/><br/>
+	            	 	Observação: para mais informações consulte o link ajuda (acima e a direita da tela).<p /><br/>
+			    </div>
+				<a href="#" id="mais" onclick="$('detailMessagePanel').show(); $(this).hide(); $('menos').show(); return false;"><b>Mais Detalhes</b></a>
+				<a href="#" id="menos" onclick="$('detailMessagePanel').hide(); $(this).hide(); $('mais').show(); return false;" style="display: none"><b>Menos Detalhes</b></a>
+			    <div id="detailMessagePanel" class="panel-inset" style="display: none;color: #999;">
+					<pre><h:outputText value="#{errorMessageBean.details}"/></pre>
+				</div>
+			</div>
+		</rich:panel>
+    </ui:define>
+</ui:composition>

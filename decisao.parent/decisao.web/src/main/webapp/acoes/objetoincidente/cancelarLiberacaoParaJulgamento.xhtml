@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:s="http://jboss.com/products/seam/taglib"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:rich="http://richfaces.org/rich"
+	xmlns:a="http://richfaces.org/a4j"
+	xmlns:c="http://java.sun.com/jstl/core"
+	xmlns:stf="http://www.stf.jus.br/custom-components">
+
+	<s:decorate template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="principal" />
+		<ui:define name="descricao">Verifique os processos selecionados.</ui:define>
+		<ui:define name="conteudo">
+			<rich:dataTable id="tblAgendamentos" width="100%"
+				var="agendamentoSelecionado"
+				value="#{actionFacesBean.agendamentosSelecionados}">
+				<rich:column styleClass="leftAlign">
+					<f:facet name="header">
+						<h:outputText value="Processo" styleClass="leftAlign" />
+					</f:facet>
+					<h:outputText
+						value="#{agendamentoSelecionado.objetoIncidente.identificacao}" />
+				</rich:column>
+				<rich:column styleClass="centerAlign">
+					<f:facet name="header">
+						<h:outputText value="Agenda" />
+					</f:facet>
+					<h:outputText value="#{agendamentoSelecionado.tipoAgendamento}" />
+				</rich:column>
+				<rich:column styleClass="centerAlign">
+					<f:facet name="header">
+						<h:outputText value="Colegiado" />
+					</f:facet>
+					<h:outputText value="#{agendamentoSelecionado.colegiado}" />
+				</rich:column>
+				<rich:column styleClass="centerAlign">
+					<f:facet name="header">
+						<h:outputText value="Vistas" />
+					</f:facet>
+					<h:graphicImage value="/common/images/passed.gif"
+						rendered="#{agendamentoSelecionado.vista}" />
+				</rich:column>
+			</rich:dataTable>
+			
+			<rich:spacer height="15px"/>
+			<c:if test="#{actionFacesBean.haJulgamentoConjunto}">
+				<h:outputText value="O processo encontra-se em Julgamento Conjunto, você deseja cancelar:" />
+				<s:decorate id="julgConj">
+					<h:selectOneRadio id="rdJulgConj" value="#{actionFacesBean.removerProcessosJulgamentoConjunto}" layout="pageDirection" style="margin-left: 30px;">
+						<f:selectItem itemValue="SOMENTE" itemLabel="Somente a liberação desse Processo da lista." />
+						<f:selectItem itemValue="TODOS" itemLabel="A liberação de todos Processos da lista." />
+					</h:selectOneRadio>							
+				</s:decorate>
+			</c:if>
+			
+			<rich:spacer height="15px"/>
+			<c:if test="#{actionFacesBean.haListaJulgamento}">
+				<h:outputText value="O processo encontra-se em Lista de Julgamento, você deseja cancelar:" />
+				<s:decorate id="ListaJulg">
+					<h:selectOneRadio id="rdListaJulg" value="#{actionFacesBean.removerProcessosListaJulgamento}" style="margin-left: 30px;" layout="pageDirection" >
+						<f:selectItem itemValue="SOMENTE" itemLabel="Somente a liberação desse Processo da lista." />
+						<f:selectItem itemValue="TODOS" itemLabel="A liberação de todos Processos da lista." />
+					</h:selectOneRadio>							
+				</s:decorate>
+			</c:if>
+			<div>#{actionFacesBean.mensagemDeAlertaDoCancelamento}</div>
+		</ui:define>
+		
+		<ui:define name="botoes">
+			<a:commandButton value="Cancelar Julgamento(s)"
+				action="#{actionFacesBean.validateAndExecute}"
+				reRender="actionModalPanel"
+				oncomplete="showActionPanel('panelItem', #{actionFacesBean.definition.width}, #{actionFacesBean.definition.height})" eventsQueue="ajaxQueue"
+							ignoreDupResponses="true"/>
+		</ui:define>
+	</s:decorate>
+
+	<s:decorate template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="warnings" />
+		<ui:define name="descricao">Verifique as informações abaixo antes de prosseguir</ui:define>
+		<ui:define name="conteudo">
+			<c:if
+				test="#{not empty actionFacesBean.processosPendentesDeConfirmacao}">
+				<div>Os seguintes processos precisam de confirmação para terem seus julgamentos cancelados:</div>
+				<div><stf:messages level="WARN"/></div>
+				<div>
+					<h:selectBooleanCheckbox styleClass="Checkbox" value="#{actionFacesBean.confirmarAgendamentosPendentes}" imediate="true" /> 
+					<span>Confirmar cancelamento de julgamento dos processos. </span>
+				</div>
+			</c:if>
+			<c:if test="#{not empty actionFacesBean.processosInvalidos}">
+				<div class="vermelho">Os processos abaixo não poderão ter seus julgamentos cancelados:</div>
+				<div><stf:messages level="ERROR"/></div>
+			</c:if>
+		</ui:define>
+		<ui:define name="botoes">
+			<c:if test="#{empty actionFacesBean.processosInvalidos}">
+				<a:commandButton value="Confirmar Cancelamento"
+					id="btnConfirmarCancelamento" action="#{actionFacesBean.execute}"
+					reRender="actionModalPanel"
+					oncomplete="showActionPanel('panelItem', #{actionFacesBean.definition.width}, #{actionFacesBean.definition.height})" eventsQueue="ajaxQueue"
+								ignoreDupResponses="true"/>
+			</c:if>
+			<a:commandButton value="Voltar" action="#{actionFacesBean.voltar}"
+				reRender="actionModalPanel"
+				oncomplete="showActionPanel('panelItem', #{actionFacesBean.definition.width}, #{actionFacesBean.definition.height})" eventsQueue="ajaxQueue"
+							ignoreDupResponses="true"/>
+		</ui:define>
+	</s:decorate>
+	<s:decorate template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="nenhumProcessoSelecionado" />
+		<ui:define name="descricao">Nenhum processo foi selecionado para a execução da ação.</ui:define>
+		<ui:define name="botoes">
+			<a:commandButton value="Voltar" action="#{actionFacesBean.voltar}"
+				reRender="actionModalPanel"
+				oncomplete="showActionPanel('panelItem', #{actionFacesBean.definition.width}, #{actionFacesBean.definition.height})" eventsQueue="ajaxQueue"
+							ignoreDupResponses="true"/>
+		</ui:define>
+
+	</s:decorate>
+
+</ui:composition>

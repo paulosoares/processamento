@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:seam="http://jboss.com/products/seam/spring-seam" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:jee="http://www.springframework.org/schema/jee"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+                        http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-2.0.xsd
+                        http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee-2.0.xsd
+                        http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.0.xsd
+                        http://jboss.com/products/seam/spring-seam http://jboss.com/products/seam/spring-seam-2.2.xsd
+                        http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-2.0.xsd
+                        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-2.5.xsd"
+	default-autowire="byName" default-lazy-init="true"
+	default-dependency-check="none">
+
+	<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+	<!-- Configurações Gerais... -->
+
+	<seam:configure-scopes default-auto-create="true" />
+
+	<context:annotation-config />
+	
+	<aop:aspectj-autoproxy />
+	
+	<bean id="timingAspect" class="org.perf4j.log4j.aop.TimingAspect"/>
+
+	<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+	<!-- Acões... -->
+
+	<context:component-scan base-package="br.jus.stf.estf.decisao.objetoincidente.web"
+		scope-resolver="br.jus.stf.estf.decisao.support.action.beanfactory.ActionScopeResolver"
+		name-generator="br.jus.stf.estf.decisao.support.action.beanfactory.ActionNameGenerator">
+		<context:include-filter type="annotation"
+			expression="br.jus.stf.estf.decisao.support.action.support.Action" />
+	</context:component-scan>
+
+	<context:component-scan base-package="br.jus.stf.estf.decisao.texto.web"
+		scope-resolver="br.jus.stf.estf.decisao.support.action.beanfactory.ActionScopeResolver"
+		name-generator="br.jus.stf.estf.decisao.support.action.beanfactory.ActionNameGenerator">
+		<context:include-filter type="annotation"
+			expression="br.jus.stf.estf.decisao.support.action.support.Action" />
+	</context:component-scan>
+
+	<context:component-scan base-package="br.jus.stf.estf.decisao.comunicacao.web"
+		scope-resolver="br.jus.stf.estf.decisao.support.action.beanfactory.ActionScopeResolver"
+		name-generator="br.jus.stf.estf.decisao.support.action.beanfactory.ActionNameGenerator">
+		<context:include-filter type="annotation"
+			expression="br.jus.stf.estf.decisao.support.action.support.Action" />
+	</context:component-scan>
+
+	<context:component-scan base-package="br.jus.stf.estf.decisao.support.action" />
+	<context:component-scan base-package="br.jus.stf.estf.decisao.support.assinatura" />
+
+	<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+	<!-- Spring Beans: Scanner... -->
+
+	<context:component-scan base-package="br.jus.stf.estf.decisao.objetoincidente" />
+	<context:component-scan base-package="br.jus.stf.estf.decisao.texto" />
+	<context:component-scan base-package="br.jus.stf.estf.decisao.documento" />
+	<context:component-scan base-package="br.jus.stf.estf.decisao.comunicacao" />
+	<context:component-scan base-package="br.jus.stf.estf.decisao.pesquisa" />
+	<context:component-scan base-package="br.jus.stf.estf.decisao.support.security" />
+	<context:component-scan base-package="br.jus.stf.estf.decisao.support.service" />
+	<context:component-scan base-package="br.jus.stf.estf.decisao.support.persistence" />
+	<context:component-scan base-package="br.jus.stf.estf.decisao.support.util" />
+	<context:component-scan base-package="br.jus.stf.estf.decisao.api" />
+
+	<bean class="br.gov.stf.eprocesso.servidorpdf.servico.impl.ServicoServidorPdfImpl" />
+
+	<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+	<!-- SessionFactory:: Configuração default para todas as dao's do componentes... -->
+
+	<bean id="sessionFactory"
+		class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<property name="configLocations">
+			<list>
+				<value>classpath*:hibernate.cfg.xml</value>
+			</list>
+		</property>
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.query.factory_class">org.hibernate.hql.classic.ClassicQueryTranslatorFactory</prop>
+				<prop key="hibernate.dialect">org.hibernate.dialect.Oracle10gDialect</prop>
+				<prop key="hibernate.cglib.use_reflection_optimizer">true</prop>
+				<prop key="hibernate.show_sql">true</prop>
+				<prop key="hibernate.format_sql">false</prop>
+				<prop key="hibernate.cache.provider_class">org.hibernate.cache.EhCacheProvider</prop>
+				<prop key="hibernate.cache.use_query_cache">true</prop>
+			</props>
+		</property>
+	</bean>
+
+	<bean id="hibernateTemplate" class="org.springframework.orm.hibernate3.HibernateTemplate">
+		<property name="sessionFactory" ref="sessionFactory" />
+	</bean>
+
+	<bean id="wsdecisaoService" class="br.jus.stf.estf.decisao.support.service.Server" />
+	<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+	<!-- Transaction manager para Hibernate SessionFactory (Alternativo ao JTA)... -->
+
+	<bean id="transactionManager"
+		class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+		<property name="sessionFactory" ref="sessionFactory" />
+	</bean>
+
+	<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+	<!-- Data Source (Desenvolvimento)... -->
+
+	<bean id="dataSource"
+		class="br.jus.stf.estf.decisao.support.security.datasource.LocalDataSource">
+		<constructor-arg>
+			<bean class="org.springframework.jndi.JndiObjectFactoryBean">
+				<property name="jndiName">
+					<value>java:jdbc/estfdecisao2</value>
+				</property>
+			</bean>
+		</constructor-arg>
+	</bean>
+
+	<bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+	
+	<bean id="namedParameterJdbcTemplate"
+		class="org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate">
+		<constructor-arg>
+			<ref bean="dataSource" />
+		</constructor-arg>
+	</bean>
+
+	<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+	<!-- Configurações para possibilitar que o Decisão envie e-mails -->
+	<bean id="mailSession" class="org.springframework.jndi.JndiObjectFactoryBean">
+		<!-- Recupera as informações de envio de e-mail constantes no mail-service.xml 
+			do JBoss -->
+		<property name="jndiName">
+			<value>java:/Mail</value>
+		</property>
+	</bean>
+
+	<bean id="javaMailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
+		<!-- Repassa para o javaMailSender as informações de envio de e-mail recuperadas 
+			do JBoss -->
+		<property name="session" ref="mailSession" />
+	</bean>
+	<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+	<!-- STFOFFICE -->
+	<!-- 
+	<bean
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="locations">
+			<value>classpath:application.properties</value>
+		</property>
+	</bean>
+	 -->
+
+	<bean id="stfOfficeBootstrapJar" class="java.lang.String">
+		<constructor-arg>
+			<value>${stfOfficeBootstrapJar}</value>
+		</constructor-arg>
+	</bean>
+
+	<bean id="stfOfficeClientJar" class="java.lang.String">
+		<constructor-arg>
+			<value>${stfOfficeClientJar}</value>
+		</constructor-arg>
+	</bean>
+
+	<bean id="pluginJar" class="java.lang.String">
+		<constructor-arg>
+			<value>${pluginJar}</value>
+		</constructor-arg>
+	</bean>
+
+	<bean id="appVersion" class="java.lang.String">
+		<constructor-arg>
+			<value>${app.version}</value>
+		</constructor-arg>
+	</bean>
+
+	<bean id="jossoEnable" class="java.lang.Boolean">
+		<constructor-arg>
+			<value>${josso.enable}</value>
+		</constructor-arg>
+	</bean>
+	
+	<bean id="converterServers" class="java.lang.String">
+		<constructor-arg>
+			<value>${conversores}</value>
+		</constructor-arg>
+	</bean>
+
+
+	<bean id="conversorDocumentos" class="java.lang.String">
+		<constructor-arg>
+			<value>${conversor.documentos}</value>
+		</constructor-arg>
+	</bean>
+	<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+	<!-- Consultas... -->
+
+	<bean id="oiSuggestionQuery" class="java.lang.String">
+		<constructor-arg>
+			<value>
+				SELECT 
+                    principal.*, 
+					COALESCE (ministro.nom_ministro, ''NÃO DISTRIBUÍDO'') AS nomeRelator
+                FROM 
+                	(SELECT 
+                		oi.seq_objeto_incidente AS id, oi.tip_objeto_incidente AS tipo,
+        				principal.num_processo AS numero, principal.sig_classe_proces AS sigla, principal.tip_meio_processo AS tipoProcesso, 
+        				JUDICIARIO.PKG_RELATORIA.FNC_RECUPERA_RELATOR(oi.seq_objeto_incidente) idRelator, 
+		      			
+		      			CASE WHEN ij.DSC_IDENTIFICACAO_INCIDENTE IS NULL THEN 
+		      				COALESCE(JUDICIARIO.PKG_CONSULTA.FNC_SIGLA_CADEIA(oi.seq_objeto_incidente, oi.tip_objeto_incidente), '' '')
+						ELSE 
+							COALESCE(TRIM(JUDICIARIO.PKG_CONSULTA.FNC_SIGLA_CADEIA(oi.seq_objeto_incidente, oi.tip_objeto_incidente)), '' '') || '' ('' || ij.DSC_IDENTIFICACAO_INCIDENTE || '')'' 
+						END 
+						
+						AS cadeia,
+						
+						COALESCE(ij.NUM_SEQUENCIA_CADEIA, recurso.NUM_SEQUENCIA_CADEIA) AS sequencia
+
+                    FROM judiciario.objeto_incidente oi 
+					 	LEFT OUTER JOIN judiciario.vw_processo_relator processo ON oi.seq_objeto_incidente = processo.seq_objeto_incidente
+        			 	LEFT OUTER JOIN judiciario.vw_processo_relator principal ON oi.seq_objeto_incidente_principal = principal.seq_objeto_incidente
+        			 	LEFT OUTER JOIN judiciario.recurso_processo recurso ON oi.seq_objeto_incidente = recurso.seq_objeto_incidente 
+        			 	LEFT OUTER JOIN judiciario.incidente_julgamento ij ON oi.seq_objeto_incidente = ij.seq_objeto_incidente
+					WHERE 
+						{0}
+					) principal 
+        		LEFT OUTER JOIN stf.ministros ministro ON principal.idRelator = ministro.cod_ministro
+        		ORDER BY 
+        				sigla, numero, sequencia nulls first, id 
+    		</value>
+		</constructor-arg>
+	</bean>
+	
+	<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+	<!-- Configurações DNA... -->
+	<bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="properties" ref="commonsConfigurationFactoryBean" />
+		<property name="ignoreUnresolvablePlaceholders" value="true" />
+		<property name="systemPropertiesModeName" value="SYSTEM_PROPERTIES_MODE_OVERRIDE" />
+	</bean>
+
+	<!-- Configuracoes em banco -->
+	<bean id="configuracaoService" class="br.jus.stf.dna.ConfiguracaoServiceImpl">
+		<property name="sistema" value="ESTFDECISAO" />
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+
+	<bean id="commonsConfigurationFactoryBean" class="br.jus.stf.dna.spring.CommonsConfigurationFactoryBean">
+		<property name="configuracaoService" ref="configuracaoService" />
+		<property name="locations">
+			<list>
+				<value>classpath:application.properties</value>
+			</list>
+		</property>
+	</bean>	
+
+	<!-- VelocityBuilder inicializa o velocity -->	
+	<bean id="velocityBuilder" lazy-init="false" class="br.jus.stf.estf.decisao.support.util.VelocityBuilder" init-method="iniciaVelocity" />
+
+	<import resource="applicationContext-security.xml" />
+
+	<import resource="classpath*:/componentContext.xml" />
+
+</beans>

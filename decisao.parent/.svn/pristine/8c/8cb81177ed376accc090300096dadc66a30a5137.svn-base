@@ -1,0 +1,283 @@
+package br.jus.stf.estf.decisao;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+public class StfOfficeDecisaoURI {
+	private static final Log log = LogFactory.getLog(StfOfficeDecisaoURI.class);
+
+	private static final String CHAVE_OBJETO_INCIDENTE = "objetoIncidente";
+	private static final String CHAVE_TIPO_TEXTO = "tipoTexto";
+	private static final String CHAVE_TIPO_VOTO = "tipoVoto";
+	private static final String CHAVE_RESPONSAVEL = "responsavel";
+	private static final String CHAVE_OBS = "obs";
+	private static final String CHAVE_SEQ_TEXTO = "seqTexto";
+	private static final String CHAVE_SEQ_FASE_TEXTO_PROCESSO = "seqFaseTextoProcesso";
+	private static final String CHAVE_NOME = "nome";
+	private static final String CHAVE_USER_ID = "userId";
+	private static final String CHAVE_COD_SETOR = "codigoSetor";
+	private static final String CHAVE_SOMENTE_LEITURA = "somenteLeitura";
+	private static final String CHAVE_INSERIR_RODAPE = "rodape";
+	private static final String CHAVE_MINISTRO_DIVERGENTE = "ministroDivergente";
+
+	private URI uri;
+	private String acao;
+	private DocDecisaoId docId;
+
+	public StfOfficeDecisaoURI(String pluginName, String acao, DocDecisaoId docId) throws URISyntaxException {
+		if (pluginName == null || pluginName.trim().length() == 0) {
+			throw new URISyntaxException(null, "Nome do plugin inválido.");
+		}
+		if (acao == null || acao.trim().length() == 0) {
+			throw new URISyntaxException(null, "Ação inválida.");
+		}
+
+		StringBuffer uri = new StringBuffer();
+		uri.append(pluginName);
+		uri.append(":");
+		uri.append(acao);
+
+		if (docId != null) {
+			uri.append("?");
+			uri.append(CHAVE_NOME);
+			uri.append("=");
+			try {
+				uri.append(URLEncoder.encode(docId.getNome(), "utf-8"));
+			} catch (UnsupportedEncodingException e) {
+				e.printStackTrace();
+			}
+			uri.append("&");
+			uri.append(CHAVE_USER_ID);
+			uri.append("=");
+			uri.append(docId.getUserId());
+			uri.append("&");
+			uri.append(CHAVE_COD_SETOR);
+			uri.append("=");
+			uri.append(docId.getCodigoSetor());
+			
+			if(docId.getRodape() != null){
+				uri.append("&");
+				uri.append(CHAVE_INSERIR_RODAPE);
+				uri.append("=");
+				uri.append(docId.getRodape()?"true":"false");
+			}
+			if (docId instanceof DocNovaDecisaoId) {
+				DocNovaDecisaoId docNovaId = (DocNovaDecisaoId) docId;
+
+				uri.append("&");
+				uri.append(CHAVE_OBJETO_INCIDENTE);
+				uri.append("=");
+				uri.append(docNovaId.getObjetoIncidente());
+
+				uri.append("&");
+				uri.append(CHAVE_TIPO_TEXTO);
+				uri.append("=");
+				uri.append(docNovaId.getTipoTexto());
+				
+				uri.append("&");
+				uri.append(CHAVE_TIPO_VOTO);
+				uri.append("=");
+				uri.append(docNovaId.getTipoVotoId());
+				
+				uri.append("&");
+				uri.append(CHAVE_RESPONSAVEL);
+				uri.append("=");
+				
+				try {
+					// Se o responsável não for informado, o usuario atual é utilizado
+					if(docNovaId.getResponsavel() != null){
+						uri.append(URLEncoder.encode(docNovaId.getResponsavel(), "utf-8"));
+					}else{
+						uri.append(URLEncoder.encode(docNovaId.getUserId(), "utf-8"));
+					}
+				} catch (UnsupportedEncodingException e) {
+					e.printStackTrace();
+				}
+				
+				if (docNovaId.getMinistroDivergente() != null) {
+					uri.append("&");
+					uri.append(CHAVE_MINISTRO_DIVERGENTE);
+					uri.append("=");
+					uri.append(docNovaId.getMinistroDivergente());
+				}
+
+				uri.append("&");
+				uri.append(CHAVE_OBS);
+				uri.append("=");
+				try {
+					if(docNovaId.getObservacao() != null){
+						uri.append(URLEncoder.encode(docNovaId.getObservacao(), "utf-8"));
+					}
+				} catch (UnsupportedEncodingException e) {
+					e.printStackTrace();
+				}
+
+			} else if (docId instanceof DocAbrirDecisaoId) {
+				DocAbrirDecisaoId docAbrirId = (DocAbrirDecisaoId) docId;
+
+				uri.append("&");
+				uri.append(CHAVE_SEQ_TEXTO);
+				uri.append("=");
+				uri.append(docAbrirId.getSeqTexto());
+
+				uri.append("&");
+				uri.append(CHAVE_SEQ_FASE_TEXTO_PROCESSO);
+				uri.append("=");
+				uri.append(docAbrirId.getSeqFaseTextoProcesso());
+				
+				if(docAbrirId.getSomenteLeitura() != null){
+					uri.append("&");
+					uri.append(CHAVE_SOMENTE_LEITURA);
+					uri.append("=");
+					uri.append(docAbrirId.getSomenteLeitura()?"true":"false");
+				}
+				
+			}
+
+			this.uri = new URI(uri.toString());
+
+		}
+	}
+
+	public static String criarURI(String pluginName, String acao, DocDecisaoId id) throws URISyntaxException {
+		StfOfficeDecisaoURI decisaoURI = new StfOfficeDecisaoURI(pluginName, acao, id);
+		return decisaoURI.getUri().toString();
+	}
+
+
+	private Long getLongNormalizado(String valor) {
+		if (valor != null) {
+			try {
+				return new Long(valor);
+			} catch (Exception e) {
+			}
+		}
+		return null;
+	}
+
+	private String getStringDecodificada(String valor) {
+		try {
+			if (valor != null) {
+				return URLDecoder.decode(valor, "latin1");
+			}
+			return "";
+		} catch (UnsupportedEncodingException e) {
+			throw new RuntimeException("Codificacao invalida", e);
+		}
+
+	}
+
+	public StfOfficeDecisaoURI(URI uri) throws URISyntaxException {
+		this.uri = uri;
+
+		URI novaUri = new URI(uri.getSchemeSpecificPart());
+		novaUri = new URI(novaUri.getSchemeSpecificPart());
+
+		String query = novaUri.getQuery();
+		this.acao = novaUri.getPath();
+		log.info("constructor: uri = " + uri + ", novaUri = " + novaUri + ", query = " + query + ", acao = " + this.acao);
+		if (query != null) {
+			this.docId = montaDocDecisaoId(montaMapaDeParametros(query));
+		}
+
+	}
+
+	private Map<String, String> montaMapaDeParametros(String query) {
+		Map<String, String> mapaDeParametros = new HashMap<String, String>();
+		for (String parametro : query.split("&")) {
+			adicionaParametroNoMapa(parametro, mapaDeParametros);
+		}
+		return mapaDeParametros;
+	}
+
+	private void adicionaParametroNoMapa(String parametro, Map<String, String> mapaDeParametros) {
+		String chaveValor[] = parametro.split("=");
+		if (isChaveValorValido(chaveValor)) {
+			mapaDeParametros.put(chaveValor[0], chaveValor[1]);
+		}
+	}
+
+	private DocDecisaoId montaDocDecisaoId(Map<String, String> mapaDeParametros) {
+		DocDecisaoId documentoId = montaDocIdDaAcao(mapaDeParametros);
+		if (documentoId != null) {
+			documentoId.setNome(getStringDecodificada(mapaDeParametros.get(CHAVE_NOME)));
+			documentoId.setUserId(mapaDeParametros.get(CHAVE_USER_ID));
+			documentoId.setCodigoSetor(getLongNormalizado(mapaDeParametros.get(CHAVE_COD_SETOR)));
+		}
+		return documentoId;
+	}
+
+	private DocDecisaoId montaDocIdDaAcao(Map<String, String> mapaDeParametros) {
+		DocDecisaoId docId = null;
+		if (DocDecisaoId.ACAO_ABRIR_DOCUMENTO.equals(this.acao)) {
+			DocAbrirDecisaoId id = new DocAbrirDecisaoId();
+			id.setSeqTexto(getLongNormalizado(mapaDeParametros.get(CHAVE_SEQ_TEXTO)));
+			id.setSeqFaseTextoProcesso(getLongNormalizado(mapaDeParametros.get(CHAVE_SEQ_FASE_TEXTO_PROCESSO)));
+			if(mapaDeParametros.get(CHAVE_SOMENTE_LEITURA) != null){
+				id.setSomenteLeitura(mapaDeParametros.get(CHAVE_SOMENTE_LEITURA).equalsIgnoreCase("true")?true:false);
+			}else{
+				id.setSomenteLeitura(false);
+			}
+			docId = id;
+		} else if (DocDecisaoId.ACAO_NOVO_DOCUMENTO.equals(this.acao)) {
+			DocNovaDecisaoId id = new DocNovaDecisaoId();
+			id.setObjetoIncidente(getLongNormalizado(mapaDeParametros.get(CHAVE_OBJETO_INCIDENTE)));
+			id.setTipoTexto(getLongNormalizado(mapaDeParametros.get(CHAVE_TIPO_TEXTO)));
+			id.setTipoVotoId(getStringDecodificada(mapaDeParametros.get(CHAVE_TIPO_VOTO)));
+			id.setObservacao(getStringDecodificada(mapaDeParametros.get(CHAVE_OBS)));
+			id.setResponsavel(getStringDecodificada(mapaDeParametros.get(CHAVE_RESPONSAVEL)));
+			id.setMinistroDivergente(getLongNormalizado(mapaDeParametros.get(CHAVE_MINISTRO_DIVERGENTE)));
+			docId = id;
+		}
+		if(mapaDeParametros.get(CHAVE_INSERIR_RODAPE) != null){
+			docId.setRodape(mapaDeParametros.get(CHAVE_INSERIR_RODAPE).equalsIgnoreCase("true")?true:false);
+		}else{
+			docId.setRodape(false);
+		}
+		return docId;
+	}
+
+	private boolean isChaveValorValido(String chaveValor[]) {
+		if (chaveValor != null && chaveValor.length == 2) {
+			if (chaveValor[0] != null && chaveValor[0].trim().length() > 0 && !chaveValor[0].equals("null")) {
+				if (chaveValor[1] != null && chaveValor[1].trim().length() > 0 && !chaveValor[1].equals("null")) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	public URI getUri() {
+		return uri;
+	}
+
+	public void setUri(URI uri) {
+		this.uri = uri;
+	}
+
+	public String getAcao() {
+		return acao;
+	}
+
+	public void setAcao(String acao) {
+		this.acao = acao;
+	}
+
+	public DocDecisaoId getDocId() {
+		return docId;
+	}
+
+	public void setDocId(DocDecisaoId docId) {
+		this.docId = docId;
+	}
+
+}

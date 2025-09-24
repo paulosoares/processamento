@@ -1,0 +1,1064 @@
+package br.jus.stf.estf.decisao.support.service;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.util.Calendar;
+import java.util.LinkedList;
+import java.util.List;
+
+import javax.servlet.ServletContext;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.hibernate.Hibernate;
+import org.perf4j.aop.Profiled;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.security.Authentication;
+import org.springframework.security.context.HttpSessionContextIntegrationFilter;
+import org.springframework.security.context.SecurityContext;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.ServletContextAware;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
+
+import br.gov.stf.eprocesso.servidorpdf.servico.modelo.ExtensaoEnum;
+import br.gov.stf.estf.cabecalho.model.CabecalhosObjetoIncidente.CabecalhoObjetoIncidente;
+import br.gov.stf.estf.cabecalho.service.CabecalhoObjetoIncidenteService;
+import br.gov.stf.estf.documento.model.service.ArquivoEletronicoService;
+import br.gov.stf.estf.documento.model.service.ConfiguracaoTextoSetorService;
+import br.gov.stf.estf.documento.model.service.ControleVotoService;
+import br.gov.stf.estf.documento.model.service.ControleVotoTextoService;
+import br.gov.stf.estf.documento.model.service.DocumentoEletronicoService;
+import br.gov.stf.estf.documento.model.service.DocumentoTextoService;
+import br.gov.stf.estf.documento.model.service.TextoService;
+import br.gov.stf.estf.documento.model.service.impl.AssinaturaDigitalServiceImpl;
+import br.gov.stf.estf.documento.model.service.impl.TextoServiceImpl;
+import br.gov.stf.estf.entidade.documento.ArquivoEletronico;
+import br.gov.stf.estf.entidade.documento.ArquivoEletronicoView;
+import br.gov.stf.estf.entidade.documento.ConfiguracaoTextoSetor;
+import br.gov.stf.estf.entidade.documento.ControleVoto;
+import br.gov.stf.estf.entidade.documento.DocumentoEletronico;
+import br.gov.stf.estf.entidade.documento.DocumentoTexto;
+import br.gov.stf.estf.entidade.documento.Texto;
+import br.gov.stf.estf.entidade.documento.Texto.TipoRestricao;
+import br.gov.stf.estf.entidade.documento.TipoArquivo;
+import br.gov.stf.estf.entidade.documento.TipoSituacaoDocumento;
+import br.gov.stf.estf.entidade.documento.TipoTexto;
+import br.gov.stf.estf.entidade.documento.tipofase.FaseTexto;
+import br.gov.stf.estf.entidade.julgamento.TipoVoto.TipoVotoConstante;
+import br.gov.stf.estf.entidade.ministro.Ministro;
+import br.gov.stf.estf.entidade.processostf.IncidenteJulgamento;
+import br.gov.stf.estf.entidade.processostf.ObjetoIncidente;
+import br.gov.stf.estf.entidade.processostf.Processo;
+import br.gov.stf.estf.entidade.publicacao.FaseTextoProcesso;
+import br.gov.stf.estf.entidade.usuario.Responsavel;
+import br.gov.stf.estf.entidade.usuario.Usuario;
+import br.gov.stf.estf.entidade.util.DadosTextoDecisao;
+import br.gov.stf.estf.entidade.util.ObjetoIncidenteUtil;
+import br.gov.stf.estf.processostf.model.service.ObjetoIncidenteService;
+import br.gov.stf.estf.processostf.model.service.TipoIncidenteJulgamentoService;
+import br.gov.stf.estf.publicacao.model.service.FaseTextoProcessoService;
+import br.gov.stf.estf.repercussaogeral.model.service.RepercussaoGeralService;
+import br.gov.stf.estf.usuario.model.service.UsuarioService;
+import br.gov.stf.framework.model.service.ServiceException;
+import br.gov.stf.framework.security.user.UserSession;
+import br.gov.stf.framework.util.SearchData;
+import br.jus.stf.estf.decisao.ConfiguracaoTexto;
+import br.jus.stf.estf.decisao.DecisaoVersaoInfo;
+import br.jus.stf.estf.decisao.DocDecisaoId;
+import br.jus.stf.estf.decisao.exception.ServerException;
+import br.jus.stf.estf.decisao.inter.IServer;
+import br.jus.stf.estf.decisao.objetoincidente.web.DecisaoSobreRepercussaoGeralException;
+import br.jus.stf.estf.decisao.objetoincidente.web.EmentaSobreRepercussaoGeralException;
+import br.jus.stf.estf.decisao.pesquisa.web.RefreshController;
+import br.jus.stf.estf.decisao.support.action.support.ActionIdentification;
+import br.jus.stf.estf.decisao.support.security.PermissionChecker;
+import br.jus.stf.estf.decisao.support.security.Principal;
+import br.jus.stf.estf.decisao.support.security.Principal.TipoPerfil;
+import br.jus.stf.estf.decisao.texto.support.DadosMontagemRepercussaoGeralBuilder;
+import br.jus.stf.estf.decisao.texto.support.DadosMontagemTextoBuilder;
+import br.jus.stf.estf.montadortexto.DadosMontagemRepercussaoGeral;
+import br.jus.stf.estf.montadortexto.DadosMontagemTexto;
+import br.jus.stf.estf.montadortexto.DecisaoRepercussaoGeralSource;
+import br.jus.stf.estf.montadortexto.MontadorRepercussaoGeralServiceException;
+import br.jus.stf.estf.montadortexto.MontadorTextoServiceException;
+import br.jus.stf.estf.montadortexto.OpenOfficeMontadorRepercussaoGeralService;
+import br.jus.stf.estf.montadortexto.OpenOfficeMontadorTextoService;
+import br.jus.stf.estf.montadortexto.SpecCabecalho;
+import br.jus.stf.estf.montadortexto.SpecDadosRepercussaoGeral;
+import br.jus.stf.estf.montadortexto.SpecDadosTexto;
+import br.jus.stf.estf.montadortexto.TextoSource;
+
+public class Server implements IServer, ServletContextAware {
+	
+	private static final String NOME_FONTE_PADRAO = "Palatino Linotype";
+	private static final String TAMANHO_FONTE_PADRAO = "12pt";
+
+	private static final Log log = LogFactory.getLog(Server.class);
+	
+	private final TextoService textoService;
+	private final DocumentoTextoService documentoTextoService;
+	private final DocumentoEletronicoService documentoEletronicoService;
+	private final ArquivoEletronicoService arquivoEletronicoService;
+	private final FaseTextoProcessoService faseTextoProcessoService;
+	private final ObjetoIncidenteService objetoIncidenteService;
+	private final TipoIncidenteJulgamentoService tipoIncidenteJulgamentoService;
+	private final UsuarioService usuarioService;
+	private final ConfiguracaoTextoSetorService configuracaoTextoSetorService;
+	private final RepercussaoGeralService repercussaoGeralService;
+	private final ControleVotoService controleVotoService;
+	private final ApplicationContext applicationContext;
+	private final CabecalhoObjetoIncidenteService cabecalhoObjetoIncidenteService;
+	private final OpenOfficeMontadorTextoService openOfficeMontadorTextoService;
+	private final DadosMontagemTextoBuilder dadosMontagemTextoBuilder;
+	private final OpenOfficeMontadorRepercussaoGeralService openOfficeMontadorRepercussaoGeralService;
+	private final ControleVotoTextoService controleVotoTextoService;
+	private final DadosMontagemRepercussaoGeralBuilder dadosMontagemRepercussaoGeralBuilder;
+	private final PermissionChecker permissionChecker;
+
+	@Autowired
+	public Server(TextoService textoService, DocumentoTextoService documentoTextoService,
+			DocumentoEletronicoService documentoEletronicoService, ArquivoEletronicoService arquivoEletronicoService,
+			FaseTextoProcessoService faseTextoProcessoService, ObjetoIncidenteService objetoIncidenteService,
+			TipoIncidenteJulgamentoService tipoIncidenteJulgamentoService, UsuarioService usuarioService,
+			ConfiguracaoTextoSetorService configuracaoTextoSetorService,
+			RepercussaoGeralService repercussaoGeralService, ControleVotoService controleVotoService,
+			ApplicationContext applicationContext, CabecalhoObjetoIncidenteService cabecalhoObjetoIncidenteService,
+			OpenOfficeMontadorTextoService openOfficeMontadorTextoService,
+			DadosMontagemTextoBuilder dadosMontagemTextoBuilder,
+			OpenOfficeMontadorRepercussaoGeralService openOfficeMontadorRepercussaoGeralService,
+			ControleVotoTextoService controleVotoTextoService,
+			DadosMontagemRepercussaoGeralBuilder dadosMontagemRepercussaoGeralBuilder, PermissionChecker permissionChecker) {
+		super();
+		this.textoService = textoService;
+		this.documentoTextoService = documentoTextoService;
+		this.documentoEletronicoService = documentoEletronicoService;
+		this.arquivoEletronicoService = arquivoEletronicoService;
+		this.faseTextoProcessoService = faseTextoProcessoService;
+		this.objetoIncidenteService = objetoIncidenteService;
+		this.tipoIncidenteJulgamentoService = tipoIncidenteJulgamentoService;
+		this.usuarioService = usuarioService;
+		this.configuracaoTextoSetorService = configuracaoTextoSetorService;
+		this.repercussaoGeralService = repercussaoGeralService;
+		this.controleVotoService = controleVotoService;
+		this.applicationContext = applicationContext;
+		this.cabecalhoObjetoIncidenteService = cabecalhoObjetoIncidenteService;
+		this.openOfficeMontadorTextoService = openOfficeMontadorTextoService;
+		this.dadosMontagemTextoBuilder = dadosMontagemTextoBuilder;
+		this.openOfficeMontadorRepercussaoGeralService = openOfficeMontadorRepercussaoGeralService;
+		this.controleVotoTextoService = controleVotoTextoService;
+		this.dadosMontagemRepercussaoGeralBuilder = dadosMontagemRepercussaoGeralBuilder;
+		this.permissionChecker = permissionChecker;
+	}
+
+	private Texto recuperarTexto(Long seqTexto) throws ServiceException {
+		return textoService.recuperarPorId(seqTexto);
+	}
+	
+	private Authentication getAuthentication() throws ServiceException {
+		SecurityContext securityContext = (SecurityContext) RequestContextHolder.getRequestAttributes().getAttribute(
+				HttpSessionContextIntegrationFilter.SPRING_SECURITY_CONTEXT_KEY, RequestAttributes.SCOPE_SESSION);
+		return securityContext.getAuthentication();		
+	}
+
+	private Principal getUsuarioLogado() throws ServiceException {
+		SecurityContext securityContext = (SecurityContext) RequestContextHolder.getRequestAttributes().getAttribute(
+				HttpSessionContextIntegrationFilter.SPRING_SECURITY_CONTEXT_KEY, RequestAttributes.SCOPE_SESSION);
+		Principal usuario = (Principal) securityContext.getAuthentication().getPrincipal();
+		return usuario;
+	}
+
+	private Ministro getMinistroUsuarioLogado() throws ServiceException {
+		return getUsuarioLogado().getMinistro();
+	}
+
+	public InputStream recuperarTemplateDespacho() throws ServerException {
+
+		try {
+			return Server.class.getClassLoader().getResourceAsStream("cabecalho_template.odt");
+		} catch (Exception e) {
+			log.error(e.getMessage(), e);
+			throw new ServerException("Arquivo não encontrado.", e);
+		}
+	}
+
+	public InputStream converteOdtParaRtf(final InputStream arquivoOdt) throws ServerException {
+		try {
+			TextoSource source = new TextoSource() {
+				@Override
+				public byte[] getByteArray() throws IOException, MontadorTextoServiceException {
+					return IOUtils.toByteArray(arquivoOdt);
+				}
+			};
+			return openOfficeMontadorTextoService.converteArquivo(source, ExtensaoEnum.ODT, ExtensaoEnum.RTF);
+		} catch (Exception e) {
+			throw new ServerException(e);
+		}
+	}
+
+	// public InputStream recuperarArquivo(Long seqTexto) throws ServerException
+	// {
+	// /*
+	// * RequestAttributes attrs =
+	// * RequestContextHolder.getRequestAttributes(); i attrs.getSessionId();
+	// * HttpServletRequest request = (HttpServletRequest)
+	// * ServiceContext.getContextRequest();
+	// *
+	// * HttpSession session = request.getSession(); if (session == null)
+	// * throw new ServerException("No session in WebServiceContext");
+	// *
+	// * if( log.isInfoEnabled() ) { log.info("seqTexto: " + seqTexto);
+	// * log.info("Session id: " + session.getId()); }
+	// */
+	//
+	// try {
+	// System.err.println("recuperarArquivo: start seqTexto = " + seqTexto);
+	// Texto texto = recuperarTexto(seqTexto);
+	//
+	// ArquivoEletronico arquivoEletronico = texto.getArquivoEletronico();
+	//
+	// byte[] conteudo = arquivoEletronico.getConteudo();
+	// System.err.println("recuperarArquivo: conteudo = " + conteudo);
+	// if (conteudo != null) {
+	// System.err.println("recuperarArquivo: conteudo.length = " +
+	// conteudo.length);
+	// } else {
+	// conteudo = new byte[1];
+	// }
+	// InputStream is = new ByteArrayInputStream(conteudo);
+	// System.err.println("recuperarArquivo: fim");
+	// return is;
+	//
+	// } catch (ServiceException e) {
+	// e.printStackTrace();
+	// throw new ServerException("recuperarArquivo", e);
+	// }
+	// }
+
+	@Profiled
+	@Transactional
+	public void salvarArquivo(Long seqTexto, InputStream arquivoStream) throws ServerException {
+
+		try {
+			byte[] arquivo;
+			if (arquivoStream != null) {
+				arquivo = IOUtils.toByteArray(arquivoStream);
+				IOUtils.closeQuietly(arquivoStream);
+			} else {
+				arquivo = null;
+			}
+			Texto texto = recuperarTexto(seqTexto);
+			ArquivoEletronico arquivoEletronico = texto.getArquivoEletronico();
+			arquivoEletronico.setConteudo(arquivo);
+			arquivoEletronicoService.salvar(arquivoEletronico);
+			
+			((RefreshController) applicationContext.getBean("refreshController")).executarRefreshPagina();
+		} catch (Exception e) {
+			log.error(e.getMessage(), e);
+			throw new ServerException("Erro ao salvar o arquivo.", e);
+		}
+	}
+
+	@Profiled
+	@Transactional
+	public Long salvarNovoArquivo(Long seqObjetoIncidente, Long tipoTexto, String tipoVotoId, Long objetoIncidentePai,
+			Long idTipoIncidenteJulgamento, String responsavelStr, String observacao, InputStream arquivoStream)
+			throws ServerException {
+		try {
+			byte[] arquivo;
+			if (arquivoStream != null) {
+				arquivo = IOUtils.toByteArray(arquivoStream);
+				IOUtils.closeQuietly(arquivoStream);
+			} else {
+				arquivo = null;
+			}
+			ArquivoEletronico arquivoEletronico = new ArquivoEletronico();
+			arquivoEletronico.setConteudo(arquivo);
+			arquivoEletronico.setFormato("RTF");
+			arquivoEletronicoService.incluir(arquivoEletronico);
+
+			Texto texto = new Texto();
+			if (seqObjetoIncidente != null) {
+				texto.setObjetoIncidente(objetoIncidenteService.recuperarPorId(seqObjetoIncidente));
+			} else if (objetoIncidentePai != null && idTipoIncidenteJulgamento != null) {
+				IncidenteJulgamento ij = new IncidenteJulgamento();
+				ij.setPai(objetoIncidenteService.recuperarPorId(objetoIncidentePai));
+				ij.setTipoJulgamento(tipoIncidenteJulgamentoService.recuperarPorId(idTipoIncidenteJulgamento));
+				texto.setObjetoIncidente(ij);
+			}
+			if (responsavelStr != null && responsavelStr.trim().length() > 0) {
+				Responsavel responsavel = null;
+				
+				try {
+					responsavel = usuarioService.recuperarGrupoUsuario(Long.parseLong(responsavelStr));
+				} catch (NumberFormatException e) {
+					
+				}
+				
+				if (responsavel == null) 
+					responsavel = usuarioService.recuperarPorId(responsavelStr.toUpperCase());
+				
+				texto.setResponsavel(responsavel);
+			}
+
+			texto.setObservacao(observacao);
+			texto.setArquivoEletronico(arquivoEletronico);
+			texto.setTipoRestricao(TipoRestricao.P);
+			texto.setDataCriacao(Calendar.getInstance().getTime());
+			texto.setMinistro(getMinistroUsuarioLogado());
+			texto.setPublico(false);
+			texto.setTextosIguais(false);
+			texto.setSalaJulgamento(false);
+			texto.setPubliccaoRTJ(false);
+			texto.setTipoTexto(TipoTexto.valueOf(tipoTexto));
+			if(!tipoVotoId.isEmpty() ){
+				texto.setTipoVoto(TipoVotoConstante.getById(tipoVotoId));
+			}
+
+			Texto textoCriado = textoService.persistir(texto);
+
+			// Sincronização do controle de votos
+			List<ControleVoto> controles = controleVotoService.pesquisarControleVoto(texto.getObjetoIncidente(), null,
+					null, null, null);
+			ControleVoto controleVoto = null;
+			for (ControleVoto controle : controles) {
+				if (controle.getMinistro().getId().equals(getMinistroUsuarioLogado().getId())
+						&& controle.getTexto() == null) {
+					if (controle.getTipoTexto().equals(texto.getTipoTexto())) {
+						controleVoto = controle;
+						break;
+					}
+				}
+			}
+			if (controleVoto != null) {
+				texto.setDataSessao(controleVoto.getDataSessao());
+				texto.setSequenciaVoto(controleVoto.getSequenciaVoto());
+				textoService.alterar(texto);
+				controleVoto.setTexto(texto);
+				controleVotoService.alterar(controleVoto);
+			}
+				
+			controleVotoService.flushSession();
+			
+			((RefreshController) applicationContext.getBean("refreshController")).executarRefreshPagina(texto.getId());
+
+			return texto.getId();
+		} catch (Exception e) {
+			log.error(e.getMessage(), e);
+			throw new ServerException("Erro ao salvar o novo arquivo.", e);
+		}
+
+	}
+
+	@Profiled
+	@Transactional
+	public void salvarPDF(Long seqTexto, InputStream pdfStream) throws ServerException {
+		if (seqTexto == null || pdfStream == null) {
+			throw new ServerException("Parâmentros inválidos.");
+		}
+		try {
+			byte[] pdf;
+			if (pdfStream != null) {
+				pdf = IOUtils.toByteArray(pdfStream);
+				IOUtils.closeQuietly(pdfStream);
+				// FileOutputStream fos = new
+				// FileOutputStream("C:/temp/salvarPDF-" + seqTexto + ".pdf");
+				// IOUtils.write(pdf, fos);
+				// IOUtils.closeQuietly(fos);
+			} else {
+				pdf = null;
+			}
+
+			DocumentoEletronico documentoEletronico = new DocumentoEletronico();
+			documentoEletronico.setArquivo(pdf);
+			documentoEletronico.setSiglaSistema("ESTFDECISAO");
+
+			documentoEletronico.setTipoArquivo(TipoArquivo.PDF);
+			documentoEletronico.setHashValidacao(AssinaturaDigitalServiceImpl.gerarHashValidacao());
+			documentoEletronico.setDescricaoStatusDocumento("RAS");
+			documentoEletronicoService.salvar(documentoEletronico);
+
+			DocumentoTexto documentoTexto = new DocumentoTexto();
+			documentoTexto.setDocumentoEletronico(documentoEletronico);
+			documentoTexto.setTexto(recuperarTexto(seqTexto));
+
+			documentoTexto.setTipoSituacaoDocumento(TipoSituacaoDocumento.GERADO);
+
+			documentoTextoService.salvar(documentoTexto);
+		} catch (Exception e) {
+			log.error(e.getMessage(), e);
+			throw new ServerException("salvarPDF", e);
+		}
+
+	}
+
+	public void setServletContext(ServletContext servletContext) {
+		System.out.println("Servlet Context: " + servletContext);
+		// this.servletContext = servletContext;
+	}
+
+	@Profiled
+	public List<DecisaoVersaoInfo> recuperarVersoesArquivo(Long seqTexto) throws ServerException {
+
+		try {
+			if (log.isTraceEnabled()) {
+				log.trace("Recuperando versões do texto...");
+			}
+			List<FaseTextoProcesso> listaFaseTexto = textoService.recuperarVersoesTexto(seqTexto);
+			List<DecisaoVersaoInfo> listaIds = new LinkedList<DecisaoVersaoInfo>();
+			for (FaseTextoProcesso faseTextoProcesso : listaFaseTexto) {
+				Texto texto = faseTextoProcesso.getTexto();
+				DecisaoVersaoInfo decisaoVersaoInfo = new DecisaoVersaoInfo(faseTextoProcesso.getDataTransicao(),
+						faseTextoProcesso.getTipoFaseTextoDocumento().getDescricao());
+				decisaoVersaoInfo.setSeqFaseTextoProcesso(faseTextoProcesso.getId());
+				decisaoVersaoInfo.setSeqTexto(texto.getId());
+				listaIds.add(decisaoVersaoInfo);
+			}
+			if (log.isInfoEnabled()) {
+				log.info("Foram encontradas " + listaIds.size() + " versões para o texto " + seqTexto);
+			}
+			return listaIds;
+		} catch (Exception e) {
+			log.error(e.getMessage(), e);
+			throw new ServerException("recuperarVersoesArquivo", e);
+		}
+	}
+
+	@Profiled
+	public byte[] recuperarArquivo(Long seqTexto, Long seqFaseTextoProcesso) throws ServerException {
+		try {
+			ArquivoEletronico arquivoEletronico;
+			if (seqFaseTextoProcesso == null) {
+				Texto texto = recuperarTexto(seqTexto);
+
+				arquivoEletronico = texto.getArquivoEletronico();
+
+			} else {
+				FaseTextoProcesso faseTextoProcesso = faseTextoProcessoService.recuperarPorId(seqFaseTextoProcesso);
+				arquivoEletronico = faseTextoProcesso.getArquivoEletronico();
+			}
+
+			byte[] conteudo = arquivoEletronico.getConteudo();
+
+			return conteudo;
+
+		} catch (ServiceException e) {
+			log.error(e.getMessage(), e);
+			throw new ServerException("recuperarArquivo", e);
+		}
+	}
+
+	/**
+	 * método responsável por recuperar o texto de decisão de repercussão geral.
+	 * 
+	 * @param seqTipoTexto
+	 *            quando a tipo de texto for Decisão sobre repercussão geral.
+	 * @param idObjetoIncidente
+	 * @return
+	 * @author GuilhermeA
+	 */
+	/*
+	public InputStream recuperarDocumentoRepercussaoGeral(Long seqTipoTexto, Long idObjetoIncidente)
+			throws ServerException {
+		try {
+			byte[] conteudoTextoDecisao = null;
+			byte[] conteudoTextoEmenta = null;
+			
+			if (seqTipoTexto.equals(TipoTexto.DECISAO_SOBRE_REPERCURSAO_GERAL.getCodigo())) {
+
+				ObjetoIncidente<?> obj = objetoIncidenteService.recuperarPorId(idObjetoIncidente);
+				Processo processo = ObjetoIncidenteUtil.getProcesso(obj);
+				Principal usuario = getUsuarioLogado();
+				// TODO acho que posso excluir aqui
+				Texto textoEmentaSobreRepercussaoGeral = textoService.recuperarTextoEmentaSobreRepercussaoGeral(idObjetoIncidente, usuario.getMinistro().getId());
+				if(textoEmentaSobreRepercussaoGeral == null || textoEmentaSobreRepercussaoGeral.getArquivoEletronico() == null) {
+					throw new EmentaSobreRepercussaoGeralException("O texto de Ementa da Repercussão Geral ainda não foi elaborado!");
+				} else {
+					conteudoTextoEmenta = textoEmentaSobreRepercussaoGeral.getArquivoEletronico().getConteudo();
+				}
+				
+				Texto textoDecisaoSobreRepercussaoGeral = textoService.recuperarTextoDecisaoSobreRepercussaoGeral(idObjetoIncidente, usuario.getMinistro().getId());
+
+				if(textoDecisaoSobreRepercussaoGeral != null && textoDecisaoSobreRepercussaoGeral.getArquivoEletronico() != null) {
+					conteudoTextoDecisao = textoDecisaoSobreRepercussaoGeral.getArquivoEletronico().getConteudo();
+				} else {
+					conteudoTextoDecisao = repercussaoGeralService.recuperarTextoDecisao(processo, NOME_FONTE_PADRAO, TAMANHO_FONTE_PADRAO);
+				}
+				
+//				if (conteudoTextoEmenta != null && conteudoTextoDecisao != null) {
+					// TODO MONTAR O TEXTO DE EMENTA + DECISAO + ASSINATURA DO RELATOR
+					return new ByteArrayInputStream(conteudoTextoDecisao);
+//				}
+
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new ServerException("recuperarDocumentoRepercussaoGeral", e);
+		}
+		return null;
+	}
+	*/
+	/**
+	 * método responsável por verificar se o texto de decisão permite alteração.
+	 * 
+	 * @param idObjetoIncidente
+	 * @return
+	 * @throws ServerException
+	 */
+	@Profiled
+	public Boolean verificaDocumentoReadOnlyDecisaoRepercussaoGeral(Long idObjetoIncidente) throws ServerException {
+		try {
+			ObjetoIncidente<?> obj = objetoIncidenteService.recuperarPorId(idObjetoIncidente);
+			return repercussaoGeralService.naoPermiteAlteracaoTextoDecisao(obj);
+		} catch (ServiceException e) {
+			log.error(e.getMessage(), e);
+			throw new ServerException("recuperarDocumentoRepercussaoGeral", e);
+		}
+	}
+	
+	@Profiled
+	public Boolean verificaPorTextoDocumentoReadOnlyDecisaoRepercussaoGeral(Long seqTexto) throws ServerException {
+		try {
+			Texto texto = textoService.recuperarPorId(seqTexto);
+			if(texto != null) {
+				ObjetoIncidente<?> obj = objetoIncidenteService.recuperarPorId(texto.getObjetoIncidente().getId());
+				return repercussaoGeralService.naoPermiteAlteracaoTextoDecisao(obj);
+			}
+		} catch (ServiceException e) {
+			log.error(e.getMessage(), e);
+			throw new ServerException("recuperarDocumentoRepercussaoGeral", e);
+		}
+		return Boolean.TRUE;
+	}
+
+	@Profiled
+	public ConfiguracaoTexto recuperarConfiguracaoTextoSetor(Long codigoSetor) throws ServerException {
+		ConfiguracaoTexto configuracaoTexto = null;
+		ConfiguracaoTextoSetor cts = null;
+		try {
+			cts = configuracaoTextoSetorService.recuperar(codigoSetor);
+		} catch (ServiceException e) {
+			log.error(e.getMessage(), e);
+			throw new ServerException("Erro ao recuperar a configuracao do texto do setor no banco de dados: setor="
+					+ codigoSetor);
+		}
+		if (cts != null) {
+			configuracaoTexto = new ConfiguracaoTexto();
+			configuracaoTexto.setTextoEstilo(cts.getEstilo());
+			configuracaoTexto.setXmlAtalho(cts.getAtalho());
+			configuracaoTexto.setXmlMacro(cts.getMacro());
+//		} else {
+			// throw new
+			// ServerException("Nenhuma configuracao de texto encontrada para o setor: "+codigoSetor);
+		}
+		return configuracaoTexto;
+	}
+
+	@Profiled
+	public Boolean manterSessaoUsuario() throws ServerException {
+		UserSession userSession = (UserSession) RequestContextHolder.getRequestAttributes().getAttribute(
+				UserSession.USER_SESSION_KEY, RequestAttributes.SCOPE_SESSION);
+		Principal usuario = null;
+		if(userSession != null) {
+			usuario = (Principal) userSession.getUser();
+		}
+		
+		return usuario == null ? false : true;
+
+	}
+	
+	public Boolean isDespacho(Long codigoTipoTexto) {
+		return TextoServiceImpl.isDespacho(codigoTipoTexto);
+	}
+
+	public Boolean isVoto(Long codigoTipoTexto) {
+		return TextoServiceImpl.isVoto(codigoTipoTexto);
+	}
+
+	@Profiled
+	public InputStream recuperarTemplateDoObjetoIncidente(Long seqObjetoIncidente, Long seqTipoTexto, Long seqFaseTexto)
+			throws ServerException {
+		final byte[] conteudoTextoDecisaoExistente;
+		final String conteudoTextoDecisaoNova;
+		final byte[] conteudoTextoEmenta;
+		DadosTextoDecisao dadosTextoDecisao = null;
+		try {
+			DecisaoRepercussaoGeralSource decisaoRepercussaoGeralSource = null;
+			ObjetoIncidente<?> obj = objetoIncidenteService.recuperarPorId(seqObjetoIncidente);
+			if (TipoTexto.DECISAO_SOBRE_REPERCURSAO_GERAL.getCodigo().equals(seqTipoTexto)) {
+		
+				Principal usuario = getUsuarioLogado();
+				
+				Texto textoEmentaSobreRepercussaoGeral = textoService.recuperarTextoEmentaSobreRepercussaoGeral(seqObjetoIncidente, usuario.getMinistro().getId());
+				if(textoEmentaSobreRepercussaoGeral == null || textoEmentaSobreRepercussaoGeral.getArquivoEletronico() == null) {
+					throw new EmentaSobreRepercussaoGeralException("O texto de Ementa da Repercussão Geral ainda não foi elaborado!");
+				} else {
+					conteudoTextoEmenta = textoEmentaSobreRepercussaoGeral.getArquivoEletronico().getConteudo();
+				}
+				
+				Texto textoDecisaoSobreRepercussaoGeral = textoService.recuperarTextoDecisaoSobreRepercussaoGeral(seqObjetoIncidente, usuario.getMinistro().getId());
+		
+				if(textoDecisaoSobreRepercussaoGeral != null && textoDecisaoSobreRepercussaoGeral.getArquivoEletronico() != null) {
+					conteudoTextoDecisaoNova = null;
+					conteudoTextoDecisaoExistente = textoDecisaoSobreRepercussaoGeral.getArquivoEletronico().getConteudo();
+					if(conteudoTextoDecisaoExistente == null || conteudoTextoDecisaoExistente.length <= 0) {
+						throw new DecisaoSobreRepercussaoGeralException("Não foi possível recuperar o texto de Decisão da Repercussão Geral!");
+					}
+				} else {
+					conteudoTextoDecisaoExistente = null;
+					Processo processo = ObjetoIncidenteUtil.getProcesso(obj);
+					dadosTextoDecisao = repercussaoGeralService.recuperarDadosTextoDecisao(processo);
+					if(dadosTextoDecisao != null && SearchData.stringNotEmpty(dadosTextoDecisao.getTextoDecisao()))
+						conteudoTextoDecisaoNova = dadosTextoDecisao.getTextoDecisao();
+					else 
+						throw new DecisaoSobreRepercussaoGeralException("O texto de Decisão da Repercussão Geral não foi gerado!");
+				}
+				
+				decisaoRepercussaoGeralSource = new DecisaoRepercussaoGeralSource() {
+					public byte[] getEmentaByteArray() throws IOException, MontadorRepercussaoGeralServiceException {
+						return conteudoTextoEmenta;
+					}
+					
+					public byte[] getDecisaoExistenteByteArray() throws IOException, MontadorRepercussaoGeralServiceException {
+						return conteudoTextoDecisaoExistente;
+					}
+					
+					public String getTextoDecisaoNovaString() throws IOException, MontadorRepercussaoGeralServiceException {
+						return conteudoTextoDecisaoNova;
+					}
+				};
+				
+				SpecDadosRepercussaoGeral specDados = montarDadosDaRepercussaoGeral(obj, dadosTextoDecisao, textoDecisaoSobreRepercussaoGeral, SearchData.stringNotEmpty(conteudoTextoDecisaoNova)?true:false);
+				return recuperarTemplateDaRepercussaoGeral(seqObjetoIncidente, seqFaseTexto, decisaoRepercussaoGeralSource,	specDados);
+			}
+			return recuperarTemplateDoTexto(seqObjetoIncidente, seqFaseTexto, seqTipoTexto, null, montaDadosDoObjetoIncidente(obj));
+		
+		} catch (Exception e) {
+			throw new ServerException(e);
+		}
+	}
+	
+	@Profiled
+	public Boolean recuperarPossuiVotoDivergente(Long seqObjetoIncidente) throws ServerException {
+		try {
+			if(seqObjetoIncidente != null && seqObjetoIncidente.longValue() > 0) {
+				ObjetoIncidente<?> obj = objetoIncidenteService.recuperarPorId(seqObjetoIncidente);
+				Processo processo = ObjetoIncidenteUtil.getProcesso(obj);
+				return repercussaoGeralService.recuperarPossuiVotoDivergente(processo);
+			}
+		} catch (ServiceException e) {
+			throw new ServerException(e);
+		}
+		return false;
+	}
+	
+	@Profiled
+	public InputStream recuperarTemplateDoTexto(final Long seqTexto, final Long seqFaseTexto, final Long seqTipoTexto) throws ServerException {
+		try {
+			final Texto texto = textoService.recuperarPorId(seqTexto);
+			TextoSource textoSource = null;
+			SpecDadosTexto specDadosTexto = null;
+			
+			DecisaoRepercussaoGeralSource decisaoRepercussaoGeralSource = null;
+			
+			if(texto != null) {
+				if (TipoTexto.DECISAO_SOBRE_REPERCURSAO_GERAL.getCodigo().equals(texto.getTipoTexto().getCodigo())) {
+					ObjetoIncidente<?> oi = texto.getObjetoIncidente();
+					final byte[] conteudoTextoEmenta;
+					final byte[] conteudoTextoDecisao;
+					
+					Hibernate.initialize(((Processo) oi.getPrincipal()).getMinistroRelatorAtual());
+					
+					Texto textoEmentaSobreRepercussaoGeral = textoService.recuperarTextoEmentaSobreRepercussaoGeral(oi.getId(), ((Processo) oi.getPrincipal()).getMinistroRelatorAtual().getId());
+					if(textoEmentaSobreRepercussaoGeral != null && textoEmentaSobreRepercussaoGeral.getArquivoEletronico() != null) {
+						conteudoTextoEmenta = textoEmentaSobreRepercussaoGeral.getArquivoEletronico().getConteudo();
+					} else {
+						conteudoTextoEmenta = null;
+					}
+					
+					Texto textoDecisaoSobreRepercussaoGeral = textoService.recuperarTextoDecisaoSobreRepercussaoGeral(oi.getId(), ((Processo) oi.getPrincipal()).getMinistroRelatorAtual().getId());
+					if(textoDecisaoSobreRepercussaoGeral != null && textoDecisaoSobreRepercussaoGeral.getArquivoEletronico() != null) {
+						conteudoTextoDecisao = textoDecisaoSobreRepercussaoGeral.getArquivoEletronico().getConteudo();
+					} else {
+						conteudoTextoDecisao = null;
+					}
+					
+					decisaoRepercussaoGeralSource = new DecisaoRepercussaoGeralSource() {
+						public byte[] getEmentaByteArray() throws IOException, MontadorRepercussaoGeralServiceException {
+							return conteudoTextoEmenta;
+						}
+						
+						public byte[] getDecisaoExistenteByteArray() throws IOException, MontadorRepercussaoGeralServiceException {
+							return conteudoTextoDecisao;
+						}
+						
+						public String getTextoDecisaoNovaString() throws IOException, MontadorRepercussaoGeralServiceException {
+							return null;
+						}
+					};
+					
+					SpecDadosRepercussaoGeral specDados = montarDadosDaRepercussaoGeral(oi, null, textoDecisaoSobreRepercussaoGeral, false);
+					return recuperarTemplateDaDecisaoRepercussaoGeral(oi.getId(), seqFaseTexto, decisaoRepercussaoGeralSource,	specDados);
+			
+				} else {
+					textoSource = new TextoSource() {
+						public byte[] getByteArray() throws IOException, MontadorTextoServiceException {
+							try {
+								return recuperarArquivo(seqTexto, seqFaseTexto);
+							} catch (ServerException e) {
+								throw new MontadorTextoServiceException(e);
+							}
+						}
+					};
+					specDadosTexto = montaDadosDoTexto(texto);
+		
+					return recuperarTemplateDoTexto(texto.getObjetoIncidente().getId(), seqFaseTexto, seqTipoTexto, textoSource, specDadosTexto);
+				}
+			}
+		} catch (Exception e) {
+			throw new ServerException(e);
+		}
+		return null;
+	}
+
+	private SpecDadosTexto montaDadosDoObjetoIncidente(ObjetoIncidente<?> objetoIncidente) throws ServiceException {
+		DadosMontagemTexto<Long> dadosMontagemTexto = dadosMontagemTextoBuilder
+				.montaDadosMontagemTexto(objetoIncidente);
+		if (dadosMontagemTexto != null) {
+			return dadosMontagemTexto.getSpecDados();
+		}
+		return null;
+
+	}
+	
+	private SpecDadosRepercussaoGeral montarDadosDaRepercussaoGeral(ObjetoIncidente<?> objetoIncidente, DadosTextoDecisao dadosTextoDecisao, Texto texto, boolean novaDecisao) throws ServiceException {
+		DadosMontagemRepercussaoGeral<Long> dadosMontagem = dadosMontagemRepercussaoGeralBuilder.montaDadosMontagemRepercussaoGeral(objetoIncidente, dadosTextoDecisao, texto, novaDecisao);
+		if (dadosMontagem != null && dadosMontagem.getSpecDados() != null) {
+			return dadosMontagem.getSpecDados();
+		}
+		return null;
+
+	}
+
+	private SpecDadosTexto montaDadosDoTexto(final Texto texto) throws ServiceException {
+		DadosMontagemTexto<Long> dadosMontagemTexto = dadosMontagemTextoBuilder.montaDadosMontagemTexto(texto, false);
+		if (dadosMontagemTexto != null) {
+			return dadosMontagemTexto.getSpecDados();
+		}
+		return null;
+	}
+
+	private InputStream recuperarTemplateDoTexto(Long seqObjetoIncidente, Long seqFaseTexto, Long seqTipoTexto, TextoSource textoSource,
+			SpecDadosTexto specDados) throws ServiceException, ServerException, UnsupportedEncodingException {
+		try {
+			CabecalhoObjetoIncidente coi = recuperarCabecalhoObjetoIncidente(seqObjetoIncidente, seqFaseTexto);
+			SpecCabecalho<Long> specCabecalho = cabecalhoObjetoIncidenteService.getSpecCabecalho(coi);
+			return openOfficeMontadorTextoService.carregarTemplate(specCabecalho, textoSource, specDados);
+		} catch (Exception e) {
+			throw new ServerException(e);
+		}
+
+	}
+	
+	private InputStream recuperarTemplateDaRepercussaoGeral(Long seqObjetoIncidente, Long seqFaseTexto, DecisaoRepercussaoGeralSource decisaoRepercussaoGeralSource,
+			SpecDadosRepercussaoGeral specDadosRepGeral) throws ServiceException, ServerException, UnsupportedEncodingException {
+			CabecalhoObjetoIncidente coi = recuperarCabecalhoObjetoIncidente(seqObjetoIncidente, seqFaseTexto);
+		try {
+			SpecCabecalho<Long> specCabecalho = cabecalhoObjetoIncidenteService.getSpecCabecalho(coi);
+			return openOfficeMontadorRepercussaoGeralService.carregarTemplate(specCabecalho, decisaoRepercussaoGeralSource, specDadosRepGeral);
+		} catch (Exception e) {
+			throw new ServerException(e);
+		}
+	}
+	
+	private InputStream recuperarTemplateDaDecisaoRepercussaoGeral(Long seqObjetoIncidente, Long seqFaseTexto, DecisaoRepercussaoGeralSource decisaoRepercussaoGeralSource,
+			SpecDadosRepercussaoGeral specDadosRepGeral) throws ServiceException, ServerException, UnsupportedEncodingException {
+			CabecalhoObjetoIncidente coi = recuperarCabecalhoObjetoIncidente(seqObjetoIncidente, seqFaseTexto);
+		try {
+			SpecCabecalho<Long> specCabecalho = cabecalhoObjetoIncidenteService.getSpecCabecalho(coi);
+			return openOfficeMontadorRepercussaoGeralService.carregarTemplateDecisaoExistente(specCabecalho, decisaoRepercussaoGeralSource, specDadosRepGeral);
+		} catch (Exception e) {
+			throw new ServerException(e);
+		}
+	}
+	
+	private CabecalhoObjetoIncidente recuperarCabecalhoObjetoIncidente(Long seqObjetoIncidente, Long seqFaseTexto) throws ServiceException, ServerException, UnsupportedEncodingException {
+		CabecalhoObjetoIncidente coi = null;
+		try {
+			if (seqFaseTexto == null) {
+				coi = cabecalhoObjetoIncidenteService.recuperarCabecalho(seqObjetoIncidente);
+			} else {
+				FaseTextoProcesso faseTexto = faseTextoProcessoService.recuperarPorId(seqFaseTexto);
+				if (faseTexto.getCabecalhoTexto() == null) {
+					throw new ServerException("Nao ha cabecalho gerado para a fase de codigo [" + seqFaseTexto + "]");
+				}
+				byte[] xml = faseTexto.getCabecalhoTexto().getXml().getBytes("UTF-8");
+				coi = cabecalhoObjetoIncidenteService.recuperarCabecalho(xml);	
+			}
+		} catch (ServiceException e) {
+			throw new ServerException(e);
+		} catch (ServerException e) {
+			throw new ServerException(e);
+		} catch (UnsupportedEncodingException e) {
+			throw new ServerException(e);
+		}
+		return coi;
+	}
+
+	@Profiled
+	public InputStream excluirCabecalhoDoDocumento(InputStream arquivo) throws ServerException {
+		try {
+			return openOfficeMontadorTextoService.removeCabecalhoDoDocumento(arquivo);
+		} catch (Exception e) {
+			throw new ServerException(e);
+		}
+	}
+	
+	@Profiled
+	public InputStream excluirCabecalhoDaRepercussaoGeral(InputStream arquivo) throws ServerException {
+		try {
+			return openOfficeMontadorRepercussaoGeralService.removerCabecalhoDoDocumento(arquivo);
+		} catch (Exception e) {
+			throw new ServerException(e);
+		}
+	}
+	
+	@Profiled
+	public InputStream excluirEmentaDoDocumento(InputStream arquivo) throws ServerException {
+		try {
+			return openOfficeMontadorRepercussaoGeralService.removerEmentaDoDocumento(arquivo);
+		} catch (Exception e) {
+			throw new ServerException(e);
+		}
+	}	
+	
+	@Profiled
+	public String verificaDocumentoBloqueado(Long seqTexto, boolean somenteLeitura) throws ServerException {
+		try {
+			Texto texto = textoService.recuperarPorId(seqTexto);
+			log.info("Verificando/Bloqueando Texto [" + seqTexto + "], Arquivo Eletronico ["
+					+ texto.getArquivoEletronico().getId() + "]");
+			
+			boolean bloquearTexto = !somenteLeitura;
+			if (bloquearTexto) {
+				verificaEdicaoConcorrente(seqTexto, texto);
+			}			
+			verificaTextoIgualAssinado(texto);
+			verificaEmentaComAcordaoAssinado(texto);
+			return null;
+		} catch (DocumentoBloqueadoException e) {
+			return e.getMessage();
+		} catch (DocumentoNaoPodeSerEditadoException e) {
+			desbloquearDocumento(seqTexto);
+			return e.getMessage();
+		} catch (Exception e) {
+			throw new ServerException("verificaDocumentoBloqueado", e);
+		}
+	}
+
+	private void verificaEmentaComAcordaoAssinado(Texto texto) throws ServiceException,
+			DocumentoNaoPodeSerEditadoException {
+		if (!TextoServiceImpl.isTextoSomenteLeitura(texto) && texto.getTipoTexto().equals(TipoTexto.EMENTA)) {
+			Texto acordao = textoService.recuperar(texto.getObjetoIncidente(), TipoTexto.ACORDAO, texto.getMinistro()
+					.getId());
+			if (acordao != null && TextoServiceImpl.isTextoSomenteLeitura(acordao)) {
+				throw new DocumentoNaoPodeSerEditadoException(
+						"A ementa desse processo não pode ser editada porque o acórdão está na fase "
+								+ acordao.getTipoFaseTextoDocumento().getDescricao() + ".");
+			}
+		}
+	}
+
+	private void verificaTextoIgualAssinado(Texto texto) throws ServiceException, DocumentoNaoPodeSerEditadoException {
+		if (!TextoServiceImpl.isTextoSomenteLeitura(texto) && texto.getTextosIguais()) {
+			List<Texto> textosIguais = textoService.pesquisarTextosIguais(texto, true);
+			for (Texto textoIgual : textosIguais) {
+				if (TextoServiceImpl.isTextoSomenteLeitura(textoIgual)) {
+					throw new DocumentoNaoPodeSerEditadoException(
+							"Existe um texto na lista de textos iguais que está na fase "
+									+ textoIgual.getTipoFaseTextoDocumento().getDescricao() + ".");
+				}
+			}
+		}
+	}
+
+	private void verificaEdicaoConcorrente(Long seqTexto, Texto texto) throws ServiceException,
+			DocumentoBloqueadoException {
+		ArquivoEletronico arquivoEletronico = arquivoEletronicoService.recuperarBloquearArquivoEletronico(texto
+				.getArquivoEletronico().getId());
+
+		if (arquivoEletronico.getUsuarioBloqueio() != null) {
+			if (arquivoEletronico.getUsuarioBloqueio().equalsIgnoreCase(getUsuarioLogado().getUsuario().getId())) {
+				log.info("Mesmo usuário de bloqueado. Liberando acesso para edição...");
+				return;
+			}
+			log.info("Texto [" + seqTexto + "] já bloqueado para [" + arquivoEletronico.getUsuarioBloqueio()
+					+ "]. Acesso negado.");
+			Usuario usuario = usuarioService.recuperarPorId(arquivoEletronico.getUsuarioBloqueio());
+			throw new DocumentoBloqueadoException("O documento está sendo editado pelo usuário [" + usuario.getNome()
+					+ "].");
+		}
+
+		log.info("Texto não bloqueado. Liberando acesso para edição...");
+	}
+
+	@Profiled
+	public void desbloquearDocumento(Long seqTexto) throws ServerException {
+		try {
+			if (seqTexto != null) {
+				Texto texto = textoService.recuperarPorId(seqTexto);
+				log.info("Desbloquendo Texto [" + seqTexto + "], Arquivo Eletronico ["
+						+ texto.getArquivoEletronico().getId() + "]");
+				if (texto.getArquivoEletronico() != null) {
+					arquivoEletronicoService.desbloquearArquivoEletronico(texto.getArquivoEletronico().getId());
+				}
+			}
+		} catch (Exception e) {
+			throw new ServerException("desbloquearDocumento", e);
+		}
+	}
+
+	private class DocumentoBloqueadoException extends Exception {
+		private DocumentoBloqueadoException(String message) {
+			super(message);
+		}
+	}
+
+	private class DocumentoNaoPodeSerEditadoException extends Exception {
+
+		private DocumentoNaoPodeSerEditadoException(String message) {
+			super(message);
+		}
+
+	}
+
+	@Profiled
+	@Override
+	public boolean verificarPodeCriarDecisaoRepercussaoGeral(Long seqObjetoIncidente) throws ServerException {
+		try {
+			return repercussaoGeralService.verificarPodeCriarDecisaoRepercussaoGeral(seqObjetoIncidente);
+		} catch (Exception e) {
+			throw new ServerException(e);
+		}
+	}
+
+	@Profiled
+	@Override
+	public String verificaPerfilEditarTexto(Long idTexto)
+			throws ServerException {
+		String mensagem = null;
+		
+		try {
+			Texto texto = textoService.recuperarPorId(idTexto);
+			
+			FaseTexto fase = texto.getTipoFaseTextoDocumento();
+			
+			boolean temPermissaoParaEditarTexto = true;
+			
+			if (FaseTexto.fasesComTextoAssinado.contains(fase)) {
+				return mensagem;
+			} else {
+				switch (fase.getCodigoFase().intValue()) {
+					case 1: // Em Elaboração
+						temPermissaoParaEditarTexto = permissionChecker.hasPermission((Principal) getAuthentication().getPrincipal(), ActionIdentification.EDITAR_TEXTO_EM_ELABORACAO);
+						break;
+					case 2: // Em Revisão
+						temPermissaoParaEditarTexto = permissionChecker.hasPermission((Principal) getAuthentication().getPrincipal(), ActionIdentification.EDITAR_TEXTO_EM_REVISAO);
+						break;
+					case 3: // Revisado
+						temPermissaoParaEditarTexto = permissionChecker.hasPermission((Principal) getAuthentication().getPrincipal(), ActionIdentification.EDITAR_TEXTO_REVISADO);
+						break;
+					case 4: // Liberado Para Assinatura
+						temPermissaoParaEditarTexto = permissionChecker.hasPermission((Principal) getAuthentication().getPrincipal(), ActionIdentification.EDITAR_TEXTO_LIBERADO_PARA_ASSINATURA);
+						break;
+				}		
+				if (!temPermissaoParaEditarTexto) {
+					mensagem = "O usuário [" + getUsuarioLogado().getUsuario().getNome() + "] não tem permissão para editar textos na fase \"" + fase.getDescricao() + "\".";
+				}
+			}
+			
+		} catch (ServiceException e) {
+			throw new ServerException(e);
+		}		
+		return mensagem;
+	}
+
+	@Override
+	public boolean isTextoEmEdicaoConcorrente(Long seqTexto) throws ServerException {
+		try {
+			String usuario = getUsuarioBloqueadorTexto(seqTexto);
+	
+			if (usuario != null && !usuario.equalsIgnoreCase(getUsuarioLogado().getUsuario().getNome()))
+				return true;
+		} catch (Exception e) {
+			throw new ServerException(e);
+		}
+		
+		return false;
+
+	}
+
+	@Override
+	public String getUsuarioBloqueadorTexto(Long seqTexto) {
+		try {
+			Texto texto = textoService.recuperarPorId(seqTexto);
+			
+			if (texto!= null && texto.getArquivoEletronico() != null) {
+				ArquivoEletronicoView arquivoEletronico = arquivoEletronicoService.recuperarArquivoEletronicoViewPeloId(texto.getArquivoEletronico().getId());
+				if (arquivoEletronico != null && arquivoEletronico.getUsuarioBloqueio() != null)
+					return usuarioService.recuperarPorId(arquivoEletronico.getUsuarioBloqueio()).getNome();
+			}
+		} catch (Exception e) {
+			return null;
+		}
+		
+		return null;
+	}
+	
+	public boolean isUsuarioDesbloqueadorTextos() {
+		try {
+			return getUsuarioLogado().hasRole(TipoPerfil.DESBLOQUEAR_TEXTOS);
+		} catch (ServiceException e) {
+			e.printStackTrace();
+		}
+		
+		return false;
+	}
+	
+	@Profiled
+	public void desbloquearDocumentoAdmin(Long seqTexto) throws ServerException {
+		try {
+			if (seqTexto != null) {
+				Texto texto = textoService.recuperarPorId(seqTexto);
+				log.info("Desbloquendo Texto [" + seqTexto + "], Arquivo Eletronico ["
+						+ texto.getArquivoEletronico().getId() + "]");
+				if (texto.getArquivoEletronico() != null) {
+					arquivoEletronicoService.desbloquearArquivoEletronicoAdmin(texto.getArquivoEletronico().getId());
+				}
+			}
+		} catch (Exception e) {
+			throw new ServerException("desbloquearDocumento", e);
+		}
+	}
+
+	@Override
+	public void bloquearTexto(DocDecisaoId docId) throws ServerException {
+		try {
+			Texto texto = textoService.recuperarPorId(docId.getSeqTexto());
+			ArquivoEletronico arquivoEletronico = texto.getArquivoEletronico();
+			
+			if (arquivoEletronico.getUsuarioBloqueio() == null)
+				arquivoEletronico.setUsuarioBloqueio(docId.getUserId());
+			
+			arquivoEletronicoService.salvar(arquivoEletronico);
+		} catch (Exception e) {
+			throw new ServerException("bloquearTexto", e);
+		}
+		
+		
+	}
+}

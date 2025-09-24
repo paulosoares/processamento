@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml" 
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:a="http://richfaces.org/a4j"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:s="http://jboss.com/products/seam/taglib"
+	xmlns:h="http://java.sun.com/jsf/html">
+    
+	<a:outputPanel id="statusBar" styleClass="status-bar-container">
+		<a:status id="statusPopup" onstart="start()" onstop="stop()">
+			<f:facet name="start">
+				<s:span styleClass="status-bar">
+					<h:graphicImage height="15px" width="15px" style="margin-right:5px" value="/common/images/spinner.gif"/>
+					<h:outputText style="vertical-align: top;" value="Por favor, aguarde. Processando..."/>
+				</s:span>
+			</f:facet>
+		</a:status>
+	</a:outputPanel>
+    
+</ui:composition>

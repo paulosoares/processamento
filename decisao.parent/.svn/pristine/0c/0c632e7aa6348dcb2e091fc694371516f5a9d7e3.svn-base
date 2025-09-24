@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:s="http://jboss.com/products/seam/taglib"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:rich="http://richfaces.org/rich"
+	xmlns:p="http://primefaces.prime.com.tr/ui"
+	xmlns:a="http://richfaces.org/a4j"
+	xmlns:c="http://java.sun.com/jstl/core"
+	xmlns:stf="http://www.stf.jus.br/custom-components">
+	
+	<c:choose>
+    	<c:when test="#{not empty origem}">
+    		<c:set var="facesBean" value="#{incidenteFacesBean}" />
+    		<c:set var="idPartesPanel" value="incidentePartesPanel" />
+    	</c:when>
+    	<c:otherwise>
+    		<c:set var="facesBean" value="#{textoFacesBean}" />
+    		<c:set var="idPartesPanel" value="textoPartesPanel" />
+    	</c:otherwise>
+    </c:choose>
+
+
+	<rich:modalPanel id="#{idPartesPanel}" width="700" autosized="true" >
+		<f:facet name="header">
+			<div><label>Partes</label></div>
+		</f:facet>
+
+		<!-- Mensagens Gerais -->
+		<a:outputPanel id="messagesPartesPanel">
+			<h:messages id="mensagensParte" showDetail="true" showSummary="false"
+				infoClass="info" infoStyle="color: green;" warnClass="erro"
+				warnStyle="color: green;" errorClass="erro" errorStyle="color: red;"
+				layout="table" rendered="#{showGlobalMessages != 'false'}" />
+		</a:outputPanel>
+
+		<c:if test="#{not empty facesBean.listaParte}">
+			<div style="height: 210px; overflow: auto;">
+				<rich:dataTable 
+					id="tbPartes" var="_parte" value="#{facesBean.listaParte}"
+					rowClasses="dr-table-row-odd, dr-table-row-even"
+					styleClass="data-table" >
+					<rich:column styleClass="dr-table-firstcol">
+						<f:facet name="header">
+							<span style="font-weight: bold;">Tipo</span>
+						</f:facet>
+						<span>#{_parte.categoria.descricao}</span>
+					</rich:column>
+					<rich:column styleClass="dr-table-lastcol">
+						<f:facet name="header">
+							<span style="font-weight: bold;">Nome</span>
+						</f:facet>
+						<span>#{_parte.nomeJurisdicionado} #{_parte.dscTipoImpressao}</span>
+					</rich:column>
+					<rich:column styleClass="dr-table-lastcol">
+						<f:facet name="header">
+							<span style="font-weight: bold;">OAB</span>
+						</f:facet>
+						<span>#{_parte.jurisdicionado.oab}</span>
+					</rich:column>
+				</rich:dataTable>
+			</div>
+		</c:if>
+
+		<div class="action-buttons">
+			<a:commandButton
+				value="Fechar"
+				action="#{facesBean.setListaParte(null)}"
+				oncomplete="#{rich:component(idPartesPanel)}.hide()"
+				immediate="true" eventsQueue="ajaxQueue" ignoreDupResponses="true" ajaxSingle="true" />		
+		</div>
+	</rich:modalPanel>
+	
+</ui:composition>

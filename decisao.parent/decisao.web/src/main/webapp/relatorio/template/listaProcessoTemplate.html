@@ -1,0 +1,58 @@
+<html xmlns="http://www.w3.org/1999/xhtml" lang="pt-br" xml:lang="pt-br">
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<head>
+<style type="text/css">
+body {
+	font-family: Arial, Helvetica, Tahoma, sans-serif;
+}
+
+.negrito {
+	font-weight: bold;
+}
+
+.tamanhoA4 {
+	width: 17cm;
+	height: 25cm;
+	padding-left: 0.5cm;
+	padding-right: 0.0cm;
+	padding-top: 0.0cm;
+	padding-bottom: 0.0cm;
+}
+
+</style>
+</head>
+<body>
+	<div class="tamanhoA4">
+		<div>$cabecalhoHtml</div>
+		<br />
+		<table border="1">
+			<tbody>
+				
+				#set( $numeroLinha = 1) 
+				
+				#foreach( $processo in $listaProcessos )
+					<tr>
+						<td align="center" style="width:33px; font-size:14px;" class="negrito">$numeroLinha</td>
+						
+						<td style="width:633px; font-size:14px;">
+							
+							<div class="negrito" style="margin-left:3px; margin-top:3px">$processo.identificacaoCompletaProcesso</div>
+							
+							#foreach ($item in $processo.informacoesProcesso)
+								<div style="margin-left:3px; margin-top:2px; margin-bottom:1px">
+									<b>$item.titulo : </b> $item.descricao
+								</div> 
+							#end
+						</td>
+						
+					</tr>
+					
+					#set($numeroLinha = $numeroLinha + 1) 
+					
+				#end
+			</tbody>
+		</table>
+
+	</div>
+</body>
+</html>

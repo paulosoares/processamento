@@ -1,0 +1,41 @@
+'use strict';
+
+/**
+ * Serviço utilitário para recuperar informações relativas ao browser.
+ * 
+ * @param win Objeto window do browser
+ */
+StfDecisao.util('BrowserUtil', function(win) {
+	var self = this;
+	/**
+	 * Recupera a Url base do servidor onde está rodando o sistema.
+	 * 
+	 */
+	this.getUrlBase = function() {
+		return win.document.location.origin;
+	};
+
+	/**
+	 * Verifica se o sistema está rodando em ambiente mobile. Supõe-se que o ambiente mobile ocorrerá sempre que está rodando em um iframe.
+	 * 
+	 */
+	this.isMobile = function() {
+		return win.location != win.parent.location;
+	};
+
+	/**
+	 * Recupera a Url base do servidor que será utilizado para autenticar no sistema.
+	 */
+	this.getUrlBaseServidorAutenticacao = function() {
+		var urlBase = self.getUrlBase();
+		if (urlBase.indexOf("localhost") > -1) {
+			return "https://sistemast.stf.jus.br";
+		} else {
+			return urlBase;
+		}
+	};
+
+	this.hello = function() {
+		return "hello";
+	};
+});

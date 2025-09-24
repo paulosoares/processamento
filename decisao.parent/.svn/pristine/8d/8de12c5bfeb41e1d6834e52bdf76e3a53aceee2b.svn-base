@@ -1,0 +1,24 @@
+Tags:
+Preconditions:
+Configurações do Gabinete:
+#A opção Configurar Opções do Gabinete não deve ser acessada sem antes selecionar um setor
+#A opção Configurar Opções do Gabinete deve ser exibida somente para usuários com o perfil Ministro
+#A opção Configurar Opções do Gabinete deve ser exibida somente para usuários com o perfil Administrador
+
+Restrição na Elaboração de Textos:
+#Não deve ser possível visualizar um texto restrito a outro usuário na fase "Em elaboração"
+#(criar insert de um texto "em elaboração", elaborado por "jenny.oliveira", restrito, tentar acessar com outro usuário)
+#Não deve ser possível editar um texto restrito a outro usuário na fase "Em elaboração" 
+#(criar insert de um texto "em elaboração", elaborado por "jenny.oliveira", restrito, tentar acessar com outro usuário)
+#Sem a configuração do setor selecionada textos iniciados ou Em elaboração devem vir sem restrição
+
+Perfis e Acessos aos Textos:
+#O perfil Ministro deve ter acesso a qualquer texto restrito ou não e em qualquer fase que esteja sob sua relatoria
+#O perfil Administrador deve ter acesso a qualquer texto restrito ou não e em qualquer fase que esteja sob sua relatoria
+#Não deve ser possível o acesso a textos restritos de outras relatorias independente do perfil
+
+Atribuição de Responsáveis:
+#Deve ser possível permitir os responsáveis de um texto a um usuário ou grupo do setor
+#Deve ser possível trocar o responsável na transição de fase dos textos 
+#(parâmetros para as fases)
+

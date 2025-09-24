@@ -1,0 +1,13 @@
+stfOfficeBootstrapJar=stfoffice-client-bootstrap-${stfoffice.version}-signed.jar
+stfOfficeClientJar=stfoffice-client-${stfoffice.version}-full.jar
+pluginJar=decisao.plugin-${project.version}-full.jar
+app.version=${project.version}
+
+oauth2.tokenLocation=${oauth2.tokenLocation}
+oauth2.clientId=${oauth2.clientId}
+oauth2.clientSecret=${oauth2.clientSecret}
+oauth2.resourceServer=${oauth2.resourceServer}
+oauth2.timeout=${oauth2.timeout}
+oauth2.scope=${oauth2.scope}
+
+converter.servers = pirapora,pirapora2

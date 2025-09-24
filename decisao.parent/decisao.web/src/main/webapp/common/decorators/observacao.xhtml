@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:s="http://jboss.com/products/seam/taglib"
+	xmlns:a="http://richfaces.org/a4j" >
+
+	<script type="text/javascript">
+		function contentEditableValue(el) {
+			if (typeof el.innerText === "undefined") {
+				return el.textContent;
+			} else {
+				return el.innerText;
+			}
+		}
+	</script>
+
+	<div name="observacaoEditable" title="#{userFacesBean.podeEditarObservacaoProcesso ? 'Clique aqui para editar a observação.' : ''}"
+		contenteditable="#{userFacesBean.podeEditarObservacaoProcesso}" 
+		onblur="jsSalvarObservacaoProcesso(contentEditableValue(this))" style="width: 55%; min-height:70px; padding-top: 5px">#{incidenteFacesBean.observacaoProcesso.observacao}</div> 
+	
+	<a:jsFunction name="jsSalvarObservacaoProcesso" action="#{incidenteFacesBean.salvarObservacaoProcesso()}" reRender="messagesPanel,resultTable" 
+		oncomplete="setTimeout(function(){jsLimparMensagens();}, 3000);"
+		eventsQueue="ajaxQueue" ignoreDupResponses="true" >
+		<a:actionparam name="novaObservacao" assignTo="#{incidenteFacesBean.observacaoProcesso.observacao}" />
+	</a:jsFunction>
+	
+	<a:jsFunction name="jsLimparMensagens" 
+		eventsQueue="ajaxQueue" ignoreDupResponses="true"
+		reRender="messagesPanel" >
+	</a:jsFunction>
+	
+	<style type="text/css">
+		[name="observacaoEditable"][contenteditable="true"] {
+			border: solid rgb(255, 255, 255);
+			border-width: 1px;
+			padding-right: 30px;
+		}
+		[name="observacaoEditable"][contenteditable="true"]:focus, 
+		[name="observacaoEditable"][contenteditable="true"]:hover {
+			border: solid rgb(230, 230, 230);
+			border-width: 1px;
+			border-radius: 3px;
+			padding-right: 30px;		
+			background: url('#{facesContext.externalContext.requestContextPath}/common/images/lapis.jpg') no-repeat center right;
+		}
+		
+		[name="observacaoEditable"][contenteditable="true"]:focus {
+
+			box-shadow: 0px 0px 3px rgb(58, 124, 191);
+			border: 1px solid rgb(58, 124, 191);
+			border-radius: 2px;
+			outline: none;
+			background: none;
+		}
+	</style>
+</ui:composition>

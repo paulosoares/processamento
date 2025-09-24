@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<f:view xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:a="http://richfaces.org/a4j"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:c="http://java.sun.com/jstl/core"
+	xmlns:rich="http://richfaces.org/rich" contentType="text/html">
+	<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+		<head>
+			<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+			<title>eSTF-Decisão</title>
+            <meta name="robots" content="noindex,nofollow,nosnippet,noodp,noarchive,noimageindex" />
+            <meta http-equiv="Pragma" content="no-cache" />  
+	        <meta http-equiv="Cache-Control" content="no-cache" />
+			<a:loadStyle src="/common/styles/theme.xcss" />
+			<a:loadStyle src="/common/styles/reset.css" />
+			<a:loadStyle src="/common/styles/richfaces.css" />
+			<c:if test="#{globalFacesBean.tipoAmbiente.getDescricao().equals('Produção')}">
+				<a:loadStyle src="/common/styles/theme.css" />
+			</c:if>
+			<c:if test="#{!globalFacesBean.tipoAmbiente.getDescricao().equals('Produção')}">
+				<a:loadStyle src="/common/styles/theme-dev.css" />
+			</c:if>
+			<a:loadScript src="/common/scripts/global.js" />
+			<a:loadScript src="/common/scripts/jquery-1.4.2.min.js" />
+			<a:loadScript src="/common/scripts/styled-select.js" />
+			<!--[if lt IE 8]>
+				<link href="#{facesContext.externalContext.requestContextPath}/common/styles/theme-ie.css" rel="stylesheet" type="text/css" />
+				<link href="#{facesContext.externalContext.requestContextPath}/common/styles/richfaces-ie.css" rel="stylesheet" type="text/css" />
+                <style media="screen" type="text/css">
+                	/* Layout principal */
+                    .root-wrapper       { height:100%; }
+                    body				{ overflow-y: visible; }
+                    /*.panel-outset		{ behavior: url(#{facesContext.externalContext.requestContextPath}/common/styles/PIE.htc); }*/
+                </style>
+            <![endif]-->
+            <script type="text/javascript">
+            //<![CDATA[
+            	$j = jQuery.noConflict();
+            	(function($) { 
+		        	$(function() {
+			        	$('select').styled();
+		        	});
+           		})(jQuery);
+           		
+            	var onAfterAjaxListener = new A4J.AJAX.AjaxListener("onafterajax", function(req,evt,data) {
+	           		A4J.AJAX.removeListener(onAfterAjaxListener);
+	           		A4J.AJAX.AddListener(onAfterAjaxListener);
+	           			$j('select').styled();
+	           		}
+           		);
+           		A4J.AJAX.AddListener(onAfterAjaxListener);
+           	//]]>
+            </script>
+		</head>
+		<body>
+			<div class="root-wrapper">
+				<ui:include src="/common/includes/header.xhtml"/>
+				<div class="body">
+					<ui:insert name="body" />
+				</div>
+				<ui:include src="/common/includes/footer.xhtml"/>
+			</div>
+			<ui:include src="/common/includes/status.xhtml"/>
+			<ui:include src="/common/includes/release.xhtml"/>
+		</body>
+	</html>
+</f:view>

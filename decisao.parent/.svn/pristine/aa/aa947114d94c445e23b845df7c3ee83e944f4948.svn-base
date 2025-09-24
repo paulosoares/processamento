@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:s="http://jboss.com/products/seam/taglib"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:rich="http://richfaces.org/rich"
+	xmlns:a="http://richfaces.org/a4j"
+	xmlns:c="http://java.sun.com/jstl/core"
+	xmlns:stf="http://www.stf.jus.br/custom-components">
+
+	<s:decorate id="replicarTextos"
+		template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="principal" />
+		<ui:define name="descricao">
+			<h:outputText value="Textos selecionados: " />
+			
+		</ui:define>
+		<ui:define name="conteudo">
+			<a:outputPanel id="panelMessage">
+				<stf:messages height="31px" styleClass="noBorder" />
+			</a:outputPanel>
+			<s:decorate template="/common/decorators/edit.xhtml">		
+				<ui:define name="label">Responsável:</ui:define>
+				<h:inputText id="txtResponsavel" size="47"					 
+					style="width: 300px" converter="responsavelConverter"/>
+				<rich:suggestionbox id="sgResponsavel" for="txtResponsavel"
+					width="300" height="150" var="obj" 
+					fetchValue="#{obj}" nothingLabel="Nenhum registro encontrado."
+					suggestionAction="#{responsavelFacesBean.search}">
+					<h:column>
+						<h:outputText value="#{obj}" styleClass="sugestao" />
+					</h:column>
+					<a:support event="onselect" eventsQueue="ajaxQueue" ignoreDupResponses="true">
+						<f:setPropertyActionListener value="#{obj}" target="#{actionFacesBean.responsavel}" />
+					</a:support>
+				</rich:suggestionbox>
+			</s:decorate>
+			
+			
+			
+			
+			
+			<a:outputPanel id="panelProcesso">
+				<s:decorate template="/common/decorators/edit.xhtml">
+					<ui:define name="label">Processo:</ui:define>
+					<h:inputText id="identificacaoProcesso"
+						value="#{actionFacesBean.identificacaoProcesso}"
+						onkeydown="return noCtrlJ(event);"
+						onkeyup="susgestionEmptyValue(#{rich:component('sgBoxProcessoReplicarTexto')},this)" 
+						onclick="susgestionEmptyValue(#{rich:component('sgBoxProcessoReplicarTexto')},this)"/>
+					<rich:suggestionbox id="sgBoxProcessoReplicarTexto"
+						suggestionAction="#{incidenteFacesBean.searchWithoutFake}"
+						for="identificacaoProcesso" var="result" minChars="1"
+						fetchValue="#{result.identificacao}"
+						nothingLabel="Nenhum Objeto Incidente encontrado." width="350"
+						height="100">
+
+						<a:support event="onselect"
+							action="#{actionFacesBean.incluirProcessoSelecionado(result)}"
+							reRender="panelMessage, panelProcessoIncluso, panelProcesso"
+							focus="identificacaoProcesso" eventsQueue="ajaxQueue"
+							ignoreDupResponses="true" />
+
+						<h:column>
+							<h:outputText rendered="#{result.eletronico}" value="e"
+								styleClass="vermelho" />
+							<h:outputText value="#{result.identificacao}"
+								styleClass="oiSuggestion" />
+							<h:outputText value=" -> " />
+							<h:outputText value="#{result.nomeRelator}"
+								styleClass="#{(result.idRelator != userFacesBean.principal.ministro.id)? 'oiSuggestion':'green'}" />
+						</h:column>
+					</rich:suggestionbox>
+				</s:decorate>
+			</a:outputPanel>
+			<a:outputPanel id="panelProcessoIncluso" >
+				<div style="height: 200px; overflow: auto;">
+					<div style="border: 1px solid #006699; border-top: none;">
+						<rich:dataTable	id="tbTextosIguais"
+							var="processoValido"
+							value="#{actionFacesBean.processosParaSelecao}"
+							rowClasses="dr-table-row-odd, dr-table-row-even"
+							styleClass="data-table">
+							<rich:column styleClass="dr-table-firstcol dr-table-col-center" headerClass="dr-table-firstcol dr-table-col-center largura20px">
+								<f:facet name="header">
+									<a:commandButton image="/common/images/setabaixo.gif"
+										action="#{actionFacesBean.selectAll}"
+										title="Página atual" eventsQueue="ajaxQueue"
+										ignoreDupResponses="true"
+										reRender="panelProcessoIncluso" />
+								</f:facet>
+								<h:selectBooleanCheckbox styleClass="Checkbox"
+									value="#{processoValido.selected}" />
+							</rich:column>
+							<rich:column styleClass="dr-table-lastcol" headerClass="dr-table-lastcol">
+								<f:facet name="header">
+									<h:outputText value="Processo" />
+								</f:facet>
+								<h:outputText value="#{processoValido.identificacao}" />
+							</rich:column>
+						</rich:dataTable>
+					</div>
+				</div>
+			</a:outputPanel>
+		</ui:define>
+		<ui:define name="botoes">
+			<a:commandButton value="Remover"
+				action="#{actionFacesBean.excluirProcessosSelecionados}"
+				reRender="panelMessage, panelProcessoIncluso" eventsQueue="ajaxQueue"
+				ignoreDupResponses="true"
+				style="float: left;"/>
+			<a:commandButton value="Gravar"
+				action="#{actionFacesBean.validateAndExecute}"
+				reRender="actionModalPanel, panelMessage"
+				oncomplete="showActionPanel('panelItem', #{actionFacesBean.definition.width}, #{actionFacesBean.definition.height})"
+				eventsQueue="ajaxQueue" ignoreDupResponses="true" />
+		</ui:define>
+	</s:decorate>
+
+</ui:composition>

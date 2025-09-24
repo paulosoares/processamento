@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:s="http://jboss.com/products/seam/taglib"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:rich="http://richfaces.org/rich"
+	xmlns:a="http://richfaces.org/a4j"
+	xmlns:c="http://java.sun.com/jstl/core"
+	xmlns:stf="http://www.stf.jus.br/custom-components">
+	
+	<s:decorate id="impressaoCombinada" template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="principal"/>
+		<ui:define name="descricao">O(s) seguinte(s) processo(s) não possui(em) texto(s) para impressão:</ui:define>
+		<ui:define name="conteudo">
+			<stf:messages/>
+			<br/>
+			<c:if test="#{not empty actionFacesBean.listaDadosMontagemTexto}" >
+   	  			 <h:outputText value="Deseja imprimir assim mesmo? A ação será aplicada aos demais processos selecionados."/>
+   	  		</c:if>			
+		</ui:define>
+		<ui:define name="botoes">
+           	<h:commandButton value="OK" 
+           	action="#{actionFacesBean.execute}" 
+           	onclick="Richfaces.hideModalPanel('panelItem')" 
+           	rendered="#{not empty actionFacesBean.listaDadosMontagemTexto}"/>
+		</ui:define>	
+	</s:decorate>
+	
+	<s:decorate template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="semMensagem"/>
+		<ui:define name="descricao">Imprimindo...</ui:define>
+		<ui:define name="botoes">
+			<c:if test="#{empty actionFacesBean.listaMsgProcessosSemTexto and not empty actionFacesBean.listaDadosMontagemTexto}">
+				<script type="text/javascript">
+					#{rich:element("btnOk")}.click();
+				</script>
+			</c:if>
+			<h:commandButton value="OK" 
+				action="#{actionFacesBean.execute}"
+				rendered="#{not empty actionFacesBean.listaDadosMontagemTexto}" 
+				id="btnOk" 
+				styleClass="botaoOculto" />
+		</ui:define>
+	</s:decorate>
+
+</ui:composition>

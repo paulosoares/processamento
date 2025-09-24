@@ -1,0 +1,2189 @@
+package br.jus.stf.estf.decisao.texto.service.impl;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+
+import javax.annotation.Resource;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.hibernate.criterion.DetachedCriteria;
+import org.hibernate.criterion.Expression;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.orm.hibernate3.HibernateTemplate;
+import org.springframework.security.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionCallbackWithoutResult;
+import org.springframework.transaction.support.TransactionTemplate;
+
+import br.gov.stf.estf.documento.model.exception.TextoException;
+import br.gov.stf.estf.documento.model.exception.TextoInvalidoParaPecaException;
+import br.gov.stf.estf.documento.model.service.ControleVotoService;
+import br.gov.stf.estf.documento.model.service.DocumentoEletronicoService;
+import br.gov.stf.estf.documento.model.service.ListaTextosService;
+import br.gov.stf.estf.documento.model.service.TipoDocumentoTextoService;
+import br.gov.stf.estf.documento.model.service.enums.TipoDeAcessoDoDocumento;
+import br.gov.stf.estf.documento.model.service.exception.NaoExisteDocumentoAssinadoException;
+import br.gov.stf.estf.documento.model.service.exception.TextoNaoPodeSerAlteradoException;
+import br.gov.stf.estf.documento.model.service.exception.TextoSemControleDeVotosException;
+import br.gov.stf.estf.documento.model.service.exception.TransicaoDeFaseInvalidaException;
+import br.gov.stf.estf.documento.model.service.impl.ArquivoProcessoEletronicoServiceExtra;
+import br.gov.stf.estf.documento.model.util.AssinaturaDto;
+import br.gov.stf.estf.documento.model.util.DocumentoTextoUtil;
+import br.gov.stf.estf.entidade.documento.ArquivoEletronicoView;
+import br.gov.stf.estf.entidade.documento.ControleVoto;
+import br.gov.stf.estf.entidade.documento.DocumentoEletronico;
+import br.gov.stf.estf.entidade.documento.DocumentoTexto;
+import br.gov.stf.estf.entidade.documento.ListaTextos;
+import br.gov.stf.estf.entidade.documento.Texto;
+import br.gov.stf.estf.entidade.documento.Texto.TipoRestricao;
+import br.gov.stf.estf.entidade.documento.TipoDocumentoTexto;
+import br.gov.stf.estf.entidade.documento.TipoSituacaoDocumento;
+import br.gov.stf.estf.entidade.documento.TipoSituacaoTexto;
+import br.gov.stf.estf.entidade.documento.TipoTexto;
+import br.gov.stf.estf.entidade.documento.tipofase.FaseTexto;
+import br.gov.stf.estf.entidade.documento.tipofase.TipoTransicaoFaseTexto;
+import br.gov.stf.estf.entidade.documento.tipofase.TransicaoFaseTexto;
+import br.gov.stf.estf.entidade.localizacao.Setor;
+import br.gov.stf.estf.entidade.ministro.Ministro;
+import br.gov.stf.estf.entidade.processostf.Classe;
+import br.gov.stf.estf.entidade.processostf.IncidenteJulgamento;
+import br.gov.stf.estf.entidade.processostf.ObjetoIncidente;
+import br.gov.stf.estf.entidade.processostf.Processo;
+import br.gov.stf.estf.entidade.processostf.TipoConfidencialidade;
+import br.gov.stf.estf.entidade.processostf.TipoIncidenteJulgamento;
+import br.gov.stf.estf.entidade.processostf.TipoJulgamento;
+import br.gov.stf.estf.entidade.processostf.TipoMeioProcesso;
+import br.gov.stf.estf.entidade.publicacao.ConteudoPublicacao;
+import br.gov.stf.estf.entidade.publicacao.EstruturaPublicacao;
+import br.gov.stf.estf.entidade.usuario.Responsavel;
+import br.gov.stf.estf.entidade.usuario.Usuario;
+import br.gov.stf.estf.entidade.util.ObjetoIncidenteUtil;
+import br.gov.stf.estf.localizacao.model.service.SetorService;
+import br.gov.stf.estf.localizacao.model.service.exception.NaoExisteSetorParaDeslocamentoException;
+import br.gov.stf.estf.ministro.model.service.MinistroService;
+import br.gov.stf.estf.processostf.model.service.IncidenteJulgamentoService;
+import br.gov.stf.estf.processostf.model.service.MapeamentoClasseSetorService;
+import br.gov.stf.estf.processostf.model.service.ProcessoException;
+import br.gov.stf.estf.processostf.model.service.TipoIncidenteJulgamentoService;
+import br.gov.stf.estf.processostf.model.service.TipoJulgamentoService;
+import br.gov.stf.estf.processostf.model.service.exception.DuplicacaoChaveAntigaException;
+import br.gov.stf.estf.processostf.model.service.exception.IncidenteJulgamentoException;
+import br.gov.stf.estf.publicacao.model.service.ConteudoPublicacaoService;
+import br.gov.stf.estf.publicacao.model.util.IConsultaDeDadosDePublicacao;
+import br.gov.stf.estf.repercussaogeral.model.service.RepercussaoGeralService;
+import br.gov.stf.estf.usuario.model.service.TransacaoService;
+import br.gov.stf.estf.usuario.model.service.UsuarioService;
+import br.gov.stf.framework.model.dataaccess.DaoException;
+import br.gov.stf.framework.model.service.ServiceException;
+import br.gov.stf.framework.util.DateTimeHelper;
+import br.jus.stf.estf.decisao.objetoincidente.service.ObjetoIncidenteService;
+import br.jus.stf.estf.decisao.objetoincidente.support.ProcessoApensanteInvalidoParaDeslocamentoException;
+import br.jus.stf.estf.decisao.objetoincidente.support.ProcessoOcultoException;
+import br.jus.stf.estf.decisao.pesquisa.domain.ObjetoIncidenteDto;
+import br.jus.stf.estf.decisao.pesquisa.domain.TextoDto;
+import br.jus.stf.estf.decisao.support.action.support.ActionIdentification;
+import br.jus.stf.estf.decisao.support.security.PermissionChecker;
+import br.jus.stf.estf.decisao.support.security.Principal;
+import br.jus.stf.estf.decisao.support.util.NestedRuntimeException;
+import br.jus.stf.estf.decisao.texto.persistence.TextoDao;
+import br.jus.stf.estf.decisao.texto.service.TextoJaJuntadoException;
+import br.jus.stf.estf.decisao.texto.service.TextoService;
+import br.jus.stf.estf.decisao.texto.support.ConsultaDadosDoTextoDto;
+import br.jus.stf.estf.decisao.texto.support.ConsultaDeDadosDePublicacaoVO;
+import br.jus.stf.estf.decisao.texto.support.DesfazerJuntadaTextoException;
+import br.jus.stf.estf.decisao.texto.support.ErroAoDeslocarProcessoException;
+import br.jus.stf.estf.decisao.texto.support.ErroTesteAssinaturaException;
+import br.jus.stf.estf.decisao.texto.support.ManterListaDeTextosException;
+import br.jus.stf.estf.decisao.texto.support.SetorInativoException;
+import br.jus.stf.estf.decisao.texto.support.SituacaoDoTextoParaPublicacao;
+import br.jus.stf.estf.decisao.texto.support.TextoBloqueadoException;
+import br.jus.stf.estf.decisao.texto.support.TextoComSituacaoDaPublicacaoVO;
+import br.jus.stf.estf.decisao.texto.support.TextoNaoPodeSerRestritoException;
+
+/**
+ * Implementação default para interface {@link TextoService}.
+ * 
+ * @author Rodrigo.Barreiros
+ * @since 15.04.2010
+ */
+@Service("textoServiceLocal")
+public class TextoServiceImpl implements TextoService {
+
+	private static final Log logger = LogFactory.getLog(TextoServiceImpl.class);
+
+	private static final String DATA_LIMITE_ALTERACAO_TIPO_SITUACAO_DOCUMENTO = "08/11/2006";
+
+	private static final String TEXTOS_IGUAIS = "Não é permitido restringir o acesso a texto em lista de textos iguais.";
+
+	private static final String TEXTO_PUBLICO = "Não é permitido restringir o acesso de um texto público.";
+
+	private static final String TEXTO_RESPONSAVEL = "Não é permitido restringir o acesso do texto caso você não seja o criador ou responsável.";
+
+	private static final String MENSAGEM_PROCESSO_OCULTO = "Este texto é vinculado a processo oculto e, como tal, não pode ser liberado para publicação. Para publicá-lo, é necessário despacho do Min. Relator determinando à Secretaria Judiciária que retire sua condição de oculto.";
+	
+	private static final String MENSAGEM_PROCESSO_SIGILOSO = "Este texto é vinculado a processo sigiloso e, como tal, não pode ser liberado para publicação. Para publicá-lo, é necessário despacho do Min. Relator determinando à Secretaria Judiciária que retire sua condição de sigilo.";
+
+	@Resource(name="transactionManager")
+	private PlatformTransactionManager transactionManager;
+	
+	@Autowired
+	private br.gov.stf.estf.documento.model.service.TextoService textoService;
+
+	@Autowired
+	private ListaTextosService listaTextosService;
+
+	@Autowired
+	private HibernateTemplate dao;
+
+	@Autowired
+	private TipoDocumentoTextoService tipoDocumentoTextoService;
+
+	@Autowired
+	private UsuarioService usuarioService;
+
+	@Qualifier("objetoIncidenteServiceLocal")
+	@Autowired
+	private ObjetoIncidenteService objetoIncidenteService;
+
+	@Autowired
+	private ControleVotoService controleVotoService;
+
+	@Autowired
+	private TipoIncidenteJulgamentoService tipoIncidenteJulgamentoService;
+
+	@Autowired
+	private IncidenteJulgamentoService incidenteJulgamentoService;
+
+	@Autowired
+	private ArquivoProcessoEletronicoServiceExtra arquivoProcessoEletronicoServiceExtra;
+
+	@Autowired
+	private DocumentoEletronicoService documentoEletronicoService;
+
+	@Autowired
+	private TextoDao textoDao;
+
+	@Autowired
+	private SetorService setorService;
+
+	@Autowired
+	private MapeamentoClasseSetorService mapeamentoClasseSetorService;
+
+	@Autowired
+	private ConteudoPublicacaoService conteudoPublicacaoService;
+
+	@Autowired
+	private PermissionChecker permissionChecker;
+		
+	@Autowired
+	private TipoJulgamentoService tipoJulgamentoService;
+	
+	@Autowired
+	private RepercussaoGeralService repercussaoGeralService;
+	
+	@Autowired
+	private MinistroService ministroService;
+	
+	@Autowired
+	private TransacaoService transacaoService;
+
+	public List<TipoDocumentoTexto> pesquisarTiposDocumentoTextoPorSetor(long codSetor) {
+		try {
+			return tipoDocumentoTextoService.pesquisarTiposDocumentoTextoPorSetor(codSetor);
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+
+	/**
+	 * @throws TextoBloqueadoException 
+	 * @throws ProcessoOcultoException 
+	 * @see br.jus.stf.estf.decisao.texto.service.TextoService#alterarFase(TextoDto, br.gov.stf.estf.entidade.documento.tipofase.TipoTransicaoFaseTexto, Set)
+	 */
+	@Override
+	public void alterarFase(TextoDto texto, TipoTransicaoFaseTexto tipoTransicao, Set<Long> textosProcessados, String observacao, Responsavel responsavel)
+			throws TransicaoDeFaseInvalidaException, TextoBloqueadoException, ProcessoOcultoException {
+		try {
+			verificaTextoBloqueado(texto);
+			alterarFaseDoTexto(texto, tipoTransicao, textosProcessados, observacao, responsavel);
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+
+	/**
+	 * Executa a transição entre duas fases (origem e destino). Segue o seguinte
+	 * algoritmo: 
+	 * 01 - Cria uma nova instância de FaseTextoProcesso, que representará a fase de origem; 
+	 * 02 - Associa, à instância de FaseTextoProcesso, o arquivo eletrônico recuperado seguindo a seguinte regra: 
+	 * 		- Se o arquivo eletrônico associado ao texto selecionado for igual ao arquivo eletrônico gravado na fase anterior, associar o mesmo arquivo
+	 * 			gravado na fase anterior, senão, associar uma nova cópia do arquivo
+	 * 			associado ao texto selecionado; 
+	 * 		- Obviamente se o arquivo estiver em elaboração não haverá arquivo gravado; 
+	 * 03 - Gera e associa, à instância de FaseTextoProcesso, o cabeçalho do documento; 
+	 * 04 - Associa, à instância de FaseTextoProcesso, o documento PDF registrado na fase anterior, se houver; 
+	 * 05 - Associa, à instância de FaseTextoProcesso, a data de transição: data corrente; 
+	 * 06 - Associa, à instância de FaseTextoProcesso, o texto selecionado; 
+	 * 07 - Salva a instância de FaseTextoProcesso; 
+	 * 08 - Alterar a fase atual do texto selecionado; 
+	 * 09 - Salva o texto selecionado.
+	 * @param texto
+	 * @param tipoTransicao
+	 * @param textosProcessados
+	 * @throws ServiceException
+	 * @throws TransicaoDeFaseInvalidaException
+	 * @throws ProcessoOcultoException 
+	 */
+	private void alterarFaseDoTexto(TextoDto textoDto, TipoTransicaoFaseTexto tipoTransicao, Set<Long> textosProcessados, String observacao, Responsavel responsavel)
+			throws ServiceException, TransicaoDeFaseInvalidaException, ProcessoOcultoException {
+		if (!textosProcessados.contains(textoDto.getId())) {
+			// Verifica se existem textos iguais ao texto informado.
+			if (textoDto.isTextosIguais()) {
+				// Se existirem textos iguais, devemos alterar o estado de todos
+				// eles. Essa pesquisa não retorna o próprio texto!
+				List<Texto> textosIguais = pesquisarTextosIguaisParaTransicaoFase(textoDto, tipoTransicao);
+				for (Texto textoIgual : textosIguais) {
+					alterarFase(textoIgual, tipoTransicao, textosProcessados, observacao, responsavel);
+				}
+			}
+			alterarFase(textoService.recuperarPorId(textoDto.getId()), tipoTransicao, textosProcessados, observacao, responsavel);
+		}
+	}
+
+	private void alterarFase(Texto textoIgual, TipoTransicaoFaseTexto tipoTransicao, Set<Long> textosProcessados, String observacao, Responsavel responsavel)
+			throws ServiceException, TransicaoDeFaseInvalidaException {
+		DocumentoTexto documentoTexto = DocumentoTextoUtil.recuperaDocumentoTextoMaisRecente(textoIgual);
+		// Na transição de fase SUSPENDER PUBLICAÇÃO, se não houver documento assinado digitalmente, 
+		// o texto deve voltar para a fase EM ELABORAÇÃO
+		if (tipoTransicao.equals(TipoTransicaoFaseTexto.SUSPENDER_PUBLICACAO) && (documentoTexto == null || !documentoTexto.getTipoSituacaoDocumento().equals(TipoSituacaoDocumento.ASSINADO_DIGITALMENTE))) {
+			textoService.alterarFase(textoIgual, TipoTransicaoFaseTexto.VOLTAR_PARA_ELABORACAO, observacao, responsavel);
+		} else {
+			textoService.alterarFase(textoIgual, tipoTransicao, observacao, responsavel);
+		}
+		textosProcessados.add(textoIgual.getId());
+	}
+
+	@Override
+	@Transactional(propagation = Propagation.REQUIRES_NEW)
+	public Collection<String> suspenderPublicacao(TextoDto textoDto, Set<Long> textosProcessados, String observacao, Principal usuario, Responsavel responsavel)
+			throws TransicaoDeFaseInvalidaException, TextoInvalidoParaPecaException, ProcessoOcultoException {
+		try {
+			Collection<String> mensagensDeTextosProcessados = new ArrayList<String>();
+			List<Texto> textos = pesquisarTextosIguaisParaTransicaoFase(textoDto,
+					TipoTransicaoFaseTexto.SUSPENDER_PUBLICACAO);
+			textos.add(0, recuperarTextoPorId(textoDto.getId()));
+			for (Texto texto : textos) {
+				if (isTextoNaoFoiProcessado(textosProcessados, texto)) {
+					suspendePublicacaoDoTexto(texto);
+					verificaAlteracoesDoControleDeVotos(texto, TipoTransicaoFaseTexto.SUSPENDER_PUBLICACAO);
+					String mensagem = "";
+					try {
+						if (isDespacho(texto) || isDecisaoMonocratica(texto) || isManifestacaoSobrePropostaSumulaVinculante(texto)) {
+							excluiPecaDoProcessoEletronico(texto);
+							atualizaAcessoAoTexto(texto, TipoDeAcessoDoDocumento.INTERNO);
+							if (!isManifestacaoSobrePropostaSumulaVinculante(texto))
+								mensagem = deslocaProcessoDoTexto(texto, usuario, TipoTransicaoFaseTexto.SUSPENDER_PUBLICACAO);
+						}
+					} catch (ErroAoDeslocarProcessoException e) {
+						mensagem = montaMensagemDeTextoValidoNaoDeslocado(e, TipoTransicaoFaseTexto.SUSPENDER_PUBLICACAO);
+					} catch (NaoExisteSetorParaDeslocamentoException e) {
+						mensagem = montaMensagemDeTextoValidoNaoDeslocado(e, TipoTransicaoFaseTexto.SUSPENDER_PUBLICACAO);
+					} catch (ProcessoApensanteInvalidoParaDeslocamentoException e) {
+						mensagem = montaMensagemDeTextoValidoNaoDeslocado(e, TipoTransicaoFaseTexto.SUSPENDER_PUBLICACAO);
+					}
+					
+					mensagensDeTextosProcessados.add(montaMensagemTextoValido(texto, mensagem));
+				}
+			}
+			alterarFaseDoTexto(textoDto, TipoTransicaoFaseTexto.SUSPENDER_PUBLICACAO, textosProcessados, observacao, responsavel);
+			return mensagensDeTextosProcessados;
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+
+	}
+
+	private void excluiPecaDoProcessoEletronico(Texto texto) throws ServiceException, TextoInvalidoParaPecaException {
+		arquivoProcessoEletronicoServiceExtra.excluirJuntadaDePecas(texto, false);
+	}
+
+	private void suspendePublicacaoDoTexto(Texto texto) throws ServiceException {
+		texto.setPublico(false);
+		texto.setPubliccaoRTJ(false);
+		textoService.alterar(texto);
+	}
+
+	/**
+	 * @throws TextoBloqueadoException 
+	 * @throws ProcessoOcultoException 
+	 * @throws SetorInativoException 
+	 * @see br.jus.stf.estf.decisao.texto.service.TextoService#liberarParaPublicacao(TextoDto)
+	 */
+	@Transactional(propagation = Propagation.REQUIRES_NEW)
+	public Collection<String> liberarParaPublicacao(TextoDto textoDto,
+			Set<Long> textosProcessados, boolean liberarRtj, Principal usuario,
+			String observacao, Responsavel responsavel) {
+		try {
+			Collection<String> mensagensDeTextosProcessados = new ArrayList<String>();
+			List<Texto> textos = pesquisarTextosIguaisParaTransicaoFase(textoDto,
+					TipoTransicaoFaseTexto.LIBERAR_PARA_PUBLICACAO);
+			textos.add(0, recuperarTextoPorId(textoDto.getId()));
+			for (Texto texto : textos) {
+				if (isTextoNaoFoiProcessado(textosProcessados, texto)) {
+					
+					if(!hasPerfilLiberarAcordaoParaPublicacaoProcessoSigiloso()) {
+						verificaConfidencialidade(texto.getObjetoIncidente());
+					}
+					
+					boolean isPublico = texto.getPublico();
+					liberaTextoParaPublicacao(texto, liberarRtj);
+					String mensagem = "";
+					if (!isPublico) {
+						verificaAlteracoesDoControleDeVotos(texto, TipoTransicaoFaseTexto.LIBERAR_PARA_PUBLICACAO);
+						try {
+							if (isDecisaoColegiada(texto)) {
+								mensagem = deslocaProcessoDoTexto(texto, getSetorDeAcordaos(), usuario, TipoTransicaoFaseTexto.LIBERAR_PARA_PUBLICACAO);
+							}
+							if (isDespacho(texto) || isDecisaoMonocratica(texto) || isManifestacaoSobrePropostaSumulaVinculante(texto)) {
+								gravaPecaProcessoEletronico(texto);
+								if (isManifestacaoSobrePropostaSumulaVinculante(texto)){
+									atualizaAcessoAoTexto(texto, TipoDeAcessoDoDocumento.PUBLICO);
+								}
+								else{
+									atualizaAcessoAoTexto(texto, TipoDeAcessoDoDocumento.INTERNO);								
+									mensagem = deslocaProcessoDoTexto(texto, usuario, TipoTransicaoFaseTexto.LIBERAR_PARA_PUBLICACAO);
+								}
+							}
+						} catch (NaoExisteSetorParaDeslocamentoException e) {
+							mensagem = montaMensagemDeTextoValidoNaoDeslocado(e, TipoTransicaoFaseTexto.LIBERAR_PARA_PUBLICACAO);
+						} catch (ErroAoDeslocarProcessoException e) {
+							mensagem = montaMensagemDeTextoValidoNaoDeslocado(e, TipoTransicaoFaseTexto.LIBERAR_PARA_PUBLICACAO);
+						} catch (ProcessoApensanteInvalidoParaDeslocamentoException e) {
+							mensagem = montaMensagemDeTextoValidoNaoDeslocado(e, TipoTransicaoFaseTexto.LIBERAR_PARA_PUBLICACAO);
+						}
+					}
+					mensagensDeTextosProcessados.add(montaMensagemTextoValido(texto, mensagem));
+				}
+			}
+			alterarFase(textoDto, TipoTransicaoFaseTexto.LIBERAR_PARA_PUBLICACAO, textosProcessados, observacao, responsavel);
+			return mensagensDeTextosProcessados;
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		} catch (ProcessoOcultoException e) {
+			throw new NestedRuntimeException(e);
+		} catch (TransicaoDeFaseInvalidaException e) {
+			throw new NestedRuntimeException(e);
+		} catch (TextoBloqueadoException e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+
+	private void verificaConfidencialidade(ObjetoIncidente<?> objetoIncidente) throws ProcessoOcultoException {
+		if (TipoConfidencialidade.OCULTO.equals(objetoIncidente.getTipoConfidencialidade())) {
+			throw new ProcessoOcultoException(MENSAGEM_PROCESSO_OCULTO);
+		}
+		
+		if (TipoConfidencialidade.SIGILOSO.equals(objetoIncidente.getTipoConfidencialidade())) {
+			throw new ProcessoOcultoException(MENSAGEM_PROCESSO_SIGILOSO);
+		}
+		
+	}
+
+	private boolean isTextoNaoFoiProcessado(Set<Long> textosProcessados, Texto texto) {
+		return !textosProcessados.contains(texto.getId());
+	}
+
+	private String montaMensagemTextoValido(Texto texto, String observacao) {
+		if (observacao != null && observacao.trim().length() > 0) {
+			observacao = ": " + observacao;
+		} else {
+			observacao = "";
+		}
+		return String.format("[%s]%s", montaIdentificacaoDoTexto(texto), observacao);
+	}
+
+	private String montaMensagemDeTextoValidoNaoDeslocado(Exception e, TipoTransicaoFaseTexto transicao) {
+		String acao = "";
+		if (TipoTransicaoFaseTexto.LIBERAR_PARA_PUBLICACAO.equals(transicao)) {
+			acao = "foi liberado para publicação";
+		} else if (TipoTransicaoFaseTexto.SUSPENDER_PUBLICACAO.equals(transicao)) {
+			acao = "teve a liberação para publicação suspensa";
+		} else if (TipoTransicaoFaseTexto.JUNTAR.equals(transicao)) {
+			acao = "foi juntado";
+		} else {
+			acao = "foi liberado";
+		}
+		return "O texto " + acao + " com sucesso, porém o deslocamento automático não foi realizado, devido ao seguinte motivo: "
+				+ e.getMessage();
+	}
+
+	private void liberaTextoParaPublicacao(Texto texto, boolean liberarRtj) throws ServiceException,
+			TransicaoDeFaseInvalidaException {
+		texto.setPublico(true);
+		texto.setPubliccaoRTJ(liberarRtj);
+		texto.setTipoRestricao(TipoRestricao.P);
+		textoService.alterar(texto);
+	}
+
+	private void verificaAlteracoesDoControleDeVotos(Texto texto, TipoTransicaoFaseTexto tipoTransicao)
+			throws ServiceException {
+		try {
+			ControleVoto controleDeVoto = controleVotoService.consultaControleDeVotosDoTexto(texto);
+			controleDeVoto.setDataPublico(getDataParaControleDeVotos(tipoTransicao));
+			if (isAlterarSituacaoDoTexto(texto)) {
+				controleDeVoto.setTipoSituacaoTexto(defineTipoSituacaoTextoControleVotos(tipoTransicao));
+			}
+			controleVotoService.alterar(controleDeVoto);
+		} catch (TextoSemControleDeVotosException e) {
+			// Não faz alterações no controle de votos, pois não está associado.
+		}
+	}
+
+	/**
+	 * Define qual o tipo de situação de texto do Controle de Votos será aplicado àquela ação
+	 * @param tipoTransicao
+	 * @return REVISADO caso seja Liberação para Publicação. ATIVO_NO_CONTROLE_DE_VOTOS caso seja Suspensão.
+	 */
+	private TipoSituacaoTexto defineTipoSituacaoTextoControleVotos(TipoTransicaoFaseTexto tipoTransicao) {
+		if (tipoTransicao.equals(TipoTransicaoFaseTexto.LIBERAR_PARA_PUBLICACAO)) {
+			return TipoSituacaoTexto.REVISADO;
+		} else if (tipoTransicao.equals(TipoTransicaoFaseTexto.SUSPENDER_PUBLICACAO)) {
+			return TipoSituacaoTexto.ATIVO_NO_CONTROLE_DE_VOTOS;
+		}
+		return null;
+	}
+
+	/**
+	 * Recupera a data usada para a alteração do controle de votos. Tem comportamentos distintos para 
+	 * a liberação para publicação e a suspensão de publicação
+	 * @param tipoTransicao
+	 * @return A data atual, caso seja Liberação para publicação. Null, se estiver Suspendendo a Publicação.
+	 */
+	private Date getDataParaControleDeVotos(TipoTransicaoFaseTexto tipoTransicao) {
+		if (tipoTransicao.equals(TipoTransicaoFaseTexto.LIBERAR_PARA_PUBLICACAO)) {
+			// Retorna a data atual
+			return new Date();
+		}
+		// Limpa a data que está gravada
+		return null;
+
+	}
+
+	private boolean isDespacho(Texto texto) {
+		return texto.getTipoTexto().equals(TipoTexto.DESPACHO);
+	}
+	
+	private boolean isDecisaoMonocratica(Texto texto) {
+		return texto.getTipoTexto().equals(TipoTexto.DECISAO_MONOCRATICA);
+	}
+	
+	private Boolean isManifestacaoSobrePropostaSumulaVinculante(Texto texto){
+		return texto.getTipoTexto().equals(TipoTexto.MANIFESTACAO_SOBRE_PROPOSTA_SUMULA_VINCULANTE);
+	}
+
+	private boolean isDecisaoColegiada(Texto texto) {
+		return texto.getTipoTexto().equals(TipoTexto.ACORDAO)
+				|| texto.getTipoTexto().equals(TipoTexto.DECISAO_SOBRE_REPERCURSAO_GERAL);
+	}
+
+	private boolean isAlterarSituacaoDoTexto(Texto texto) {
+		return texto.getTipoTexto().equals(TipoTexto.REVISAO_DE_APARTES)
+				&& texto.getDataSessao().after(DateTimeHelper.getData(DATA_LIMITE_ALTERACAO_TIPO_SITUACAO_DOCUMENTO));
+	}
+
+	private Setor getSetorDeAcordaos() throws ServiceException {
+		return setorService.recuperarPorId(Setor.CODIGO_SECAO_DE_COMPOSIÇAO_E_CONTROLE_DE_ACORDAOS);
+	}
+
+	private String deslocaProcessoDoTexto(Texto texto, Principal usuario, TipoTransicaoFaseTexto transicao)
+			throws ProcessoException, ServiceException,
+			NaoExisteSetorParaDeslocamentoException, ErroAoDeslocarProcessoException, ProcessoApensanteInvalidoParaDeslocamentoException {
+		return deslocaProcessoDoTexto(texto, recuperaSetorDeDestino(texto), usuario, transicao);
+	}
+
+	private Setor recuperaSetorDeDestino(Texto texto) throws ServiceException, NaoExisteSetorParaDeslocamentoException {
+		return mapeamentoClasseSetorService.recuperarSetorDeDestinoDoDeslocamento(texto.getObjetoIncidente());
+
+	}
+
+	protected String deslocaProcessoDoTexto(Texto texto, Setor setorDeDestino, Principal usuario, TipoTransicaoFaseTexto transicao)
+			throws ProcessoException, ServiceException, ErroAoDeslocarProcessoException, ProcessoApensanteInvalidoParaDeslocamentoException {
+		Processo processoDoTexto = (Processo) texto.getObjetoIncidente().getPrincipal();
+		if (validarProcessoParaDeslocamentoAutomatico(processoDoTexto, true)) {
+			if (isProcessoApenso(processoDoTexto)) {
+				Processo processoApensante = objetoIncidenteService.recuperarProcessoApensante(processoDoTexto);
+				if (validarProcessoParaDeslocamentoAutomatico(processoApensante, true)) {
+					objetoIncidenteService.deslocarProcesso(processoApensante, setorDeDestino, usuario);
+					return montaMensagemDeDeslocamentoDoProcesso(texto, setorDeDestino, transicao);
+				} else {
+					throw new ProcessoApensanteInvalidoParaDeslocamentoException("O processo eletrônico " + processoDoTexto.getIdentificacao()
+							+ " é apenso de um processo físico e, por este motivo, não foi deslocado automaticamente.");
+				}
+			} else {
+				// se processo não apenso
+				objetoIncidenteService.deslocarProcesso(processoDoTexto, setorDeDestino, usuario);
+				return montaMensagemDeDeslocamentoDoProcesso(texto, setorDeDestino, transicao);
+			}
+		}
+		return null;
+	}
+
+	private boolean isProcessoApenso(Processo processo) throws ServiceException {
+		return objetoIncidenteService.isProcessoApenso(processo);
+	}
+
+	private boolean validarProcessoParaDeslocamentoAutomatico(Processo processo, boolean validarProcessoParaDeslocamento) throws ErroAoDeslocarProcessoException {
+		try {
+			if (validarProcessoParaDeslocamento) {
+				return processo.getTipoMeioProcesso().equals(TipoMeioProcesso.ELETRONICO) && objetoIncidenteService.validarProcessoParaDeslocamento(processo);
+			}
+			
+			return processo.getTipoMeioProcesso().equals(TipoMeioProcesso.ELETRONICO);
+		} catch (Exception e) {
+			throw new ErroAoDeslocarProcessoException("Erro ao validar processo para deslocamento automático.", e);
+		}
+	}
+	
+	private String montaMensagemDeDeslocamentoDoProcesso(Texto texto, Setor setorDeDestino, TipoTransicaoFaseTexto transicao) {
+		String acao = "";
+		if (TipoTransicaoFaseTexto.LIBERAR_PARA_PUBLICACAO.equals(transicao)) {
+			acao = "foi liberado para publicação";
+		} else if (TipoTransicaoFaseTexto.SUSPENDER_PUBLICACAO.equals(transicao)) {
+			acao = "teve a liberação para publicação suspensa";
+		} else if (TipoTransicaoFaseTexto.JUNTAR.equals(transicao)) {
+			acao = "foi juntado";
+		} else {
+			acao = "foi liberado";
+		}
+		return "O texto " + montaIdentificacaoDoTexto(texto) + " " + acao + ", e o processo foi deslocado para: "
+				+ setorDeDestino.getNome();
+	}
+
+	private String montaIdentificacaoDoTexto(Texto texto) {
+		StringBuffer identificacao = new StringBuffer();
+		identificacao.append(texto.getIdentificacaoCompleta());
+		if (texto.getObservacao() != null && !texto.getObservacao().trim().equals("")) {
+			identificacao.append(" - ");
+			identificacao.append(texto.getObservacao());
+		}
+		return identificacao.toString();
+	}
+
+	private void gravaPecaProcessoEletronico(Texto texto) throws ServiceException {
+		try {
+			arquivoProcessoEletronicoServiceExtra.gravarJuntadaDePecas(texto);
+		} catch (NaoExisteDocumentoAssinadoException e) {
+			logger.warn(montaMensagemDeErroDeLiberacao(texto));
+		} catch (TextoInvalidoParaPecaException e) {
+			throw new ServiceException("Erro:", e);
+		}
+	}
+
+	private String montaMensagemDeErroDeLiberacao(Texto texto) {
+		StringBuilder sb = new StringBuilder();
+		sb.append("Não foi inserida nenhuma peça, pois não existe documento assinado para o seguinte texto: ");
+		sb.append(texto.getIdentificacao());
+		return sb.toString();
+	}
+
+	private void atualizaAcessoAoTexto(Texto texto, TipoDeAcessoDoDocumento tipoAcesso) throws ServiceException {
+		try {
+			DocumentoTexto documentoAssinado = DocumentoTextoUtil.recuperarDocumentoAssinadoDoTexto(texto);
+			documentoEletronicoService.alterarTipoDeAcessoDoDocumento(documentoAssinado.getDocumentoEletronico(),
+					tipoAcesso);
+		} catch (NaoExisteDocumentoAssinadoException e) {
+			// Não atualiza o status do documento, pois o texto não está
+			// assinado
+		}
+
+	}
+
+	/**
+	 * @see br.jus.stf.estf.decisao.texto.service.TextoService#recuperarTextos(br.gov.stf.estf.entidade.processostf.ObjetoIncidente, br.gov.stf.estf.entidade.ministro.Ministro)
+	 */
+	@Override
+	public List<TextoDto> recuperarTextos(ObjetoIncidente<?> objetoIncidente, Ministro ministro, Principal principal) {
+		// Recuperando todos os textos associados ao Objeto Incidente e ao
+		// Ministro...
+		List<TextoDto> dtos = textoDao.recuperarTextos(objetoIncidente, ministro, true, principal, hasPerfilVisualizarVotoDisponibilizado());
+		
+		validaAcessoTextosRestritos(principal, dtos);
+		
+		return adicionaControleDeVotos(objetoIncidente, ministro, dtos, true);
+	}
+
+	@Override
+	public void validaAcessoTextosRestritos(Principal principal, List<TextoDto> dtos) {
+		try {
+			String idUsuario = principal.getUsuario().getId();
+			String sistema = PermissionChecker.SIGLA_SISTEMA_ESTF_DECISAO;
+			String transacao = ActionIdentification.ACESSO_TEXTOS_RESTRITOS_GABINETE.name();
+			boolean possuiPermisssao = transacaoService.usuarioPossuiTransacao(idUsuario,sistema,transacao);
+			if ( possuiPermisssao ) {
+				for (TextoDto textoDto : dtos) {
+					if ( textoDto != null && !textoDto.isDeOutroSetor() ) {
+						textoDto.setVisivel(true);
+//						textoDto.setTipoRestricao(null); // Retira a restrição de visualização quando o usuário possuir a transação de acesso a texto a texto restrito. Isso é usado pelo TextoPermissionChecker.isRestrito(); // Márcio que pediu pra fazer :-)
+					}
+				}
+			}
+
+		} catch (ServiceException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private List<TextoDto> adicionaControleDeVotos(ObjetoIncidente<?> objetoIncidente, Ministro ministro,
+			List<TextoDto> dtos, boolean textosDoMinistro) {
+		// Somente adicionar controle para votos não elaborados.
+		try {
+			// Recuperando todos o votos abertos para o Objeto Incidente
+			// corrente...
+			List<ControleVoto> controles = controleVotoService.pesquisarControleVoto(objetoIncidente, null, null, null,
+					null);
+			// Para cada voto, se o controle for para o ministro corrente,
+			// verificar se já existe texto associado...
+			// Se não existir, incluir texto não elaborado.
+			List<TextoDto> textos = new ArrayList<TextoDto>();
+			for (ControleVoto controle : controles) {
+				// Só deve verificar a questão de permissão de controle de votos
+				// se não for pesquisa por textos do ministro.
+				if (!textosDoMinistro && isUsuarioPossuiPermissaoControleVotos()) {
+					adicionaControleDeVotosDeOutrosMinistros(objetoIncidente, ministro, textos, controle);
+				} else if (controle.getMinistro().equals(ministro) && controle.getTexto() == null) {
+					// Instanciar novo texto e adicionar à lista.
+					textos.add(getInstanciaTexto(objetoIncidente, controle, ministro));
+				}
+			}
+
+			// Adicionando textos retornados na pesquisa...
+			textos.addAll(dtos);
+
+			// Retornando lista incluindo textos sugeridos e textos retornados
+			// na pesquisa...
+			return textos;
+		} catch (ServiceException e) {
+			// ServiceException não deveria ser "Checked Exception",
+			// encapsulando e enviando...
+			throw new NestedRuntimeException(e);
+		}
+	}
+
+	private void adicionaControleDeVotosDeOutrosMinistros(ObjetoIncidente<?> objetoIncidente, Ministro ministro,
+			List<TextoDto> textos, ControleVoto controle) {
+		if (controle.getTexto() == null) {
+			objetoIncidente = objetoIncidenteService.recuperarObjetoIncidentePorId(objetoIncidente.getId());
+			textos.add(getInstanciaTexto(objetoIncidente, controle, controle.getMinistro()));
+		} else {
+			if (!controle.getMinistro().equals(ministro) 
+					&& !controle.getTexto().getPublico() 
+					&& controle.getTexto().getTipoFaseTextoDocumento() != null 
+					&& controle.getTexto().getTipoFaseTextoDocumento().getCodigoFase() != null
+					&& controle.getTexto().getTipoFaseTextoDocumento().getCodigoFase() >= FaseTexto.ASSINADO.getCodigoFase()
+					) {
+				textos.add(TextoDto.valueOf(controle.getTexto(), true));
+			}
+		}
+	}
+
+	/**
+	 * Valida se um usuário possui a permissão de criar um controle de votos.
+	 * @return
+	 */
+	private boolean isUsuarioPossuiPermissaoControleVotos() {
+		return permissionChecker.hasPermission((Principal) SecurityContextHolder.getContext().getAuthentication().getPrincipal(),
+				ActionIdentification.CRIAR_CONTROLE_DE_VOTOS);
+	}
+	
+	private boolean hasPerfilVisualizarVotoDisponibilizado() {
+		if (permissionChecker.hasPermission((Principal) SecurityContextHolder.getContext().getAuthentication().getPrincipal(), ActionIdentification.VISUALIZAR_VOTO_DISPONIBILIZADO))
+			return true;
+			
+		return false;
+	}
+	
+	public boolean hasPerfilLiberarAcordaoParaPublicacaoProcessoSigiloso(){
+		if (permissionChecker.hasPermission((Principal) SecurityContextHolder.getContext().getAuthentication().getPrincipal(), ActionIdentification.LIBERAR_ACORDAO_PARA_PUBLICACAO_PROCESSO_SIGILOSO))
+			return true;
+
+		return false;
+	}
+
+	/**
+	 * @see br.jus.stf.estf.decisao.texto.service.TextoService#recuperarTextos(br.gov.stf.estf.entidade.processostf.ObjetoIncidente)
+	 */
+	
+	@Override
+	public List<TextoDto> recuperarTextos(ObjetoIncidente<?> objetoIncidente) {
+		return recuperarTextos(objetoIncidente, true);
+	}
+	
+	/**
+	 * @see br.jus.stf.estf.decisao.texto.service.TextoService#recuperarTextos(br.gov.stf.estf.entidade.processostf.ObjetoIncidente, boolean)
+	 */
+	@Override
+	public List<TextoDto> recuperarTextos(ObjetoIncidente<?> objetoIncidente, boolean adicionarControleDeVotos) {
+		Ministro ministro = ((Principal) SecurityContextHolder.getContext().getAuthentication().getPrincipal())
+				.getMinistro();
+
+		// Recuperando todos os textos associados ao Objeto Incidente e ao
+		// Ministro...
+		List<TextoDto> textos = textoDao.recuperarTextos(objetoIncidente, ministro, false, (Principal) SecurityContextHolder.getContext().getAuthentication().getPrincipal(), hasPerfilVisualizarVotoDisponibilizado());
+		if (adicionarControleDeVotos) { 
+			return adicionaControleDeVotos(objetoIncidente, ministro, textos, false);
+		} else {
+			return textos;
+		}
+			
+	}
+
+	/**
+	 * Cria uma nova instância de texto para um dado tipo de texto.
+	 */
+	private TextoDto getInstanciaTexto(ObjetoIncidente<?> objetoIncidente, ControleVoto controleVoto, Ministro ministro) {
+		TextoDto dto = new TextoDto();
+		dto.setFake(true);
+		dto.setProcesso(ObjetoIncidenteDto.valueOf(objetoIncidente).getIdentificacao());
+		dto.setIdObjetoIncidente(objetoIncidente.getId());
+		dto.setMinistro(ministro.getSigla());
+		dto.setIdMinistro(ministro.getId());
+		if (TipoSituacaoTexto.CANCELADO.equals(controleVoto.getTipoSituacaoTexto())) {
+			dto.setFase(FaseTexto.CANCELADO);
+		} else {
+			dto.setFase(FaseTexto.NAO_ELABORADO);
+		}
+		dto.setSituacaoTexto(controleVoto.getTipoSituacaoTexto());
+		dto.setCancelado(TipoSituacaoTexto.CANCELADO.equals(controleVoto.getTipoSituacaoTexto()));
+		dto.setTipoTexto(controleVoto.getTipoTexto());
+		dto.setSequenciaVotos(controleVoto.getSequenciaVoto());
+		dto.setTipoSessao(controleVoto.getSessao().getDescricao());
+		dto.setDataSessao(controleVoto.getDataSessao());
+		return dto;
+	}
+
+	/**
+	 * @see br.jus.stf.estf.decisao.texto.service.TextoService#pesquisarListasTextos(java.lang.String)
+	 */
+	@Override
+	public List<ListaTextos> pesquisarListasTextos(String nome) {
+		Principal principal = (Principal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		try {
+			return principal.getMinistro() != null ? listaTextosService.pesquisarListaTextos(nome, true, principal.getMinistro().getSetor().getId()) : null;
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+
+	/**
+	 * @see br.jus.stf.estf.decisao.texto.service.TextoService#recuperarTextosIguais(java.lang.Long)
+	 */
+	@Override
+	public List<Texto> recuperarTextosIguais(Long id) {
+		try {
+			return textoService.pesquisarTextosIguais(recuperarTextoPorId(id), true);
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+
+	/**
+	 * @see br.jus.stf.estf.decisao.texto.service.TextoService#recuperarTextoPorId(java.lang.Long)
+	 */
+	@Override
+	public Texto recuperarTextoPorId(Long id) {
+		try {
+			return textoService.recuperarPorId(id);
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+
+	@Override
+	public List<Texto> recuperarListaTextos(Collection<TextoDto> textos) throws ServiceException {
+			try{
+				return textoDao.recuperarListaTextos(textos);
+			}catch(DaoException e){
+				throw new ServiceException(e.getMessage(), e);
+			}
+	}
+
+	public void cancelarAssinatura(TextoDto textoDto, TipoTransicaoFaseTexto transicao, Set<Long> textosProcessados, String observacao, Responsavel responsavel) throws TextoBloqueadoException, ProcessoOcultoException {
+		try {
+			verificaTextoBloqueado(textoDto);
+			Texto texto = recuperarTextoPorId(textoDto.getId());
+			cancelarAssinatura(texto, transicao, textosProcessados, observacao, responsavel);
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		} catch (TransicaoDeFaseInvalidaException e) {
+			throw new NestedRuntimeException(e);
+		} catch (TextoInvalidoParaPecaException e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+
+	private void cancelarAssinatura(Texto texto, TipoTransicaoFaseTexto transicao, Set<Long> textosProcessados, String observacao, Responsavel responsavel)
+			throws TransicaoDeFaseInvalidaException, TextoInvalidoParaPecaException, ServiceException, ProcessoOcultoException {
+		if (isTextoNaoFoiProcessado(textosProcessados, texto)) {
+			List<Texto> textosParaCancelar = new ArrayList<Texto>();
+			textosParaCancelar.add(texto);
+			List<Texto> textosIguais = pesquisarTextosIguaisParaTransicaoFase(TextoDto.valueOf(texto), transicao);
+			textosParaCancelar.addAll(textosIguais);
+			for (Texto textoParaCancelar : textosParaCancelar) {
+				FaseTexto faseTexto = textoParaCancelar.getTipoFaseTextoDocumento();
+				// Só devemos cancelar a assinatura se o texto foi efetivamente
+				// assinado (Fases "Assinado" e "Publicado")
+				if (FaseTexto.fasesComTextoAssinado.contains(faseTexto)) {
+					// Só devemos cancelar a assinatura se não foi excluída a
+					// juntada de peças. Essa exclusão já cancela a assinatura
+					textoService.cancelarAssinaturaDoTexto(textoParaCancelar);
+				}
+				// Se não nenhuma transição for informada, setar a default:
+				// cancelar assinatura.
+				if (transicao == null) {
+					transicao = TipoTransicaoFaseTexto.CANCELAR_ASSINATURA;
+				}
+				
+				// A Ementa só pode ter a assinatura cancelado caso o Acórdão
+				// esteja em uma fase anterior a Assinado.
+				if (texto.getTipoTexto().equals(TipoTexto.EMENTA)) {
+					TextoDto acordao = recuperarAcordao(ObjetoIncidenteDto.valueOf(texto.getObjetoIncidente()));
+					if (acordao != null && FaseTexto.fasesComTextoAssinado.contains(acordao.getFase())) {
+						throw new ServiceException("O texto " + TextoDto.valueOf(texto).toString()
+										+ " não pode ter a assinatura cancelada pois o Acórdão está na fase "
+										+ acordao.getFase() + ".");
+					}
+				}
+				
+				// Realizando transição de estados...
+				alterarFase(textoParaCancelar, transicao, textosProcessados, observacao, responsavel);
+			}
+		}
+	}
+
+	public void verificaTextoBloqueado(Texto texto) throws ServiceException, TextoBloqueadoException {
+		TextoDto textoDto = TextoDto.valueOf(texto, true);
+		verificaTextoBloqueado(textoDto);
+	}
+
+	public void verificaTextoBloqueado(TextoDto texto) throws TextoBloqueadoException, ServiceException {
+		String usuarioBloqueio = recuperarUsuarioBloqueio(texto);
+		if (usuarioBloqueio != null) {
+			throw new TextoBloqueadoException(montaMensagemDeTextoBloqueado(texto, usuarioBloqueio));
+		}
+	}
+
+	protected String recuperarUsuarioBloqueio(TextoDto texto) throws ServiceException {
+		ArquivoEletronicoView arquivoEletronicoView = recuperarArquivoEletronicoViewPeloId(texto
+				.getIdArquivoEletronico());
+		if (arquivoEletronicoView != null) {
+			return arquivoEletronicoView.getUsuarioBloqueio();
+		}
+		return null;
+
+	}
+
+	/**
+	 * Recupera o ArquivoEletronicoView pelo id.
+	 * @param id
+	 * @return
+	 */
+	public ArquivoEletronicoView recuperarArquivoEletronicoViewPeloId(Long id) {
+		return (ArquivoEletronicoView) recuperarRegistroPeloId(id, ArquivoEletronicoView.class);
+	}
+
+	private Object recuperarRegistroPeloId(Object id, Class<?> clazz) {
+		DetachedCriteria criteria = DetachedCriteria.forClass(clazz);
+		criteria.add(Expression.eq("id", id));
+		List<?> resultado = dao.findByCriteria(criteria, 0, 1);
+		if (resultado.size() == 1) {
+			return resultado.get(0);
+		}
+		return null;
+	}
+
+	protected String montaMensagemDeTextoBloqueado(TextoDto texto, String usuarioBloqueio) throws ServiceException {
+		Usuario usuario = recuperarUsuarioPeloId(usuarioBloqueio);
+		String mensagemDeTextoBloqueado = "O texto está sendo editado pelo usuário: " + usuario.getNome();
+		return mensagemDeTextoBloqueado;
+	}
+
+	private Usuario recuperarUsuarioPeloId(String usuarioBloqueio) {
+		return (Usuario) recuperarRegistroPeloId(usuarioBloqueio, Usuario.class);
+	}
+
+	@Override
+	public Texto recuperarEmenta(Texto texto, Ministro ministro) throws ServiceException {
+		return textoService.recuperar(texto.getObjetoIncidente(), TipoTexto.EMENTA, ministro.getId());
+	}
+	
+	@Override
+	public Texto recuperarEmenta(TextoDto textoDto, Ministro ministro) throws ServiceException {
+		return textoService.recuperar(objetoIncidenteService.recuperarObjetoIncidentePorId(textoDto.getIdObjetoIncidente()), TipoTexto.EMENTA, ministro.getId());
+	}
+
+	@Override
+	public Texto recuperarDecisaoRepercussaoGeral(Texto texto, Ministro ministro) throws ServiceException {
+		return textoService.recuperar(texto.getObjetoIncidente(), TipoTexto.DECISAO_SOBRE_REPERCURSAO_GERAL,
+				ministro.getId());
+	}
+
+	@Override
+	public Texto recuperarEmentaRepercussaoGeral(Texto texto, Ministro ministro) throws ServiceException {
+		return textoService.recuperar(texto.getObjetoIncidente(), TipoTexto.EMENTA_SOBRE_REPERCURSAO_GERAL,
+				ministro.getId());
+	}
+	
+	@Override
+	public Texto recuperarEmentaRepercussaoGeral(TextoDto textoDto, Ministro ministro) throws ServiceException {
+		return textoService.recuperar(objetoIncidenteService.recuperarObjetoIncidentePorId(textoDto.getIdObjetoIncidente()), TipoTexto.EMENTA_SOBRE_REPERCURSAO_GERAL,
+				ministro.getId());
+	}
+
+	/**
+	 * Pesquisa os textos iguais que devem ser levados em consideração para a
+	 * transição de fase.
+	 * 
+	 * @param texto
+	 * @param tipoTransicao
+	 * @return
+	 * @throws ServiceException
+	 * @throws TransicaoDeFaseInvalidaException
+	 * @throws ProcessoOcultoException 
+	 */
+	public List<Texto> pesquisarTextosIguaisParaTransicaoFase(TextoDto textoDto, TipoTransicaoFaseTexto tipoTransicao)
+			throws TransicaoDeFaseInvalidaException, ProcessoOcultoException {
+		List<Texto> textosIguais = recuperarTextosIguais(textoDto.getId());
+		if (!tipoTransicao.equals(TipoTransicaoFaseTexto.LIBERAR_PARA_PUBLICACAO)) {
+			textosIguais = ajustarListaDeTextosIguaisParaTransicaoConjunta(textoDto, textosIguais, tipoTransicao);
+		} else {
+			textosIguais = ajustarListaParaLiberarParaPublicacao(textosIguais);
+		}
+		return textosIguais;
+	}
+
+	/**
+	 * Monta a lista de textos igau
+	 * @param textosIguais
+	 * @return
+	 * @throws TransicaoDeFaseInvalidaException
+	 * @throws ProcessoOcultoException 
+	 */
+	private List<Texto> ajustarListaParaLiberarParaPublicacao(List<Texto> textosIguais)
+			throws TransicaoDeFaseInvalidaException, ProcessoOcultoException {
+		List<Texto> textosComStatusProibido = new ArrayList<Texto>();
+		List<Texto> textosValidos = new ArrayList<Texto>();
+		List<Texto> textosProcessoOculto = new ArrayList<Texto>();
+		for (Texto texto : textosIguais) {
+			if (isFaseMenor(texto.getTipoFaseTextoDocumento(), FaseTexto.ASSINADO)) {
+				textosComStatusProibido.add(texto);
+			} else if (isTextoProcessoOculto(texto)) {
+				textosProcessoOculto.add(texto);
+			} else {
+				if (texto.getTipoFaseTextoDocumento().equals(FaseTexto.ASSINADO)
+						|| texto.getTipoFaseTextoDocumento().equals(FaseTexto.JUNTADO)) {
+					textosValidos.add(texto);
+				}
+			}
+			
+		}
+		if (textosComStatusProibido.size() > 0) {
+			throw new TransicaoDeFaseInvalidaException(montaMensagemDeErro(textosComStatusProibido));
+		}
+		if (textosProcessoOculto.size() > 0) {
+			throw new ProcessoOcultoException(montaMensagemDeProcessoOculto(textosProcessoOculto));
+		}
+		return textosValidos;
+	}
+
+	private String montaMensagemDeProcessoOculto(
+			List<Texto> textosProcessoOculto) {
+		StringBuilder mensagem = new StringBuilder();
+		mensagem.append("Não é possível liberar o texto para publicação, pois os seguintes textos iguais não podem ser liberados para publicação:");
+		mensagem.append("\n");
+		for (Texto texto : textosProcessoOculto) {
+			mensagem.append(texto.getIdentificacaoCompleta());
+			mensagem.append(": ");
+			mensagem.append(MENSAGEM_PROCESSO_OCULTO);
+			mensagem.append("\n");
+		}
+		return mensagem.toString();
+	}
+
+	private boolean isTextoProcessoOculto(Texto texto) {
+		return TipoConfidencialidade.OCULTO.equals(texto.getObjetoIncidente().getTipoConfidencialidade()) || TipoConfidencialidade.SIGILOSO.equals(texto.getObjetoIncidente().getTipoConfidencialidade());
+	}
+
+	private String montaMensagemDeErro(List<Texto> textosComStatusProibido) {
+		StringBuilder mensagem = new StringBuilder();
+		mensagem.append("Não é possível liberar o texto para publicação, pois os seguintes textos iguais se encontram em fases anteriores a Assinado:");
+		mensagem.append("\n");
+		for (Texto texto : textosComStatusProibido) {
+			mensagem.append(texto.getIdentificacaoCompleta());
+			mensagem.append(": ");
+			mensagem.append(texto.getTipoFaseTextoDocumento().getDescricao());
+			mensagem.append("\n");
+		}
+		return mensagem.toString();
+	}
+
+	/**
+	 * Método que ajusta as fases dos textos que estiverem em fases diferentes
+	 * do texto-base, de forma que a transição ocorra em todos os textos que
+	 * estiverem com a fase inferior à fase de destino.
+	 * 
+	 * @param texto
+	 *            Texto base da mudança
+	 * @param textosIguais
+	 *            Coleção de textos iguais que deve ser ajustada
+	 * @param tipoTransicao
+	 *            O tipo de transição executada
+	 * @return A lista de textos ajustada
+	 */
+	private List<Texto> ajustarListaDeTextosIguaisParaTransicaoConjunta(TextoDto texto, List<Texto> textosIguais,
+			TipoTransicaoFaseTexto tipoTransicao) {
+		FaseTexto faseTextoBase = texto.getFase();
+		TransicaoFaseTexto transicao = getTransicaoDoTexto(texto, tipoTransicao);
+		boolean isTransicaoProgressiva = isFaseDoTextoMenorIgualQueFaseDaTransicao(texto, transicao);
+		List<Texto> textosIguaisAjustados = new ArrayList<Texto>();
+		for (Texto textoIgual : textosIguais) {
+			// Modificação. Agora apenas os textos que estiverem com fase menor
+			// terão a fase ajustada. Os de fase igual ficarão inalterados.
+			if ((isTransicaoProgressiva && isFaseMenor(textoIgual.getTipoFaseTextoDocumento(), transicao.destino))
+					|| (!isTransicaoProgressiva && isTextoIgualPodeRegredirDeFase(textoIgual, transicao, faseTextoBase))) {
+				// Iguala a fase de texto para a fase do texto-base.
+				textoIgual.setTipoFaseTextoDocumento(faseTextoBase);
+				textosIguaisAjustados.add(textoIgual);
+			}
+		}
+		return textosIguaisAjustados;
+	}
+
+	/**
+	 * Verifica se um texto da lista de textos iguais pode regredir de fase ou não. Isso acontecerá se:
+	 * 1)Fase do texto igual for maior que a fase de destino da transição
+	 * 2)A fase do texto igual for menor ou igual à fase do texto base.
+	 * 
+	 * @param textoIgual
+	 * @param transicao
+	 * @param faseTextoBase
+	 * @return
+	 */
+	private boolean isTextoIgualPodeRegredirDeFase(Texto textoIgual, TransicaoFaseTexto transicao,
+			FaseTexto faseTextoBase) {
+		return !isFaseDoTextoMenorIgualQueFaseDaTransicao(TextoDto.valueOf(textoIgual), transicao)
+				&& isFaseMenorOuIgual(textoIgual.getTipoFaseTextoDocumento(), faseTextoBase);
+
+	}
+
+	/**
+	 * Verifica se a transição é progressiva ou regressiva. Caso a fase do texto
+	 * seja menor que a fase de destino, é progressiva. Caso contrário, é
+	 * regressiva.
+	 * 
+	 * @param textoIgual
+	 * @param transicao
+	 * @return
+	 */
+	private boolean isFaseDoTextoMenorIgualQueFaseDaTransicao(TextoDto textoIgual, TransicaoFaseTexto transicao) {
+		return isFaseMenorOuIgual(textoIgual.getFase(), transicao.destino);
+	}
+
+	private boolean isFaseMenorOuIgual(FaseTexto faseTextoBase, FaseTexto faseTextoComparada) {
+		return faseTextoBase.compareTo(faseTextoComparada) <= 0;
+	}
+
+	private boolean isFaseMenor(FaseTexto faseTextoBase, FaseTexto faseTextoComparada) {
+		return faseTextoBase.compareTo(faseTextoComparada) < 0;
+	}
+
+	private TransicaoFaseTexto getTransicaoDoTexto(TextoDto texto, TipoTransicaoFaseTexto tipoTransicao) {
+		return tipoTransicao.getTransicao(texto.getFase());
+	}
+
+	@Override
+	public Long recuperarSequencialDoDocumentoEletronico(TextoDto texto) {
+		try {
+			Texto textoConsulta = recuperarTextoPorId(texto.getId());
+			return textoService.recuperarSequencialDoDocumentoEletronico(textoConsulta);
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+
+	/**
+	 * @see br.jus.stf.estf.decisao.texto.service.TextoService#verificarRestricaoTextos(Collection, String, Long)
+	 */
+	@Override
+	public boolean verificarRestricaoTextos(Collection<Texto> textos, String idUsuario, Long idSetor) {
+		return textoService.verificarRestricaoTextos(textos, idUsuario, idSetor);
+	}
+
+	@Override
+	public TipoDocumentoTexto recuperarTipoDocumentoTextoPorId(Long idTipoDocumentoTexto) {
+		try {
+			return tipoDocumentoTextoService.recuperarPorId(idTipoDocumentoTexto);
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+
+	/**
+	 * @see br.jus.stf.estf.decisao.texto.service.TextoService#pesquisarEmentaParaTextoIgual(br.jus.stf.estf.decisao.texto.support.ConsultaDadosDoTextoDto)
+	 */
+	@Override
+	public TextoDto pesquisarEmentaParaTextoIgual(ConsultaDadosDoTextoDto consulta) {
+		try {
+			return TextoDto.valueOf(textoService.pesquisarEmentaParaTextoIgual(consulta));
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+
+	/**
+	 * @see br.jus.stf.estf.decisao.texto.service.TextoService#isTextoJaRegistradoParaProcesso(br.jus.stf.estf.decisao.texto.support.ConsultaDadosDoTextoDto)
+	 */
+	@Override
+	public boolean isTextoJaRegistradoParaProcesso(ConsultaDadosDoTextoDto consulta) {
+		try {
+			return textoService.isTextoJaRegistradoParaProcesso(consulta);
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+
+	/**
+	 * @see br.jus.stf.estf.decisao.texto.service.TextoService#pesquisar(br.jus.stf.estf.decisao.texto.support.ConsultaDadosDoTextoDto)
+	 */
+	@Override
+	public List<TextoDto> pesquisar(ConsultaDadosDoTextoDto consulta) {
+		try {
+			List<Texto> textos = textoService.pesquisar(consulta);
+			List<TextoDto> dtos = new ArrayList<TextoDto>();
+			for (Texto texto : textos) {
+				dtos.add(TextoDto.valueOf(texto));
+			}
+			return null;
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+
+	/**
+	 * @see br.jus.stf.estf.decisao.texto.service.TextoService#criarListaTextosReplicados(br.jus.stf.estf.decisao.pesquisa.domain.TextoDto, java.util.Collection, br.gov.stf.estf.entidade.ministro.Ministro)
+	 */
+	@Override
+	public void criarListaTextosReplicados(TextoDto texto, Collection<ObjetoIncidenteDto> objetosIncidenteValidos,
+			Ministro ministro) {
+		try {
+			Texto textoModelo = recuperarTextoPorId(texto.getId());
+
+			for (ObjetoIncidenteDto objetoIncidente : objetosIncidenteValidos) {
+				Texto novoTexto = new Texto();
+
+				// Informações padrão...
+				novoTexto.setDataCriacao(DateTimeHelper.getDataAtual());
+				novoTexto.setTipoFaseTextoDocumento(FaseTexto.EM_ELABORACAO);
+
+				// Informações do modelo...
+				novoTexto.setTipoRestricao(textoModelo.getTipoRestricao());
+
+				// Informações do usuário...
+				
+				if (texto.getResponsavel() != null && texto.getResponsavel().trim().length() > 0) {
+					Responsavel responsavel = null;
+					
+					try {
+						responsavel = usuarioService.recuperarGrupoUsuario(Long.parseLong(texto.getResponsavel()));
+					} catch (NumberFormatException e) {
+						
+					}
+					
+					if (responsavel == null) 
+						responsavel = usuarioService.recuperarPorId(texto.getResponsavel().toUpperCase());
+					
+					novoTexto.setResponsavel(responsavel);
+				}
+				
+				novoTexto.setTipoTexto(texto.getTipoTexto());
+				novoTexto.setLiberacaoAntecipada(texto.getLiberacaoAntecipada());
+				novoTexto.setTipoVoto(texto.getTipoVoto());
+				novoTexto.setObservacao(texto.getObservacao());
+
+				// Informações do ministro...
+				novoTexto.setMinistro(ministro);
+
+				// Informações de publicação...
+				novoTexto.setPublico(false);
+				novoTexto.setSalaJulgamento(false);
+				novoTexto.setPubliccaoRTJ(false);
+
+				// Informações da lista...
+				novoTexto.setTextosIguais(false);
+
+				// Informações de objeto incidente...
+				novoTexto.setObjetoIncidente(objetoIncidenteService.recuperarObjetoIncidentePorId(objetoIncidente
+						.getId()));
+
+				// Informações do arquivo eletrônico...
+				textoService.copiarArquivoParaTexto(novoTexto, textoModelo.getArquivoEletronico());
+
+				// Validação e inclusão do texto
+				textoService.validarNovoTexto(novoTexto);
+				textoService.incluir(novoTexto);
+
+				// Sincroniza o controle de votos
+				sincronizarControleDeVotos(ministro, textoModelo, objetoIncidente, novoTexto);
+			}
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+
+	private void sincronizarControleDeVotos(Ministro ministro, Texto textoModelo, ObjetoIncidenteDto objetoIncidente,
+			Texto novoTexto) throws ServiceException {
+		// Informações de controle de votos...
+		ControleVoto controleVoto = consultaControleDeVotoDoProcesso(novoTexto.getTipoTexto(), ministro,
+				objetoIncidente);
+		if (controleVoto == null || TipoTexto.DESPACHO.equals(novoTexto.getTipoTexto()) || TipoTexto.DECISAO_MONOCRATICA.equals(novoTexto.getTipoTexto())) {
+			novoTexto.setSequenciaVoto(0L);
+			novoTexto.setDataSessao(null);
+		} else {
+			novoTexto.setSequenciaVoto(controleVoto.getSequenciaVoto());
+			novoTexto.setDataSessao(controleVoto.getDataSessao());
+			controleVoto.setTexto(novoTexto);
+			controleVotoService.salvar(controleVoto);
+		}
+		textoService.salvar(novoTexto);
+	}
+
+	@Override
+	public List<ControleVoto> consultarControleDeVotoDoProcesso(ObjetoIncidenteDto objetoIncidente)
+			throws ServiceException {
+		return controleVotoService.pesquisarControleVoto(montaConsultaDeTextoDoProcesso(objetoIncidente));
+	}
+
+	/**
+	 * @see br.jus.stf.estf.decisao.texto.service.TextoService#consultaControleDeVotoDoProcesso(br.gov.stf.estf.entidade.documento.TipoTexto, br.gov.stf.estf.entidade.ministro.Ministro, br.jus.stf.estf.decisao.pesquisa.domain.ObjetoIncidenteDto)
+	 */
+	@Override
+	public ControleVoto consultaControleDeVotoDoProcesso(TipoTexto tipoTexto, Ministro ministroDoGabinete,
+			ObjetoIncidenteDto objetoIncidente) throws ServiceException {
+		List<ControleVoto> controlesDeVoto = controleVotoService.pesquisarControleVoto(montaConsultaDeTextoDoProcesso(
+				objetoIncidente, tipoTexto, ministroDoGabinete));
+		if (controlesDeVoto.isEmpty()) {
+			return null;
+		}
+		return controlesDeVoto.get(0);
+	}
+
+	private ConsultaDadosDoTextoDto montaConsultaDeTextoDoProcesso(ObjetoIncidenteDto objetoIncidente)
+			throws ServiceException {
+		return montaConsultaDeTextoDoProcesso(objetoIncidente, null, null);
+	}
+
+	private ConsultaDadosDoTextoDto montaConsultaDeTextoDoProcesso(ObjetoIncidenteDto objetoIncidente,
+			TipoTexto tipoTexto, Ministro ministroDoGabinete) throws ServiceException {
+		ConsultaDadosDoTextoDto consulta = montaDadosBasicosDaConsulta(objetoIncidente);
+		if (ministroDoGabinete != null) {
+			consulta.setCodigoDoMinistro(ministroDoGabinete.getId());
+			consulta.setIncluirPresidencia(isPermitePesquisaNaPresidencia(ministroDoGabinete, objetoIncidente,
+					tipoTexto));
+		}
+		consulta.setTipoDeTexto(tipoTexto);
+		return consulta;
+	}
+
+	private boolean isPermitePesquisaNaPresidencia(Ministro ministroDoGabinete, ObjetoIncidenteDto objetoIncidente,
+			TipoTexto tipoTexto) throws ServiceException {
+		return isSetorDoPresidente(ministroDoGabinete) && (TipoTexto.DESPACHO.equals(tipoTexto) || TipoTexto.DECISAO_MONOCRATICA.equals(tipoTexto)
+		// Ministro é relator do objetoIncidente
+				|| objetoIncidente.getIdRelator().equals(ministroDoGabinete.getId()));
+	}
+
+	private boolean isSetorDoPresidente(Ministro ministroDoGabinete) throws ServiceException {
+		return (ministroDoGabinete.getId().equals(ministroDoGabinete.getMinistroPresidente().getId()) || (ministroDoGabinete
+				.getSetor().getId().equals(Setor.CODIGO_SETOR_PRESIDENCIA)));
+	}
+
+	/**
+	 * @see br.jus.stf.estf.decisao.texto.service.TextoService#existeTextoRegistradoParaProcesso(br.jus.stf.estf.decisao.pesquisa.domain.ObjetoIncidenteDto, br.gov.stf.estf.entidade.documento.TipoTexto, br.gov.stf.estf.entidade.ministro.Ministro)
+	 */
+	@Override
+	public boolean existeTextoRegistradoParaProcesso(ObjetoIncidenteDto objetoIncidente, TipoTexto tipoTexto,
+			Ministro ministroDoGabinete) throws ServiceException {
+		ConsultaDadosDoTextoDto consulta = montaConsultaDeTextoDoProcesso(objetoIncidente, tipoTexto,
+				ministroDoGabinete);
+		return textoService.isTextoJaRegistradoParaProcesso(consulta);
+	}
+
+	private ConsultaDadosDoTextoDto montaConsultaDeEmenta(TextoDto texto, ObjetoIncidenteDto objetoIncidente) {
+		ConsultaDadosDoTextoDto consulta = montaDadosBasicosDaConsulta(objetoIncidente);
+		consulta.setSequencialDoArquivoEletronico(texto.getIdArquivoEletronico());
+		consulta.setTipoDeTexto(texto.getTipoTexto());
+		return consulta;
+	}
+
+	private ConsultaDadosDoTextoDto montaDadosBasicosDaConsulta(ObjetoIncidenteDto objetoIncidente) {
+		ConsultaDadosDoTextoDto consulta = new ConsultaDadosDoTextoDto();
+		consulta.setSequencialObjetoIncidente(objetoIncidente.getId());
+		return consulta;
+	}
+
+	@Override
+	public TextoDto recuperarEmenta(ObjetoIncidenteDto objetoIncidente) throws ServiceException {
+		return TextoDto.valueOf(textoService.recuperar(
+				objetoIncidenteService.recuperarObjetoIncidentePorId(objetoIncidente.getId()), TipoTexto.EMENTA, null));
+
+	}
+	
+	@Override
+	public TextoDto recuperarAcordao(ObjetoIncidenteDto objetoIncidente) throws ServiceException {
+		return TextoDto.valueOf(textoService.recuperar(
+				objetoIncidenteService.recuperarObjetoIncidentePorId(objetoIncidente.getId()), TipoTexto.ACORDAO, null));
+
+	}
+
+
+//	@Override
+//	public List<TipoTexto> recuperarTipoTextoPadrao(ObjetoIncidente<?> objetoIncidente, Ministro ministro) {
+//		try {
+//			if (objetoIncidente != null) {
+//				List<TipoTexto> lista = new LinkedList<TipoTexto>();
+//
+//				ObjetoIncidente<?> obj = objetoIncidenteService.recuperarObjetoIncidentePorId(objetoIncidente.getId());
+//				Processo processo = ObjetoIncidenteUtil.getProcesso(obj);
+//				TipoIncidenteJulgamento tipoIncidenteJulgamento = ObjetoIncidenteUtil.getTipoJulgamento(obj);
+//
+//				lista.add(TipoTexto.DESPACHO);
+//
+//				// Tipo de texto padrão para o ministro relator
+//
+//				// Verifica se o processo foi distribuído
+//				MinistroDto relatorIncidente = pesquisaService.recuperarRelatorIncidente(objetoIncidente.getId());
+//				if (relatorIncidente != null) {
+//					if (relatorIncidente.getId().equals(ministro.getId())) {
+//						lista.add(TipoTexto.EMENTA);
+//						lista.add(TipoTexto.ACORDAO);
+//						lista.add(TipoTexto.RELATORIO);
+//						lista.add(TipoTexto.VOTO);
+//						// Jubé - Incluído em 9/9/2010 a pedido do Tiago
+//						lista.add(TipoTexto.OFICIO);
+//					}
+//
+//					// quando o tipo de julgamento for de repercussão geral é inserido
+//					// os
+//					// tipo de texto padrao para o plenário virtual.
+//					if (tipoIncidenteJulgamento != null
+//							&& tipoIncidenteJulgamento.getSigla() != null
+//							&& tipoIncidenteJulgamento.getSigla().equals(
+//									TipoIncidenteJulgamento.SIGLA_REPERCUSSAO_GERAL)) {
+//						// recupera se o julgametno da repercussão geral foi finalizado.
+//						Boolean finalizado = repercussaoGeralService.julgamentoFinalizado(processo);
+//
+//						if (!finalizado) {
+//							lista.add(TipoTexto.MANIFESTACAO_SOBRE_REPERCUSAO_GERAL);
+//						}
+//						if (relatorIncidente.getId().equals(ministro.getId())) {
+//							if (finalizado) {
+//								lista.add(TipoTexto.DECISAO_SOBRE_REPERCURSAO_GERAL);
+//							}
+//							lista.add(TipoTexto.EMENTA_SOBRE_REPERCURSAO_GERAL);
+//						}
+//					}
+//				}
+//
+//				return lista;
+//			}
+//			return Arrays.asList(TipoTexto.getTipoTextoVazio());
+//		} catch (ServiceException e) {
+//			throw new NestedRuntimeException(e);
+//		}
+//	}
+	
+	@Override
+	public List<TipoTexto> recuperarTipoTextoPadrao(ObjetoIncidente<?> objetoIncidente, Ministro ministro) {
+		try {
+			if (objetoIncidente != null) {
+				List<TipoTexto> lista = new LinkedList<TipoTexto>();
+
+				ObjetoIncidente<?> obj = objetoIncidenteService.recuperarObjetoIncidentePorId(objetoIncidente.getId());
+				Processo processo = ObjetoIncidenteUtil.getProcesso(obj);
+				TipoIncidenteJulgamento tipoIncidenteJulgamento = ObjetoIncidenteUtil.getTipoJulgamento(obj);
+
+//				lista.add(TipoTexto.DESPACHO);
+//				lista.add(TipoTexto.DECISAO_MONOCRATICA);
+				lista.add(TipoTexto.MANIFESTACAO_SOBRE_PROPOSTA_SUMULA_VINCULANTE);
+				lista.add(TipoTexto.COMPLEMENTO_AO_VOTO);
+				// Tipo de texto padrão para o ministro relator
+
+				// Verifica se o processo foi distribuído
+				Ministro ministroRelator = ministroService.recuperarMinistroRelatorIncidente(obj);
+				if (ministroRelator != null && ministro != null) {
+					if (ministroRelator.getId().equals(ministro.getId())) {
+						lista.add(TipoTexto.EMENTA);
+						lista.add(TipoTexto.ACORDAO);
+						lista.add(TipoTexto.RELATORIO);
+						lista.add(TipoTexto.VOTO);
+						//Jubé - Incluído em 9/9/2010 a pedido do Tiago
+						lista.add(TipoTexto.OFICIO);
+					}
+					//O tipo "Voto Vista" é liberado para qualquer Ministro, mesmo o
+					//próprio relator do processo, conforme solicitação da ISSUE 941.
+					lista.add(TipoTexto.VOTO_VISTA);
+
+					// quando o tipo de julgamento for de repercussão geral é inserido os tipo de texto padrao para o plenário virtual.
+					if (tipoIncidenteJulgamento != null && tipoIncidenteJulgamento.getSigla() != null && (tipoIncidenteJulgamento.getSigla().equals(TipoIncidenteJulgamento.SIGLA_REPERCUSSAO_GERAL)
+							|| tipoIncidenteJulgamento.getSigla().equals(TipoIncidenteJulgamento.SIGLA_REPERCUSSAO_GERAL_SEGUNDO_JULGAMENTO))) {
+						// recupera se o julgametno da repercussão geral foi finalizado.
+						Boolean finalizado = repercussaoGeralService.julgamentoFinalizado(processo);
+
+						if (!finalizado) {
+							lista.add(TipoTexto.MANIFESTACAO_SOBRE_REPERCUSAO_GERAL);
+						}
+						if (ministroRelator.getId().equals(ministro.getId())) {
+							if (finalizado) {
+								lista.add(TipoTexto.DECISAO_SOBRE_REPERCURSAO_GERAL);
+							}
+							lista.add(TipoTexto.EMENTA_SOBRE_REPERCURSAO_GERAL);
+						}
+					}
+					lista.add(TipoTexto.MEMORIA_DE_CASO);
+					lista.add(TipoTexto.MINUTA);
+					lista.add(TipoTexto.VOTO_VOGAL);
+				}
+
+				return lista;
+			}
+			return Arrays.asList(TipoTexto.getTipoTextoVazio());
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+
+	public List<TipoIncidenteJulgamento> recuperarTiposDeIncidentes(Classe classeProcessual) {
+		try {
+			List<TipoIncidenteJulgamento> lista = tipoIncidenteJulgamentoService.pesquisarTodosTiposJulgamento();
+			if (lista != null && lista.size() > 0) {
+				List<TipoIncidenteJulgamento> permitidosParaClasse = new ArrayList<TipoIncidenteJulgamento>();
+				for (TipoIncidenteJulgamento tipoIncidenteJulgamento : lista) {
+					if (isTipoIncidenteJulgamentoPermitidoParaClasse(tipoIncidenteJulgamento, classeProcessual)) {
+						permitidosParaClasse.add(tipoIncidenteJulgamento);
+					}
+				}
+				Collections.sort(permitidosParaClasse, getComparadorDeTipoDeIncidente());
+				return permitidosParaClasse;
+			} else {
+				insereTipoIncidenteVazioNaLista(lista);
+				return lista;
+			}
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+
+	}
+
+	@Override
+	public boolean isTipoIncidenteJulgamentoPermitidoParaClasse(TipoIncidenteJulgamento tipoIncidenteJulgamento, Classe classeProcessual) {
+		return tipoIncidenteJulgamento.getClasses() == null || tipoIncidenteJulgamento.getClasses().size() == 0
+				|| tipoIncidenteJulgamento.getClasses().contains(classeProcessual);
+	}
+
+	public void insereTipoIncidenteVazioNaLista(List<TipoIncidenteJulgamento> lista) {
+		TipoIncidenteJulgamento incidenteVazio = new TipoIncidenteJulgamento();
+		incidenteVazio.setId(null);
+		incidenteVazio.setDescricao("");
+		lista.add(incidenteVazio);
+	}
+
+	/**
+	 * Compara dois tipos de incidente usando as descrições.
+	 * @return
+	 */
+	private Comparator<TipoIncidenteJulgamento> getComparadorDeTipoDeIncidente() {
+		return new Comparator<TipoIncidenteJulgamento>() {
+			@Override
+			public int compare(TipoIncidenteJulgamento o1, TipoIncidenteJulgamento o2) {
+				if (o1 != null) {
+					return o1.getDescricao().compareTo(o2.getDescricao());
+				} else {
+					if (o2 != null) {
+						return -1;
+					}
+				}
+				return 0;
+			};
+		};
+	}
+
+	@Override
+	public Integer recuperarProximaSequenciaCadeia(Long idObjetoIncidente, Long idTipoIncidenteJulgamento) {
+		try {
+			return incidenteJulgamentoService.proximaSequenciaCadeia(idObjetoIncidente, idTipoIncidenteJulgamento);
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+
+	@Override
+	public IncidenteJulgamento inserirIncidenteJulgamento(Long idObjetoIncidente, Long idTipoIncidenteJulgamento,
+			Integer sequenciaCadeia) throws DuplicacaoChaveAntigaException {
+		try {
+			return incidenteJulgamentoService.inserirIncidenteJulgamentoESTFDecisao(idObjetoIncidente, idTipoIncidenteJulgamento,
+					sequenciaCadeia);
+		} catch (IncidenteJulgamentoException e) {
+			throw new NestedRuntimeException(e);
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+
+	@Override
+	public void validaExclusaoTexto(TextoDto texto) throws TextoException, ServiceException {
+		textoService.validaExclusaoTexto(recuperarTextoPorId(texto.getId()));
+	}
+
+	@Override
+	public void excluirTextos(Collection<TextoDto> textos) throws ServiceException {
+		excluirTextosComRelacionamentos(textos);
+	}
+
+	private void excluirTextosComRelacionamentos(Collection<TextoDto> textos) throws ServiceException {
+		for (TextoDto texto : textos) {
+			textoService.excluirTextoComRelacionamentos(recuperarTextoPorId(texto.getId()));
+		}
+	}
+
+	@Override
+	public void validarNovoTexto(Texto texto) {
+		try {
+			textoService.validarNovoTexto(texto);
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+
+	@Override
+	public List<ObjetoIncidenteDto> recuperarProcessosListaTextosIguais(TextoDto texto) throws ServiceException {
+		List<Texto> textosIguais = textoService.pesquisarTextosIguais(recuperarTextoPorId(texto.getId()), true);
+		List<ObjetoIncidenteDto> processos = new ArrayList<ObjetoIncidenteDto>();
+		for (Texto textoIgual : textosIguais) {
+			processos.add(ObjetoIncidenteDto.valueOf(textoIgual.getObjetoIncidente()));
+		}
+
+		return processos;
+	}
+	
+	@Override
+	public TextoDto recuperaEmentaGeradaParaProcesso(TextoDto texto, ObjetoIncidenteDto objetoIncidente)
+			throws ServiceException {
+		ConsultaDadosDoTextoDto consulta = montaConsultaDeEmenta(texto, objetoIncidente);
+		return TextoDto.valueOf(textoService.pesquisarEmentaParaTextoIgual(consulta));
+	}
+
+	@Override
+	public void verificaTextoLiberadoParaPublicacao(TextoDto texto) throws ServiceException,
+			TextoNaoPodeSerAlteradoException {
+		textoService.verificaTextoLiberadoParaPublicacao(recuperarTextoPorId(texto.getId()));
+	}
+
+	private Collection<TextoDto> carregaTextosParaExclusao(Collection<ObjetoIncidenteDto> processosValidos,
+			List<TextoDto> textosIguaisGravados) throws ServiceException {
+		Collection<TextoDto> textosParaExclusao = new ArrayList<TextoDto>();
+		for (TextoDto textoGravado : textosIguaisGravados) {
+			boolean textoEncontrado = isTextoSelecionadoPeloUsuario(textoGravado, processosValidos);
+			if (!textoEncontrado) {
+				if (isTextoNaoPodeSerExcluido(textoGravado)) {
+					throw new ServiceException(textoGravado.toString() + " - "
+							+ "O texto não pode ser excluído, pois se encontrada "
+							+ textoGravado.getFase().getDescricao() + "!");
+				} else if (TipoTexto.REVISAO_DE_APARTES.equals(textoGravado.getTipoTexto())) {
+					throw new ServiceException(textoGravado.toString() + " - "
+							+ "O texto não pode ser excluído da lista de textos iguais, pois é do tipo "
+							+ TipoTexto.REVISAO_DE_APARTES.getDescricao() + "!");
+				} else {
+					textosParaExclusao.add(textoGravado);
+				}
+			}
+		}
+		return textosParaExclusao;
+	}
+
+	private boolean isTextoSelecionadoPeloUsuario(TextoDto texto, Collection<ObjetoIncidenteDto> processosValidos)
+			throws ServiceException {
+		return isTextoSelecionadoPeloUsuario(texto, processosValidos, false);
+	}
+
+	private boolean isTextoSelecionadoPeloUsuario(TextoDto texto, Collection<ObjetoIncidenteDto> processosValidos,
+			boolean retirarProcessoCadastrado) throws ServiceException {
+		for (ObjetoIncidenteDto processo : processosValidos) {
+			if (isTextoDoProcesso(texto, processo)) {
+				if (retirarProcessoCadastrado) {
+					// Retira o processo já cadastrado. Como não há alteração,
+					// não precisa fazer modificações no banco
+					processosValidos.remove(processo);
+				}
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private boolean isTextoDoProcesso(TextoDto textoGravado, ObjetoIncidenteDto objetoIncidente)
+			throws ServiceException {
+		return objetoIncidente.getId().equals(recuperarTextoPorId(textoGravado.getId()).getObjetoIncidente().getId());
+	}
+
+	private void excluiTextosRemovidosPeloUsuario(List<TextoDto> textosIguaisGravados,
+			Collection<ObjetoIncidenteDto> processosValidos) throws ServiceException {
+		Collection<TextoDto> textosParaExclusao = carregaTextosParaExclusao(processosValidos, textosIguaisGravados);
+		excluirTextosComRelacionamentos(textosParaExclusao);
+	}
+
+	/**
+	 * @see br.jus.stf.estf.decisao.texto.service.TextoService#validaTextoParaAlteracao(br.jus.stf.estf.decisao.pesquisa.domain.TextoDto)
+	 */
+	@Override
+	public void validaTextoParaAlteracao(TextoDto texto) throws ServiceException, TextoNaoPodeSerAlteradoException {
+		if (TipoTexto.DECISAO_SOBRE_REPERCURSAO_GERAL.equals(texto.getTipoTexto())) {
+			verificaTextoLiberadoParaPublicacao(texto);
+		}
+		if (isTextoNaoPodeSerExcluido(texto)) {
+			throw new TextoNaoPodeSerAlteradoException(
+					"Esta lista de textos iguais não pode ser editada, pois seus textos se encontram no estado "
+							+ texto.getFase().getDescricao() + "!");
+		}
+	}
+
+	private boolean isTextoNaoPodeSerExcluido(TextoDto textoGravado) {
+		FaseTexto tipoFase = textoGravado.getFase();
+		if (tipoFase != null) {
+			return FaseTexto.fasesComTextoAssinado.contains(tipoFase);
+		}
+		return false;
+	}
+
+	private void removeProcessosNaoSelecionadosPeloUsuario(TextoDto texto,
+			Collection<ObjetoIncidenteDto> processosValidos) throws ServiceException {
+		// Caso a lista já exista, deve excluir os textos que foram
+		// retirados pelo usuário
+		List<TextoDto> textosIguaisGravados = pesquisarTextosIguais(texto, true);
+		excluiTextosRemovidosPeloUsuario(textosIguaisGravados, processosValidos);
+	}
+
+	@Override
+	public List<TextoDto> pesquisarTextosIguais(TextoDto texto) throws ServiceException {
+		List<Texto> textosIguais = textoService.pesquisarTextosIguais(recuperarTextoPorId(texto.getId()));
+		List<TextoDto> textosIguaisConvertidos = new ArrayList<TextoDto>();
+		for (Texto textoIgual : textosIguais) {
+			textosIguaisConvertidos.add(TextoDto.valueOf(textoIgual));
+		}
+		return textosIguaisConvertidos;
+	}
+	
+	@Override
+	public List<TextoDto> pesquisarTextosIguais(TextoDto texto, boolean limitarTextosDoMinistro) throws ServiceException {
+		List<Texto> textosIguais = textoService.pesquisarTextosIguais(recuperarTextoPorId(texto.getId()), limitarTextosDoMinistro);
+		List<TextoDto> textosIguaisConvertidos = new ArrayList<TextoDto>();
+		for (Texto textoIgual : textosIguais) {
+			textosIguaisConvertidos.add(TextoDto.valueOf(textoIgual));
+		}
+		return textosIguaisConvertidos;
+	}
+
+	@Override
+	public void criarEditarListaTextosIguais(TextoDto texto, Collection<ObjetoIncidenteDto> processosValidos,
+			Ministro ministro, Usuario usuarioLogado, boolean sobrescreverEmenta) throws TransicaoDeFaseInvalidaException {
+		try {
+			Texto textoModelo = recuperarTextoPorId(texto.getId());
+
+			// Caso a lista de textos iguais seja nova, altera o texto para
+			// fazer parte
+			if (!texto.isTextosIguais()) {
+				if (isNenhumProcessoFoiSelecionado(processosValidos)) {
+					throw new ManterListaDeTextosException("É obrigatório informar ao menos 1 (um) processo!");
+				}
+
+				textoModelo.setTextosIguais(true);
+				textoService.salvar(textoModelo);
+
+				texto.setTextosIguais(true);
+
+			} else {
+				removeProcessosNaoSelecionadosPeloUsuario(texto, processosValidos);
+				if (isNenhumProcessoFoiSelecionado(processosValidos)) {
+					// Deve modificar o texto para não ser mais texto igual
+					textoModelo.setTextosIguais(false);
+					textoService.salvar(textoModelo);
+
+					texto.setTextosIguais(false);
+				}
+				limpaProcessosJaCadastrados(texto, processosValidos);
+			}
+
+			for (ObjetoIncidenteDto objetoIncidente : processosValidos) {
+				Texto novoTextoIgual = new Texto();
+
+				// Informações padrão...
+				novoTextoIgual.setDataCriacao(DateTimeHelper.getDataAtual());
+				novoTextoIgual.setTipoFaseTextoDocumento(FaseTexto.EM_ELABORACAO);
+
+				// Informações do modelo...
+				novoTextoIgual.setTipoRestricao(textoModelo.getTipoRestricao());
+				novoTextoIgual.setObservacao(textoModelo.getObservacao());
+				novoTextoIgual.setTipoTexto(textoModelo.getTipoTexto());
+				
+				// Sempre seta como NÃO porque o texto está na fase EM ELABORAÇÃO
+				novoTextoIgual.setLiberacaoAntecipada(false);
+				
+				novoTextoIgual.setTipoVoto(textoModelo.getTipoVoto());
+				novoTextoIgual.setResponsavel(textoModelo.getResponsavel());
+
+				// Informações do ministro...
+				novoTextoIgual.setMinistro(ministro);
+
+				// Informações de publicação...
+				novoTextoIgual.setPublico(false);
+				novoTextoIgual.setSalaJulgamento(false);
+				novoTextoIgual.setPubliccaoRTJ(false);
+
+				// Informações da lista...
+				novoTextoIgual.setTextosIguais(true);
+
+				// Informações de objeto incidente...
+				novoTextoIgual.setObjetoIncidente(objetoIncidenteService.recuperarObjetoIncidentePorId(objetoIncidente.getId()));
+
+				// Informações do arquivo eletrônico...
+				novoTextoIgual.setArquivoEletronico(textoModelo.getArquivoEletronico());
+
+				// Validação e inclusão do texto
+				try {
+					textoService.validarNovoTexto(novoTextoIgual);
+				} catch (TextoException e) {
+					if (TipoTexto.EMENTA.equals(novoTextoIgual.getTipoTexto())) {
+						excluiEmentasDoProcesso(objetoIncidente, texto);
+					}
+				}
+				textoService.persistir(novoTextoIgual);
+				sincronizarControleDeVotos(ministro, textoModelo, objetoIncidente, novoTextoIgual);
+
+				// Se o texto original estiver em elaboração, nenhuma transição
+				// de fase será necessária
+				if (!textoModelo.getTipoFaseTextoDocumento().equals(FaseTexto.EM_ELABORACAO)) {
+					alterarFaseDoTexto(novoTextoIgual, textoModelo);
+				}
+			}
+
+		} catch (ManterListaDeTextosException e) {
+			throw new NestedRuntimeException(e);
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+
+	private boolean isNenhumProcessoFoiSelecionado(Collection<ObjetoIncidenteDto> processosValidos) {
+		return processosValidos.isEmpty();
+	}
+
+	private void limpaProcessosJaCadastrados(TextoDto texto, Collection<ObjetoIncidenteDto> processosValidos)
+			throws ServiceException {
+		List<TextoDto> textosIguaisGravados = pesquisarTextosIguais(texto);
+		for (TextoDto textoGravado : textosIguaisGravados) {
+			isTextoSelecionadoPeloUsuario(textoGravado, processosValidos, true);
+		}
+	}
+
+	private void alterarFaseDoTexto(Texto textoIgual, Texto textoModelo) throws ServiceException,
+			TransicaoDeFaseInvalidaException {
+		TipoTransicaoFaseTexto tipoTransicao = TipoTransicaoFaseTexto.getTransicaoParaFaseDestino(textoModelo
+				.getTipoFaseTextoDocumento());
+		textoService.alterarFase(textoIgual, tipoTransicao);
+	}
+
+	private void excluiEmentasDoProcesso(ObjetoIncidenteDto processoComEmentaGerada, TextoDto texto)
+			throws ServiceException {
+		ConsultaDadosDoTextoDto consulta = montaConsultaDeEmenta(texto, processoComEmentaGerada);
+		List<Texto> ementas = textoService.pesquisar(consulta);
+		textoService.excluirTodos(ementas);
+	}
+
+	/**
+	 * @throws TextoBloqueadoException 
+	 * @throws ProcessoOcultoException 
+	 * @see br.jus.stf.estf.decisao.texto.service.TextoService#juntarPecas(br.gov.stf.estf.entidade.documento.Texto, boolean)
+	 */
+	@Override
+	@Transactional(rollbackFor = { NaoExisteDocumentoAssinadoException.class, TextoInvalidoParaPecaException.class })
+	public Collection<String> juntarPecas(TextoDto textoDto, Set<Long> textosProcessados, boolean disponibilizarNaInternet, Principal usuario, String observacao, Responsavel responsavel)
+			throws NaoExisteDocumentoAssinadoException, TextoInvalidoParaPecaException, TextoJaJuntadoException, TextoBloqueadoException, ProcessoOcultoException {
+		try {
+			Collection<String> mensagensDeTextosProcessados = new ArrayList<String>();
+			List<Texto> textos = pesquisarTextosIguaisParaTransicaoFase(textoDto, TipoTransicaoFaseTexto.JUNTAR);
+			textos.add(0, recuperarTextoPorId(textoDto.getId()));
+			for (Texto texto : textos) {
+				if (isTextoNaoFoiProcessado(textosProcessados, texto)) {
+					boolean alteracaoRealizada = arquivoProcessoEletronicoServiceExtra.gravarJuntadaDePecas(texto);
+
+					if (!alteracaoRealizada) {
+						throw new TextoJaJuntadoException(disponibilizarNaInternet);
+					}
+
+					// TODO [Jubé] Verificar se essa regra está condizente
+					// (mudando o status mesmo que não seja juntado)
+					if (disponibilizarNaInternet) {
+						DocumentoTexto documento = DocumentoTextoUtil.recuperarDocumentoAssinadoDoTexto(texto);
+						DocumentoEletronico documentoEletronico = documento.getDocumentoEletronico();
+						documentoEletronicoService.alterarTipoDeAcessoDoDocumento(documentoEletronico,
+								TipoDeAcessoDoDocumento.PUBLICO);
+					}
+
+					String mensagem = "";
+					try {
+						mensagem = deslocaProcessoDoTexto(texto, usuario, TipoTransicaoFaseTexto.JUNTAR);
+					} catch (NaoExisteSetorParaDeslocamentoException e) {
+						mensagem = montaMensagemDeTextoValidoNaoDeslocado(e, TipoTransicaoFaseTexto.JUNTAR);
+					} catch (ErroAoDeslocarProcessoException e) {
+						mensagem = montaMensagemDeTextoValidoNaoDeslocado(e, TipoTransicaoFaseTexto.JUNTAR);
+					} catch (ProcessoApensanteInvalidoParaDeslocamentoException e) {
+						mensagem = montaMensagemDeTextoValidoNaoDeslocado(e, TipoTransicaoFaseTexto.JUNTAR);
+					}
+					mensagensDeTextosProcessados.add(montaMensagemTextoValido(texto, mensagem));
+				}
+			}
+
+			// transição para fase Juntado
+			if (textoDto.getFase().equals(FaseTexto.ASSINADO)) {
+				alterarFase(textoDto, TipoTransicaoFaseTexto.JUNTAR, textosProcessados, observacao, responsavel);
+			}
+			
+			return mensagensDeTextosProcessados;
+
+		} catch (ServiceException e) {
+			// ServiceException não deveria ser "Checked Exception",
+			// encapsulando e enviando...
+			throw new NestedRuntimeException(e);
+		} catch (TransicaoDeFaseInvalidaException e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+
+	public List<TextoComSituacaoDaPublicacaoVO> consultarSituacoesDePublicacaoDosTextos(Collection<TextoDto> textos) {
+		try {
+			List<TextoComSituacaoDaPublicacaoVO> listaDeSituacoes = new ArrayList<TextoComSituacaoDaPublicacaoVO>();
+			SituacaoDoTextoParaPublicacao situacaoDoTextoParaPublicacao;
+			for (TextoDto textoDto : textos) {
+				Texto texto = recuperarTextoPorId(textoDto.getId());
+				situacaoDoTextoParaPublicacao = defineSituacaoDaPublicacao(texto);
+				listaDeSituacoes.add(new TextoComSituacaoDaPublicacaoVO(texto, situacaoDoTextoParaPublicacao));
+			}
+			Collections.sort(listaDeSituacoes);
+			return listaDeSituacoes;
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+
+	/* A regra relacionada à classificação como PUBLICADO_DJ_RTJ_SESSOES, foi retirada, pois permitia
+	 * que o sistema Suspendesse a Publicação de um Texto, mesmo quando já publicado. ISSUE DECISAO-1183. */
+	protected SituacaoDoTextoParaPublicacao defineSituacaoDaPublicacao(Texto texto) throws ServiceException {
+		ConteudoPublicacao conteudoPublicacao = consultarDadosDaPublicacaoDoTexto(texto);
+		return defineSituacaoDoTextoParaPublicacao(conteudoPublicacao);
+	}
+
+	private ConteudoPublicacao consultarDadosDaPublicacaoDoTexto(Texto texto) throws ServiceException {
+		IConsultaDeDadosDePublicacao consulta = montaConsultaDeDadosDePublicacao(texto);
+		return conteudoPublicacaoService.consultarDadosDaPublicacaoDoTexto(consulta);
+
+	}
+
+	private SituacaoDoTextoParaPublicacao defineSituacaoDoTextoParaPublicacao(ConteudoPublicacao conteudoPublicacao) {
+		if (conteudoPublicacao == null) {
+			return SituacaoDoTextoParaPublicacao.NAO_PUBLICADO;
+		} else if (conteudoPublicacao.getPublicacao() != null
+				&& conteudoPublicacao.getPublicacao().getDataPublicacaoDj() != null) {
+			return SituacaoDoTextoParaPublicacao.PUBLICADO_NO_DJ;
+		} else if (conteudoPublicacao.getDataComposicaoDj() == null) {
+			return SituacaoDoTextoParaPublicacao.ATA_DE_PUBLICACAO;
+		} else {
+			return SituacaoDoTextoParaPublicacao.PREPARADO_PARA_PUBLICACAO;
+		}
+	}
+
+	private IConsultaDeDadosDePublicacao montaConsultaDeDadosDePublicacao(Texto texto) {
+		ConsultaDeDadosDePublicacaoVO consulta = new ConsultaDeDadosDePublicacaoVO();
+		consulta.setSequencialObjetoIncidente(texto.getSequenciaObjetoIncidente());
+		if (texto.getTipoTexto().equals(TipoTexto.DESPACHO) || texto.getTipoTexto().equals(TipoTexto.DECISAO_MONOCRATICA)) {
+			consulta.setSequencialDoArquivoEletronico(texto.getArquivoEletronico().getId());
+			consulta.setMateriaCodigoCapitulo(EstruturaPublicacao.COD_CAPITULO_SECRETARIA_JUDICIARIA);
+		} else {
+			consulta.setMateriaCodigoCapitulo(EstruturaPublicacao.COD_CAPITULO_ACORDAOS);
+			consulta.setProcessoCodigoCapitulo(EstruturaPublicacao.COD_CAPITULO_ACORDAOS);
+		}
+		return consulta;
+	}
+
+	@Override
+	public List<Texto> pesquisar(ObjetoIncidenteDto objetoIncidente, TipoTexto tipoTexto, Ministro ministro)
+			throws ServiceException {
+		return textoService.pesquisar(objetoIncidenteService.recuperarObjetoIncidentePorId(objetoIncidente.getId()),
+				tipoTexto, ministro);
+	}
+
+	public void alterarAcessoDoTexto(TextoDto textoDto, TipoRestricao tipoRestricao, String siglaUsuario)
+			throws TextoNaoPodeSerRestritoException {
+		try {
+			Texto texto = recuperarTextoPorId(textoDto.getId());
+			verificaTextoIgual(texto);
+			verificaTextoPublico(texto);
+			verificarUsuarioTexto(texto, siglaUsuario);
+			// Setando o tipo de restrição selecionado...
+			texto.setTipoRestricao(tipoRestricao);
+			// Atualizando texto com a restrição selecionada...
+			textoService.alterar(texto);
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+
+	private void verificarUsuarioTexto(Texto texto, String siglaUsuario) throws TextoNaoPodeSerRestritoException {
+		if (texto != null
+				&& (!texto.getResponsavel().getId().toString().toUpperCase().equals(siglaUsuario.toUpperCase()) && !texto
+						.getUsuarioInclusao().getId().toUpperCase().equals(siglaUsuario.toUpperCase()))) {
+			throw new TextoNaoPodeSerRestritoException(TEXTO_RESPONSAVEL);
+		}
+	}
+
+	private void verificaTextoPublico(Texto texto) throws TextoNaoPodeSerRestritoException {
+		if (texto.getPublico()) {
+			throw new TextoNaoPodeSerRestritoException(TEXTO_PUBLICO);
+		}
+	}
+
+	private void verificaTextoIgual(Texto texto) throws TextoNaoPodeSerRestritoException {
+		List<Texto> textosIguais = recuperarTextosIguais(texto.getId());
+		if (textosIguais.size() > 1) {
+			throw new TextoNaoPodeSerRestritoException(TEXTOS_IGUAIS);
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * br.jus.stf.estf.decisao.texto.service.TextoService#desfazerJuntada(br
+	 * .gov.stf.estf.entidade.documento.Texto)
+	 */
+	@Override
+	@Transactional(rollbackFor = { TransicaoDeFaseInvalidaException.class, TextoInvalidoParaPecaException.class,
+			DesfazerJuntadaTextoException.class })
+	public void desfazerJuntada(TextoDto textoDto, Set<Long> textosProcessados, String observacao, Responsavel responsavel) throws ProcessoOcultoException {
+		try {
+			Collection<String> mensagensDeTextosProcessados = new ArrayList<String>();
+			List<Texto> textos = pesquisarTextosIguaisParaTransicaoFase(textoDto,
+					TipoTransicaoFaseTexto.DESFAZER_JUNTADA);
+			textos.add(0, recuperarTextoPorId(textoDto.getId()));
+			for (Texto texto : textos) {
+				if (isTextoNaoFoiProcessado(textosProcessados, texto)) {
+					boolean juntadaExcluida = arquivoProcessoEletronicoServiceExtra.excluirJuntadaDePecas(texto, false);
+
+					if (!juntadaExcluida) {
+						throw new DesfazerJuntadaTextoException();
+					}
+
+					// O texto deixa de ser público caso o seja
+					// if (texto.getPublico())
+					// suspendePublicacaoDoTexto(texto);
+
+					excluiPecaDoProcessoEletronico(texto);
+					atualizaAcessoAoTexto(texto, TipoDeAcessoDoDocumento.INTERNO);
+					
+					mensagensDeTextosProcessados.add(montaMensagemTextoValido(texto, ""));
+				}
+			}
+			alterarFaseDoTexto(textoDto, TipoTransicaoFaseTexto.DESFAZER_JUNTADA, textosProcessados, observacao, responsavel);
+		} catch (ServiceException e) {
+			// ServiceException não deveria ser "Checked Exception",
+			// encapsulando e enviando...
+			throw new NestedRuntimeException(e);
+		} catch (TransicaoDeFaseInvalidaException e) {
+			throw new NestedRuntimeException(e);
+		} catch (TextoInvalidoParaPecaException e) {
+			throw new NestedRuntimeException(e);
+		} catch (DesfazerJuntadaTextoException e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+	
+	@Override
+	public TipoJulgamento recuperarTipoJulgamento(Long seqTipoRecurso,
+			Long sequenciaCadeia) {
+		try {
+			return tipoJulgamentoService.recuperarTipoJulgamento(seqTipoRecurso, sequenciaCadeia);
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}		
+	}
+
+	@Override
+	public TipoIncidenteJulgamento recuperarTipoIncidenteJulgamentoPorId(Long id) {
+		try {
+			return tipoIncidenteJulgamentoService.recuperarPorId(id);
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+
+	@Override
+	public Long recuperarSequencialDoUltimoDocumentoEletronico() {
+		try {
+			return documentoEletronicoService.recuperarSequencialDoUltimoDocumentoEletronico();
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+	
+	@Override
+	public void testarAssinaturaTexto(final AssinaturaDto assinaturaDto) {
+		TransactionTemplate template = new TransactionTemplate(transactionManager);
+		template.execute(new TransactionCallbackWithoutResult() {
+			
+			@Override
+			protected void doInTransactionWithoutResult(TransactionStatus status) {
+				try {
+					textoService.assinarTexto(assinaturaDto);
+				} catch (ServiceException e) {
+					throw new ErroTesteAssinaturaException(e);
+				} catch (TransicaoDeFaseInvalidaException e) {
+					throw new ErroTesteAssinaturaException(e);
+				} finally {
+					status.setRollbackOnly();
+				}
+			}
+		});
+	}
+	
+	@Override
+	@Transactional(propagation=Propagation.REQUIRED)
+	public void assinarTextoContingencialmente(AssinaturaDto assinaturaDto) {
+		try {
+			textoService.assinarTextoContingencialmente(assinaturaDto);
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		} catch (TransicaoDeFaseInvalidaException e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+
+	@Override
+	@Transactional(propagation=Propagation.REQUIRED)
+	public void republicarTexto(TextoDto texto) {
+		try {
+			Texto textoOriginal = recuperarTextoPorId(texto.getId());
+			
+			Texto novoTexto = new Texto();
+			
+			// Informações padrão...
+			novoTexto.setDataCriacao(DateTimeHelper.getDataAtual());
+			novoTexto.setTipoFaseTextoDocumento(FaseTexto.EM_ELABORACAO);
+	
+			// Informações do texto original...
+			novoTexto.setTipoRestricao(textoOriginal.getTipoRestricao());
+			novoTexto.setResponsavel(textoOriginal.getResponsavel());
+			novoTexto.setTipoTexto(textoOriginal.getTipoTexto());
+			
+			// Sempre seta como NÃO porque o texto está na fase EM ELABORAÇÃO
+			novoTexto.setLiberacaoAntecipada(false);
+			
+			novoTexto.setTipoVoto(textoOriginal.getTipoVoto());
+	
+			// Informações do ministro...
+			novoTexto.setMinistro(textoOriginal.getMinistro());
+	
+			// Informações de publicação...
+			novoTexto.setPublico(false);
+			novoTexto.setSalaJulgamento(false);
+			novoTexto.setPubliccaoRTJ(false);
+	
+			// Informações da lista...
+			novoTexto.setTextosIguais(false);
+	
+			// Informações de objeto incidente...
+			novoTexto.setObjetoIncidente(textoOriginal.getObjetoIncidente());
+	
+			// Informações do arquivo eletrônico...
+			textoService.copiarArquivoParaTexto(novoTexto, textoOriginal.getArquivoEletronico());
+			
+			textoService.salvar(novoTexto);
+			
+			// Sincronizar controle de votos
+			if (textoOriginal.getControleVoto() != null) {
+				ControleVoto controleVoto = textoOriginal.getControleVoto();
+				controleVoto.setTexto(novoTexto);
+				controleVotoService.salvar(controleVoto);
+				novoTexto.setDataSessao(textoOriginal.getDataSessao());
+				novoTexto.setSequenciaVoto(textoOriginal.getSequenciaVoto());
+				textoOriginal.setDataSessao(null);
+				textoOriginal.setSequenciaVoto(0L);
+				textoService.salvar(novoTexto);
+			}
+			String observacao = textoOriginal.getTipoTexto().getDescricao() + " originalmente " + (TipoTexto.EMENTA.equals(textoOriginal.getTipoTexto()) ? "publicada" : "publicado"); 
+			textoOriginal.setObservacao(observacao);
+			textoOriginal.setTipoTexto(TipoTexto.DESPACHO);
+			
+			textoService.salvar(textoOriginal);
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+
+	@Override
+	public void marcarComoFavoritos(Collection<TextoDto> textos) throws ServiceException {
+		try {
+			List<Long> idsTextos = recuperarIdsDosDtos(textos);
+			textoDao.marcarComoFavoritos(idsTextos);
+		} catch (DaoException de) {
+			throw new ServiceException(de);
+		}
+	}
+
+	@Override
+	public void desmarcarComoFavoritos(Collection<TextoDto> textos) throws ServiceException {
+		try {
+			List<Long> idsTextos = recuperarIdsDosDtos(textos);
+			textoDao.desmarcarComoFavoritos(idsTextos);
+		} catch (DaoException de) {
+			throw new ServiceException(de);
+		}
+	}
+
+	private List<Long> recuperarIdsDosDtos(Collection<TextoDto> textos) {
+		List<Long> idsTextos = new ArrayList<Long>();
+		for (TextoDto texto : textos) {
+			idsTextos.add(texto.getId());
+		}
+		return idsTextos;
+	}
+	
+	@Override
+	public void liberarVisualizacaoAntecipada(Collection<TextoDto> textosDto, boolean liberacaoAntecipada) throws ServiceException {
+		List<Texto> textos = recuperarListaTextos(textosDto);
+		
+		for (Texto texto : textos)
+			texto.setLiberacaoAntecipada(liberacaoAntecipada);
+		
+		textoService.salvarTodos(textos);
+	}
+}
+ 

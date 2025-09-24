@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:s="http://jboss.com/products/seam/taglib"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:rich="http://richfaces.org/rich"
+	xmlns:a="http://richfaces.org/a4j"
+	xmlns:c="http://java.sun.com/jstl/core"
+	xmlns:stf="http://www.stf.jus.br/custom-components">
+
+	<s:decorate id="listaTextosIguais"
+		template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="principal" />
+		<ui:define name="descricao">
+			<h:outputText value="Texto selecionado: " />
+			<h:outputText value="#{actionFacesBean.textoSelecionado}" />
+		</ui:define>
+		<ui:define name="conteudo">
+			<rich:tabPanel switchType="ajax" id="abasPesquisa" width="750">
+				<rich:tab label="Processo">		
+					<a:outputPanel id="panelProcesso">
+						<stf:messages height="13px"/>
+						<div class="prop">
+							<span class="name" style="width: auto !important;">Processo</span>
+							<h:inputText id="identificacaoProcesso"
+								value="#{actionFacesBean.identificacaoProcesso}"
+								onkeydown="return noCtrlJ(event);"
+								onkeypress="return noEnter(event);"
+								onkeyup="susgestionEmptyValue(#{rich:component('sgBoxProcessoReplicarTexto')},this)" 
+								onclick="susgestionEmptyValue(#{rich:component('sgBoxProcessoReplicarTexto')},this)"/>
+							<rich:suggestionbox id="sgBoxProcessoReplicarTexto"
+								suggestionAction="#{incidenteFacesBean.searchWithoutFake}"
+								for="identificacaoProcesso" var="result"
+								fetchValue="#{result.identificacao}"
+								nothingLabel="Nenhum Objeto Incidente encontrado." width="350"
+								height="100">
+			
+								<a:support event="onselect"
+									action="#{actionFacesBean.incluirProcessoSelecionado(result)}"
+									reRender="tblProcessosSelecionados, panelProcesso"
+									focus="identificacaoProcesso" eventsQueue="ajaxQueue"
+									ignoreDupResponses="true" />
+			
+								<h:column>
+									<h:outputText rendered="#{result.eletronico}" value="e"
+										styleClass="vermelho" />
+									<h:outputText value="#{result.identificacao}"
+										styleClass="oiSuggestion" />
+									<h:outputText value=" -> " />
+									<h:outputText value="#{result.nomeRelator}"
+										styleClass="#{(result.idRelator != userFacesBean.principal.ministro.id)? 'oiSuggestion':'green'}" />
+								</h:column>
+							</rich:suggestionbox>
+						</div>
+					</a:outputPanel>
+				</rich:tab>
+				<rich:tab label="Lista">
+					<a:outputPanel id="tabListaPanel">
+						<div style="float:left;">
+							<s:decorate template="/common/decorators/edit.xhtml">
+								<ui:define name="label">Colegiado:</ui:define>
+								<h:selectOneMenu id="selectColegiadoPesquisa"
+									style="width:250px;"
+									value="#{actionFacesBean.idColegiadoPesquisa}">
+									<f:selectItems value="#{actionFacesBean.listaColegiado}" />
+									<a:support event="onchange"
+										reRender="selectColegiadoPesquisa,selectSessaoPesquisa"
+										eventsQueue="ajaxQueue" ignoreDupResponses="true"
+										process="selectColegiadoPesquisa" />
+								</h:selectOneMenu>
+							</s:decorate>
+							<s:decorate template="/common/decorators/edit.xhtml">
+								<ui:define name="label">Relator:</ui:define>
+								<h:selectOneMenu id="selectRelatorPesquisa"
+									style="width:250px;"
+									value="#{actionFacesBean.idRelatorPesquisa}">
+									<f:selectItems value="#{actionFacesBean.listaRelator}" />
+								</h:selectOneMenu>
+							</s:decorate>
+							<s:decorate template="/common/decorators/edit.xhtml">
+								<ui:define name="label" style="text-align: left;">Sessão:</ui:define>
+								<h:selectOneMenu id="selectSessaoPesquisa"
+									style="width:450px;"
+									value="#{actionFacesBean.idSessaoPesquisa}">
+									<f:selectItems value="#{actionFacesBean.listaSessoes}" />
+								</h:selectOneMenu>
+								<a:commandButton value="Pesquisar"
+									style="float: right; margin-right: 10px;" 
+									action="#{actionFacesBean.pesquisarListasJulgamento}"
+									eventsQueue="ajaxQueue" ignoreDupResponses="true"
+									reRender="tbListaProcessos,listasJulgamentoPesquisadasPanel,abasPesquisa" />
+							</s:decorate>
+						</div>
+						<div style="float:left; width: 750px; margin-bottom:10px;">
+							<div id="listasJulgamentoPesquisadasPanel" style="border: 1px solid #006699; margin: 7px; height:150px; overflow-y: scroll; visibility:#{not empty actionFacesBean.listasJulgamentoPesquisadas? 'visible' : 'hidden'}">
+								<rich:dataTable id="tbListaProcessos" var="listaPesquisada"
+									value="#{actionFacesBean.listasJulgamentoPesquisadas}"
+									rowClasses="dr-table-row-odd, dr-table-row-even"
+									styleClass="data-table" style="overflow-y:scroll"
+									>
+									<rich:column styleClass="dr-table-col-center"
+										headerClass="dr-table-col-center largura20px, dr-table-subheadercell-nobordertop">
+										<f:facet name="header">
+											<a:commandButton image="/common/images/setabaixo.gif"
+												action="#{actionFacesBean.selectAllListasPesquisados}"
+												title="Página atual" eventsQueue="ajaxQueue"
+												ignoreDupResponses="true" reRender="tbListaProcessos" />
+										</f:facet>
+										<h:selectBooleanCheckbox styleClass="Checkbox"
+											value="#{listaPesquisada.selected}" />
+									</rich:column>
+									<rich:column styleClass="dr-table-lastcol"
+										headerClass="dr-table-subheadercell-nobordertop">
+										<h:outputText value="#{listaPesquisada.descricao}" />
+									</rich:column>
+								</rich:dataTable>													
+							</div>
+							<div style="float:right; margin-right: 2px;">						
+								<a:commandButton value="Detalhar lista(s)" action="#{actionFacesBean.adicionarListaProcessos}"
+													title="Incluir" eventsQueue="ajaxQueue"
+													ignoreDupResponses="true" reRender="tabListaPanel,panelProcessoIncluso"
+													rendered="#{not empty actionFacesBean.listasJulgamentoPesquisadas}" />
+							</div>
+						</div>
+					</a:outputPanel>
+				</rich:tab>
+			</rich:tabPanel>		
+			<a:outputPanel id="panelProcessoIncluso">			
+				<div style="height: 200px; overflow: auto;">
+					<div style="border: 1px solid #006699; border-top: none;">
+						<rich:dataTable id="tblProcessosSelecionados"
+										var="processosValidos"
+										value="#{actionFacesBean.processosParaSelecao}"
+										rowClasses="dr-table-row-odd, dr-table-row-even"
+										styleClass="data-table">
+							<rich:column styleClass="dr-table-firstcol dr-table-col-center" headerClass="dr-table-firstcol dr-table-col-center largura20px">
+								<f:facet name="header">
+									<a:commandButton image="/common/images/setabaixo.gif"
+										action="#{actionFacesBean.selectAll}"
+										eventsQueue="ajaxQueue"
+										ignoreDupResponses="true"
+										reRender="tblProcessosSelecionados"  />
+								</f:facet>
+								<h:selectBooleanCheckbox styleClass="Checkbox"
+									value="#{processosValidos.selected}" />
+							</rich:column>
+							<rich:column styleClass="dr-table-lastcol" headerClass="dr-table-lastcol">
+								<f:facet name="header">
+									<h:outputText value="Processo" />
+								</f:facet>
+								<h:outputText value="#{processosValidos.identificacao}" />
+							</rich:column>
+						</rich:dataTable>
+					</div>
+				</div>
+			</a:outputPanel>
+		</ui:define>
+		<ui:define name="botoes">
+			<a:commandButton value="Remover"
+						 action="#{actionFacesBean.excluirProcessosSelecionados}"
+						 reRender="tblProcessosSelecionados"
+						 eventsQueue="ajaxQueue"
+						 ignoreDupResponses="true"
+						 style="float: left;"/>
+			<a:commandButton value="Adicionar texto aos processos selecionados"
+				action="#{actionFacesBean.validateAndExecute}"
+				reRender="actionModalPanel"
+				oncomplete="showActionPanel('panelItem', #{actionFacesBean.definition.width}, #{actionFacesBean.definition.height})"
+				eventsQueue="ajaxQueue" ignoreDupResponses="true" />
+		</ui:define>
+	</s:decorate>
+
+	<s:decorate id="listaDeProcessosComEmentaGerada"
+		template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="listaDeProcessosComEmentaGerada" />
+		<ui:define name="descricao">
+			Os seguintes processos possuem Ementa gerada. Deseja gerar novamente? (Caso afirmativo, as Ementas originais serão sobrescritas.)
+		</ui:define>
+		<ui:define name="conteudo">
+			<stf:messages level="INFO" />
+		</ui:define>
+		<ui:define name="botoes">
+			<a:commandButton value="Sim"
+				action="#{actionFacesBean.sobrescreverEmenta}"
+				reRender="actionModalPanel"
+				oncomplete="showActionPanel('panelItem', #{actionFacesBean.definition.width}, #{actionFacesBean.definition.height})"
+				eventsQueue="ajaxQueue" ignoreDupResponses="true" />
+			<a:commandButton value="Não" action="#{actionFacesBean.execute}"
+				reRender="actionModalPanel"
+				oncomplete="showActionPanel('panelItem', #{actionFacesBean.definition.width}, #{actionFacesBean.definition.height})"
+				eventsQueue="ajaxQueue" ignoreDupResponses="true" />
+		</ui:define>
+	</s:decorate>
+
+</ui:composition>

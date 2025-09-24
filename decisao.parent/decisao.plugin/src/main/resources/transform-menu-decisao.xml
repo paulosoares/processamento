@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xsl:stylesheet
+      version='1.0'
+      xmlns:xsl='http://www.w3.org/1999/XSL/Transform'>
+
+
+<xsl:template match="Menu">
+	<xsl:copy>
+      		<xsl:apply-templates select="@*"/>
+      		<SubMenu label="Arquivo">
+				<Item label="Fechar" url="plugin:fecharDocumento"/>
+			</SubMenu>
+			<!-- 
+			<SubMenu label="Versões">
+				<Item label="Visualizar Versões do Documento" url="plugin:recuperarVersoesDocumento"/>
+			</SubMenu>	
+			-->
+			<!-- 			
+			<SubMenu label="Editar">
+				<Item label="Recortar" url=".uno:Cut"/>
+				<Item label="Copiar" url=".uno:Copy"/>
+				<Item label="Colar" url=".uno:Paste"/>
+				<Item label="Selecionar Tudo" url=".uno:SelectAll"/>
+				<Item label="Desfazer" url=".uno:Undo"/>
+				<Item label="Refazer" url=".uno:Redo"/>
+			</SubMenu>
+			 -->															
+      		<!--<xsl:apply-templates select="node()"/>-->
+	</xsl:copy>
+</xsl:template>
+
+<xsl:template match="@*|node()">
+   <xsl:copy>
+      <xsl:apply-templates select="@*|node()"/>
+   </xsl:copy>
+</xsl:template>
+
+
+
+</xsl:stylesheet>

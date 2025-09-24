@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns="http://java.sun.com/xml/ns/javaee" xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+	id="WebApp_ID" version="2.5">
+	<context-param>
+		<param-name>facelets.DEVELOPMENT</param-name>
+		<param-value>false</param-value>
+	</context-param>
+	<!-- Componentes customizados -->
+	<context-param>
+		<param-name>facelets.LIBRARIES</param-name>
+		<param-value>/WEB-INF/customComponents.taglib.xml</param-value>
+	</context-param>
+	<!-- Processa comentarios (Importante para que o template funcione no ie!) -->
+	<context-param>
+		<param-name>facelets.SKIP_COMMENTS</param-name>
+		<param-value>false</param-value>
+	</context-param>
+	<context-param>
+		<param-name>javax.faces.DEFAULT_SUFFIX</param-name>
+		<param-value>.xhtml</param-value>
+	</context-param>
+	<!-- Carrega scrips e estilos no carregamento da pagina -->
+	<context-param>
+		<param-name>org.richfaces.LoadScriptStrategy</param-name>
+		<param-value>ALL</param-value>
+	</context-param>
+	<context-param>
+		<param-name>org.richfaces.LoadStyleStrategy</param-name>
+		<param-value>ALL</param-value>
+	</context-param>
+	<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+		Parametros adicionados ao contexto da aplicacao Desabilita temas do RichFaces -->
+	<context-param>
+		<param-name>org.richfaces.SKIN</param-name>
+		<param-value>plain</param-value>
+	</context-param>
+	<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+		Filtros -->
+	<filter>
+		<filter-name>Seam Filter</filter-name>
+		<filter-class>org.jboss.seam.servlet.SeamFilter</filter-class>
+	</filter>
+	<filter>
+		<filter-name>springSecurityFilterChain</filter-name>
+		<filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+	</filter>
+	<filter>
+		<filter-name>hibernateServletFilter</filter-name>
+		<filter-class>org.springframework.orm.hibernate3.support.OpenSessionInViewFilter
+		</filter-class>
+		<init-param>
+			<param-name>sessionFactoryBeanName</param-name>
+			<param-value>sessionFactory</param-value>
+		</init-param>
+	</filter>
+	<filter>
+		<filter-name>SetHttpHeadersFilter</filter-name>
+		<filter-class>br.jus.stf.estf.decisao.support.filter.SetHttpHeadersFilter</filter-class>
+		<init-param>
+			<param-name>X-UA-Compatible</param-name>
+			<param-value>IE=EmulateIE8</param-value>
+		</init-param>
+	</filter>  
+	<filter-mapping>
+		<filter-name>springSecurityFilterChain</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+	<filter-mapping>
+		<filter-name>SetHttpHeadersFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+	<filter-mapping>
+		<filter-name>springSecurityFilterChain</filter-name>
+		<servlet-name>AssinadorServlet</servlet-name>
+		<servlet-name>servicedispatcher</servlet-name>
+		<servlet-name>STFOfficeServlet</servlet-name>
+		<dispatcher>FORWARD</dispatcher>
+		<dispatcher>REQUEST</dispatcher>	
+	</filter-mapping>
+	<filter-mapping>
+		<filter-name>Seam Filter</filter-name>
+		<url-pattern>*.seam</url-pattern>
+		<dispatcher>FORWARD</dispatcher>
+		<dispatcher>REQUEST</dispatcher>			
+	</filter-mapping>
+	<filter-mapping>
+		<filter-name>Seam Filter</filter-name>
+		<url-pattern>*.xhtml</url-pattern>
+		<dispatcher>FORWARD</dispatcher>
+		<dispatcher>REQUEST</dispatcher>		
+	</filter-mapping>
+	<filter-mapping>
+		<filter-name>hibernateServletFilter</filter-name>
+		<servlet-name>AssinadorServlet</servlet-name>
+		<servlet-name>servicedispatcher</servlet-name>
+		<servlet-name>STFOfficeServlet</servlet-name>
+		<dispatcher>FORWARD</dispatcher>
+		<dispatcher>REQUEST</dispatcher>
+	</filter-mapping>
+    <filter>
+        <filter-name>UrlRewriteFilter</filter-name>
+        <filter-class>org.tuckey.web.filters.urlrewrite.UrlRewriteFilter</filter-class>
+        <init-param>
+            <param-name>logLevel</param-name>
+            <param-value>WARN</param-value>
+        </init-param>
+    </filter>
+    <filter-mapping>
+        <filter-name>UrlRewriteFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>		
+	<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+		Listener's -->
+	<listener>
+		<listener-class>org.jasig.cas.client.session.SingleSignOutHttpSessionListener</listener-class>
+	</listener>		
+	<listener>
+		<listener-class>br.jus.stf.estf.decisao.support.security.SessionListener
+		</listener-class>
+	</listener>
+	<listener>
+		<listener-class>org.jboss.seam.servlet.SeamListener</listener-class>
+	</listener>
+	<!-- Listener para permitir injetar o HttpSession via Spring -->
+	<listener>
+		<listener-class>org.springframework.web.context.request.RequestContextListener</listener-class>
+	</listener>
+	<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+		Servlets -->
+	<servlet>
+		<servlet-name>Seam Resource Servlet</servlet-name>
+		<servlet-class>org.jboss.seam.servlet.SeamResourceServlet
+		</servlet-class>
+	</servlet>
+	<servlet>
+		<servlet-name>Faces Servlet</servlet-name>
+		<servlet-class>javax.faces.webapp.FacesServlet</servlet-class>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	<servlet>
+		<servlet-name>AssinadorServlet</servlet-name>
+		<servlet-class>br.jus.stf.assinadorweb.servlet.STFAssinadorServlet
+		</servlet-class>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	<servlet>
+		<servlet-name>STFOfficeServlet</servlet-name>
+		<servlet-class>br.jus.stf.stfoffice.servlet.STFOfficeServlet</servlet-class>
+		<init-param>
+			<param-name>pluginGroupId</param-name>
+			<param-value>br.jus.stf.estf.decisao.decisao.parent</param-value>
+		</init-param>
+		<init-param>
+			<param-name>pluginArtifactId</param-name>
+			<param-value>decisao.plugin</param-value>
+		</init-param>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	<!-- Service Dispatcher que atender� o Hessian -->
+	<servlet>
+		<servlet-name>servicedispatcher</servlet-name>
+		<servlet-class>org.springframework.web.servlet.DispatcherServlet
+		</servlet-class>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	<servlet>
+	    <servlet-name>perf4j</servlet-name>
+	    <servlet-class>org.perf4j.log4j.servlet.GraphingServlet</servlet-class>
+	    <init-param>
+	        <param-name>graphNames</param-name>
+	        <param-value>decisaoGraphExecutionTimes,decisaoGraphExecutionTPS</param-value>
+	    </init-param>
+	    <load-on-startup>1</load-on-startup>
+  	</servlet>
+	<servlet>
+	  <servlet-name>ReferendarDecisaoController</servlet-name>
+	  <servlet-class>br.jus.stf.estf.decisao.api.ReferendarDecisaoController</servlet-class>
+	</servlet>
+	<servlet>
+	  <servlet-name>DesfazerReferendarDecisaoController</servlet-name>
+	  <servlet-class>br.jus.stf.estf.decisao.api.DesfazerReferendarDecisaoController</servlet-class>
+	</servlet>	
+	<servlet>
+	  <servlet-name>RecuperarSessaoController</servlet-name>
+	  <servlet-class>br.jus.stf.estf.decisao.api.RecuperarSessaoController</servlet-class>
+	</servlet>
+	<servlet>
+	  <servlet-name>DevolverVistaController</servlet-name>
+	  <servlet-class>br.jus.stf.estf.decisao.api.DevolverVistaController</servlet-class>
+	</servlet>
+	<servlet>
+	  <servlet-name>DevolverVistasVencidasController</servlet-name>
+	  <servlet-class>br.jus.stf.estf.decisao.api.DevolverVistasVencidasController</servlet-class>
+	</servlet>	
+	<servlet-mapping>
+	  <servlet-name>ReferendarDecisaoController</servlet-name>
+	  <url-pattern>/api/julgamento/referendarDecisao</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+	  <servlet-name>DesfazerReferendarDecisaoController</servlet-name>
+	  <url-pattern>/api/julgamento/desfazerReferendarDecisao</url-pattern>
+	</servlet-mapping>	
+	<servlet-mapping>
+	  <servlet-name>RecuperarSessaoController</servlet-name>
+	  <url-pattern>/api/julgamento/recuperarSessao</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+	  <servlet-name>DevolverVistaController</servlet-name>
+	  <url-pattern>/api/julgamento/devolverVista</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+	  <servlet-name>DevolverVistasVencidasController</servlet-name>
+	  <url-pattern>/api/julgamento/devolverVistasVencidas</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>Seam Resource Servlet</servlet-name>
+		<url-pattern>/seam/resource/*</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>Faces Servlet</servlet-name>
+		<url-pattern>*.seam</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>AssinadorServlet</servlet-name>
+		<url-pattern>/assinador.application</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>STFOfficeServlet</servlet-name>
+		<url-pattern>/stfOfficeServlet</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>servicedispatcher</servlet-name>
+		<url-pattern>/services/*</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>servicedispatcher</servlet-name>
+		<url-pattern>/api/*</url-pattern>
+	</servlet-mapping>	
+	<servlet-mapping>
+	  	<servlet-name>perf4j</servlet-name>
+	    <url-pattern>/perf4j</url-pattern>
+	</servlet-mapping>	
+	<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+		Outras configuracoes -->
+	<session-config>
+		<session-timeout>30</session-timeout>
+	</session-config>
+</web-app>

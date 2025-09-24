@@ -1,0 +1,97 @@
+package br.jus.stf.estf.decisao.api;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.security.Authentication;
+import org.springframework.security.GrantedAuthority;
+import org.springframework.security.context.SecurityContextHolder;
+import org.springframework.security.providers.anonymous.AnonymousAuthenticationToken;
+import org.springframework.security.providers.jaas.JaasGrantedAuthority;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.context.support.WebApplicationContextUtils;
+
+import br.gov.stf.estf.documento.model.service.ControleVistaService;
+import br.gov.stf.estf.entidade.documento.ControleVista;
+import br.gov.stf.estf.entidade.localizacao.Setor;
+import br.gov.stf.estf.entidade.usuario.Usuario;
+import br.gov.stf.estf.usuario.model.service.UsuarioService;
+import br.gov.stf.framework.model.service.ServiceException;
+import br.gov.stf.framework.security.user.User;
+import br.gov.stf.framework.security.user.UserHolder;
+import br.gov.stf.framework.util.ApplicationFactory;
+import br.jus.stf.estf.decisao.objetoincidente.service.DevolverVistaService;
+import br.jus.stf.estf.decisao.support.security.Principal;
+
+// TODO: refatorar para usar o spring-webmvc em vez do servlet
+@Controller
+public class DevolverVistasVencidasController extends HttpServlet {
+
+	private static final long serialVersionUID = -1966350281237303814L;
+
+	DevolverVistaService devolverVistaService;
+
+	ControleVistaService controleVistaService;
+	
+	UsuarioService usuarioService;
+
+	private WebApplicationContext context;
+
+	private ServletContext sc;
+
+	private Principal principal;
+
+	public DevolverVistasVencidasController() {
+		super();
+	}
+
+	private void devolverVistasVencidas(Principal principal) {
+		try {
+			Authentication authentication = new AnonymousAuthenticationToken("ACL_REPGERAL", getPrincipal(), new GrantedAuthority[]{new JaasGrantedAuthority("RS_DECISAO_GERENTE", null) });
+			SecurityContextHolder.getContext().setAuthentication(authentication);
+			
+			devolverVistaService.devolverVistasVencidas(principal);
+		} catch (ServiceException e) {
+			e.printStackTrace();
+		}
+	}
+
+	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		sc = request.getSession().getServletContext();
+		context = WebApplicationContextUtils.getRequiredWebApplicationContext(sc);
+		
+		devolverVistaService = (DevolverVistaService) getService("devolverVistaService");
+		controleVistaService = (ControleVistaService) getService("controleVistaService");
+		usuarioService = (UsuarioService) getService("usuarioService");
+
+		devolverVistasVencidas(getPrincipal());
+	}
+
+	public Object getService(String nomeServico) {
+		return ApplicationFactory.getInstance().getServiceLocator(context).getService(nomeServico);
+	}
+
+	protected Principal getPrincipal() {
+		if (principal == null) {
+			Setor setor = new Setor();
+			setor.setId(Setor.CODIGO_SECAO_DE_SISTEMAS_DE_GABINETES_E_JULGAMENTOS);
+			
+			Usuario usuario = new Usuario();
+			usuario.setId("ACL_REPGERAL");
+			usuario.setSetor(setor);
+			
+			principal = new Principal();
+			principal.setUsuario(usuario);
+		}
+		
+		return principal;
+	}
+}

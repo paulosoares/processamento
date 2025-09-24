@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:s="http://jboss.com/products/seam/taglib"
+    xmlns:ui="http://java.sun.com/jsf/facelets"
+    xmlns:f="http://java.sun.com/jsf/core"
+    xmlns:h="http://java.sun.com/jsf/html"
+    xmlns:rich="http://richfaces.org/rich"
+    xmlns:a="http://richfaces.org/a4j"
+    xmlns:c="http://java.sun.com/jstl/core"
+    xmlns:stf="http://www.stf.jus.br/custom-components">
+
+   	<s:decorate id="adicionarProcessos" template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="principal"/>
+		<ui:define name="descricao">
+			Adicionar Processos à Lista
+		</ui:define>		
+		<ui:define name="conteudo">
+			<s:decorate template="/common/decorators/edit.xhtml">
+	            <ui:define name="label">Lista:</ui:define>
+				<h:selectOneMenu id="lista" value="#{actionFacesBean.idListaProcessos}" required="true" style="width: 250px;">
+					<f:selectItems value="#{actionFacesBean.listasDisponiveis}"/>
+					<a:support event="onchange" reRender="nomePanel" eventsQueue="ajaxQueue"
+							ignoreDupResponses="true"/>
+				</h:selectOneMenu>
+			</s:decorate>
+			<a:outputPanel id="nomePanel">
+				<h:panelGroup rendered="#{actionFacesBean.idListaProcessos == -1}">
+					<s:decorate template="/common/decorators/edit.xhtml">
+			            <ui:define name="label">Nova Lista:</ui:define>
+			            <h:inputText value="#{actionFacesBean.nomeNovaListaProcessos}" style="width: 250px;"/>
+			        </s:decorate>
+		        </h:panelGroup>
+	        </a:outputPanel>
+        </ui:define>
+		<ui:define name="botoes">
+           	<a:commandButton value="Adicionar" action="#{actionFacesBean.execute}" reRender="actionModalPanel" oncomplete="showActionPanel('panelItem', #{actionFacesBean.definition.width}, #{actionFacesBean.definition.height})" eventsQueue="ajaxQueue"
+							ignoreDupResponses="true"/>
+		</ui:define>
+	</s:decorate>
+	
+	<s:decorate template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="warnings"/>
+		<ui:define name="descricao">
+			<h:graphicImage value="/common/images/warning.gif"/>&nbsp;&nbsp;Erro ao criar Lista de Processos
+		</ui:define> 
+		<ui:define name="conteudo">
+			<stf:messages level="INFO" />
+		</ui:define>
+		<ui:define name="botoes">
+           	<a:commandButton value="Voltar" action="#{actionFacesBean.voltar}" reRender="actionModalPanel" oncomplete="showActionPanel('panelItem', #{actionFacesBean.definition.width}, #{actionFacesBean.definition.height})" eventsQueue="ajaxQueue"
+							ignoreDupResponses="true"/>
+		</ui:define>
+	</s:decorate>
+		
+</ui:composition>

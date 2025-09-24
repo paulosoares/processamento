@@ -1,0 +1,111 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<parent>
+		<artifactId>stf-maven-parent</artifactId> 
+		<groupId>br.jus.stf</groupId>
+		<version>1.6.0</version>
+	</parent>
+	<modelVersion>4.0.0</modelVersion>
+	<artifactId>decisao.parent</artifactId>
+	<name>eSTF-Decisão Parent</name>
+	<version>5.35.01-SNAPSHOT</version>
+	<packaging>pom</packaging>
+	
+	<properties>
+		<stfoffice.version>5.5.4</stfoffice.version>
+		<app.url>http://sistemas/edecisao</app.url>
+		<jira.project.id>DECISAO</jira.project.id>
+		<jenkins.job.category>negocio.sistemas</jenkins.job.category>
+		<jenkins.job.id>negocio.sistema.decisao</jenkins.job.id>
+		<tagBase>http://build.stf.jus.br/stf/csol/projetos/java/decisao/src/tags</tagBase>
+		<tagArtifactName>edecisao</tagArtifactName>
+		<sonar-maven-plugin.version>2.0</sonar-maven-plugin.version>
+	</properties>	
+	
+	<distributionManagement>
+		<repository>
+			<id>repo-unificado</id>
+			<name>Repositorio CSOL unificado</name>
+			<url>http://build.stf.jus.br/artifactory/artefatos-releases</url>
+		</repository>
+		<snapshotRepository>
+			<id>repo-unificado</id>
+			<name>Repositorio CSOL unificado</name>
+			<url>http://build.stf.jus.br/artifactory/artefatos-snapshots</url>
+		</snapshotRepository>
+	</distributionManagement>
+	
+	<scm>
+		<connection>scm:svn:http://build.stf.jus.br/stf/csol/projetos/java/decisao/src/trunk</connection>
+		<developerConnection>scm:svn:http://build.stf.jus.br/stf/csol/projetos/java/decisao/src/trunk</developerConnection>
+	  <url>http://build.stf.jus.br/stf/csol/projetos/java/decisao/src/trunk</url>
+  	</scm>
+	
+	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-javadoc-plugin</artifactId>
+					<version>2.10.4</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-deploy-plugin</artifactId>
+					<version>2.8.2</version>
+				</plugin>			
+				<plugin>
+					<artifactId>maven-war-plugin</artifactId>
+					<version>2.3</version>
+					<configuration>
+						<filteringDeploymentDescriptors>true</filteringDeploymentDescriptors>
+						<archive>
+							<manifest>
+								<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+								<addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+							</manifest>
+							<manifestEntries>
+								<Implementation-Build>${buildNumber}</Implementation-Build>
+								<groupId>${project.groupId}</groupId>
+								<artifactId>${project.artifactId}</artifactId>
+								<parent-artifactId>${project.parent.artifactId}</parent-artifactId>
+								<version>${project.version}</version>
+								<Server-Name>campinas1</Server-Name>
+								<Description>${project.description}</Description>
+								<JBoss-Version>4.2.3.GA</JBoss-Version>			
+							</manifestEntries>
+						</archive>
+					</configuration>
+				</plugin>
+				<plugin>
+					<artifactId>maven-jar-plugin</artifactId>
+					<configuration>
+						<filteringDeploymentDescriptors>true</filteringDeploymentDescriptors>
+						<archive>
+							<manifest>
+								<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+								<addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+							</manifest>
+							<manifestEntries>
+								<Implementation-Build>${buildNumber}</Implementation-Build>
+								<groupId>${project.groupId}</groupId>
+								<artifactId>${project.artifactId}</artifactId>
+								<parent-artifactId>${project.parent.artifactId}</parent-artifactId>
+								<version>${project.version}</version>
+								<Server-Name>campinas1</Server-Name>
+								<Description>${project.description}</Description>
+								<JBoss-Version>4.2.3.GA</JBoss-Version>			
+							</manifestEntries>
+						</archive>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+	</build>
+	
+	<modules>
+		<module>decisao.plugin</module>
+		<module>decisao.int</module>
+		<module>decisao.web</module>
+	</modules>
+
+</project>

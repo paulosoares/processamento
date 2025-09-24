@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:a="http://richfaces.org/a4j"
+	xmlns:rich="http://richfaces.org/rich"
+	xmlns:c="http://java.sun.com/jstl/core">
+
+	<rich:modalPanel id="releaseNotesPanel"
+		width="520" height="300" autosized="false">
+		<f:facet name="header">
+			<div><label>Notas de Release - eSTF-Decisão - Versão #{appVersion}</label></div>
+		</f:facet>
+		<f:facet name="controls">
+			<h:panelGroup>
+				<h:graphicImage value="/common/images/close.gif"
+					style="margin-top:2px;"
+					onclick="#{rich:component('releaseNotesPanel')}.hide()" />
+			</h:panelGroup>
+		</f:facet>
+		<div class="layout-1col" style="overflow: auto; height: 210px"><rich:panel>
+
+			<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+			<!-- Procedimento:                                                            -->
+			<!-- 1: Copie o Release Notes do Jira para o espaço abaixo                   -->
+			<!-- 2: Formate o texto copiado seleciando o texto e acionando Ctrl+Alt+F     -->
+			<!-- 3: Ajuste o tamanho da janela, se necessário                             -->
+			<!-- 4: Altere "Version", "Bug" e "Improvement" para Portugues                -->
+
+
+<h2>        Melhoria
+</h2>
+<ul>
+<li>[<a href='http://sistemas.stf.jus.br/jira/browse/DECISAO-1484'>DECISAO-1484</a>] -         Não permitir que incidentes exclusivos da classe EP sejam criados em outras classes
+</li>
+</ul>
+        
+        
+<br />
+			<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+		</rich:panel></div>
+		<div class="action-buttons" style="padding-top: 5px;"><a:commandButton
+			value="Fechar"
+			onclick="#{rich:component('releaseNotesPanel')}.hide()"
+			eventsQueue="ajaxQueue"
+			ignoreDupResponses="true" /></div>
+	</rich:modalPanel>
+
+</ui:composition>

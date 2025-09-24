@@ -1,0 +1,61 @@
+<div id="detalhe-expedientes-container">
+	<div class="row" id="detalhe-expedientes" style="display: none;">
+		<div class="col-md-12">
+			<div class="row">
+				<div class="col-md-12">
+					<div class="grid simple">
+						<div class="grid-body no-border" style="min-height: 850px;">
+							
+							<div style="padding: 10px;">
+								<div class="page-title">
+									<a href="#" id="btn-back-expediente"><i class="icon-custom-left"></i>
+							        <h3 style="">Voltar</h3></a>
+							    </div>
+								<div>
+									<h3 id="numero-processo-expediente" class="pull-left"></h3>
+									<div class="btn-group pull-right" style="margin-top: 12px">
+										<button id="btn-assinar-este-expediente" class="btn btn-success btn-demo-space">Assinar
+											este (1)</button>
+										<button class="btn btn-success dropdown-toggle btn-demo-space"
+											data-toggle="dropdown">
+											<span class="caret"></span>
+										</button>
+										<ul class="dropdown-menu">
+											<li><a href="#" id="devolver-expediente">Devolver Expediente</a></li>
+										</ul>
+									</div>
+								</div>
+								<div class="clearfix"></div>
+								<br>
+								<div class="control">
+									<div class="pull-left">
+										<div class="btn-group">
+											<h4 id="titulo-expediente"></h4>
+										</div>
+									</div>
+									<div class="pull-right">
+										<span id="expediente-data" class="muted small-text"></span>
+									</div>
+									<div class="clearfix"></div>
+								</div>
+							</div>
+							<div class="visualizar-expediente-body">
+								<div style="text-align: center;">
+									<a id="link-visualizar-expediente" href="#" target="_blank" class="btn btn-success">Visualizar Expediente</a>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="row" id="detalhe-expedientes-conteudo" style="display: none;">
+		<div class="pdf-container-desktop" style="display: none;">
+		</div>
+		<div class="pdf-container-outer" style="display: none;">
+			<div class="pdf-container">
+			</div>
+		</div>
+	</div>
+</div>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:s="http://jboss.com/products/seam/taglib"
+    xmlns:ui="http://java.sun.com/jsf/facelets"
+    xmlns:f="http://java.sun.com/jsf/core"
+    xmlns:h="http://java.sun.com/jsf/html"
+    xmlns:rich="http://richfaces.org/rich"
+    xmlns:a="http://richfaces.org/a4j"
+    xmlns:c="http://java.sun.com/jstl/core">
+    
+	<c:set value="#{actionHolder.action}" var="actionFacesBean"/>
+
+	<c:if test="#{actionHolder.action.definition.facet == facetName}">
+		<h:panelGrid style="width: 100%;" cellpadding="0" cellspacing="0" border="0" columns="1">
+			<s:div styleClass="result-info" style="text-align: left;">
+				<ui:insert name="descricao"/>
+			</s:div>
+		
+			<s:div styleClass="actionBody">
+				<ui:insert name="conteudo"/>
+			</s:div>
+		</h:panelGrid>
+		<div class="action-buttons">
+			<ui:insert name="botoes"/>
+	
+		</div>
+		
+		<c:if test="#{esconderBotoes}">
+			<ui:insert name="botoesPersonalizados"/>
+		</c:if>
+	</c:if>		
+
+</ui:composition>

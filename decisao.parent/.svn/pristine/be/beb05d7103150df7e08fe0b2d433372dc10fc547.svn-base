@@ -1,0 +1,229 @@
+package br.jus.stf.estf.decisao.objetoincidente.service;
+
+import java.util.List;
+import java.util.Set;
+
+import br.gov.stf.estf.entidade.julgamento.Colegiado.TipoColegiadoConstante;
+import br.gov.stf.estf.entidade.julgamento.InformacaoPautaProcesso;
+import br.gov.stf.estf.entidade.julgamento.ListaJulgamento;
+import br.gov.stf.estf.entidade.localizacao.Setor;
+import br.gov.stf.estf.entidade.ministro.Ministro;
+import br.gov.stf.estf.entidade.processosetor.ProcessoSetor;
+import br.gov.stf.estf.entidade.processostf.Agendamento;
+import br.gov.stf.estf.entidade.processostf.AndamentoProcesso;
+import br.gov.stf.estf.entidade.processostf.ListaProcessos;
+import br.gov.stf.estf.entidade.processostf.ObjetoIncidente;
+import br.gov.stf.estf.entidade.processostf.Processo;
+import br.gov.stf.estf.entidade.processostf.SituacaoMinistroProcesso;
+import br.gov.stf.estf.entidade.processostf.TipoRecurso;
+import br.gov.stf.estf.entidade.processostf.enuns.SituacaoIncidenteJulgadoOuNao;
+import br.gov.stf.estf.entidade.usuario.Usuario;
+import br.gov.stf.estf.processostf.model.service.exception.AgendamentoNaoDefinidoException;
+import br.gov.stf.framework.model.service.ServiceException;
+import br.jus.stf.estf.decisao.objetoincidente.support.AgendamentoNaoPodeSerCanceladoException;
+import br.jus.stf.estf.decisao.objetoincidente.support.DadosAgendamentoDto;
+import br.jus.stf.estf.decisao.objetoincidente.support.ProcessoNaoPodeSerAgendadoException;
+import br.jus.stf.estf.decisao.objetoincidente.support.ProcessoPrecisaDeConfirmacaoException;
+import br.jus.stf.estf.decisao.objetoincidente.support.ProcessoTipoRecursoPodePlanarioVirtualException;
+import br.jus.stf.estf.decisao.objetoincidente.support.SustentacaoOralException;
+import br.jus.stf.estf.decisao.objetoincidente.support.ValidacaoLiberacaoParaJulgamentoException;
+import br.jus.stf.estf.decisao.objetoincidente.web.LiberarParaJulgamentoActionFacesBean.AdvogadoSustentacaoOral;
+import br.jus.stf.estf.decisao.objetoincidente.web.LiberarParaJulgamentoActionFacesBean.PrevisaoSustentacaoOralDto;
+import br.jus.stf.estf.decisao.pesquisa.domain.ObjetoIncidenteDto;
+import br.jus.stf.estf.decisao.support.security.Principal;
+import br.jus.stf.estf.decisao.texto.support.DeslocamentoNaoEncontradoException;
+import br.jus.stf.estf.decisao.texto.support.ErroAoDeslocarProcessoException;
+import br.jus.stf.estf.decisao.texto.support.ErroNoSetorDoProcessoException;
+import br.jus.stf.estf.decisao.texto.support.SetorInativoException;
+
+/**
+ * Fornece serviços de negócio relacionados a Objetos Incidentes.
+ * 
+ * <p>
+ * Deve ser o ponto único de acesso a serviços que implementam regras de negócio que envolvem objeto incidente.
+ * 
+ * @author Rodrigo Barreiros
+ * @since 05.05.2010
+ */
+public interface ObjetoIncidenteService {
+
+	/**
+	 * Pesquisa listas de incidentes dado o nome ou parte do nome da lista.
+	 * 
+	 * @param nome o nome da lista
+	 * @return a lista de listas
+	 */
+	List<ListaProcessos> pesquisarListasIncidentes(String nome);
+
+	/**
+	 * Recupera o Objeto Incidente dado o identificador.
+	 * 
+	 * @param id o identificador do objeto incidente
+	 * @return o objeto incidente
+	 */
+	ObjetoIncidente<?> recuperarObjetoIncidentePorId(Long id);
+
+	/**
+	 * Recupera a descrição da repercussão geral para ser apresentada na tela de visualização de processo
+	 * 
+	 * @param objetoIncidente
+	 * @return
+	 */
+	String recuperarDescricaoRepercussaoGeral(ObjetoIncidente<?> objetoIncidente);
+
+	/**
+	 * Valida se um processo pode ser liberado
+	 */
+	void validarSituacaoDeJulgamento(ObjetoIncidente<?> oi) throws ProcessoPrecisaDeConfirmacaoException;
+
+	/**
+	 * Método que valida se um processo pode ser agendado ou não.
+	 * 
+	 * @param dadosAgendamento Dados referentes ao agendamento
+	 * @throws ProcessoPrecisaDeConfirmacaoException
+	 * @throws ProcessoNaoPodeSerAgendadoException
+	 */
+	void validarProcessoParaAgendamento(DadosAgendamentoDto dadosAgendamento) throws ProcessoPrecisaDeConfirmacaoException, ProcessoNaoPodeSerAgendadoException;
+
+	/**
+	 * Agenda um processo obedecendo os parâmetros definidos na ação.
+	 * 
+	 * @param dadosAgendamento
+	 * @throws ProcessoNaoPodeSerAgendadoException
+	 */
+	void salvarAgendamentoProcesso(DadosAgendamentoDto dadosAgendamento);
+
+	/**
+	 * Consulta os agendamentos dos processos passados como parâmetro.
+	 * 
+	 * @param processosSelecionados Lista de processos para pesquisar o agendamento.
+	 * @return Lista dos agendamentos cadastrados no banco.
+	 */
+	List<Agendamento> consultarAgendamentos(Set<ObjetoIncidenteDto> processosSelecionados);
+
+	/**
+	 * Valida se um agendamento pode ser cancelado.
+	 * 
+	 * @param agendamento O agendamento para ser cancelado.
+	 * @param setor       Setor do usuário que está cancelando o agendamento.
+	 * @return True se precisar de confirmação, false caso contrário.
+	 * @throws AgendamentoNaoPodeSerCanceladoException
+	 */
+	boolean isCancelamentoPrecisaDeConfirmacao(Agendamento agendamento, Setor setor) throws AgendamentoNaoPodeSerCanceladoException;
+
+	/**
+	 * Cancela o agendamento de um processo
+	 * 
+	 * @param objetoIncidente
+	 * @param usuario
+	 * @param removerJulgamentoConjunto
+	 * @param removerListaJulgamento
+	 */
+	void cancelarAgendamentoDoProcesso(ObjetoIncidenteDto objetoIncidente, Principal usuario, String removerJulgamentoConjunto, String removerListaJulgamento, String tipoAmbiente)
+																						throws ProcessoPrecisaDeConfirmacaoException;
+
+	/**
+	 * Pesquisa o setor por um id informado
+	 * 
+	 * @param setor
+	 * @return
+	 */
+	Setor consultarSetorPeloId(Long id);
+
+	/**
+	 * Recupera o processoSetor do eGab para um determinado objeto incidente e setor
+	 * 
+	 * @param dto   Objeto incidente
+	 * @param setor Setor
+	 * @return
+	 * @throws ServiceException
+	 */
+	ProcessoSetor recuperarProcessoSetor(ObjetoIncidenteDto dto, Setor setor) throws ServiceException;
+
+	List<TipoRecurso> recuperarTiposRecurso(boolean ativos);
+
+	Ministro recuperarMinistroRelatorIncidente(ObjetoIncidente<?> objetoIncidente) throws ServiceException;
+
+	InformacaoPautaProcesso gravarSustentacoesOrais(InformacaoPautaProcesso informacaoPautaProcesso, List<PrevisaoSustentacaoOralDto> sustentacoesOrais) throws ServiceException;
+
+	List<AdvogadoSustentacaoOral> pesquisarAdvogados(String string) throws ServiceException;
+
+	SituacaoMinistroProcesso recuperarDistribuicaoProcesso(ObjetoIncidente<?> objetoIncidente) throws ServiceException;
+
+	List<ObjetoIncidenteDto> recuperarProcessosJulgamentoConjunto(ObjetoIncidenteDto novoProcessoVinculado) throws ServiceException;
+
+	ListaJulgamento liberarListaParaJulgamento(DadosAgendamentoDto dadosAgendamentoDto) throws ServiceException;
+
+	ListaJulgamento liberarListaParaJulgamentoComVistas(DadosAgendamentoDto dadosAgendamento) throws ServiceException, ValidacaoLiberacaoParaJulgamentoException, ProcessoNaoPodeSerAgendadoException;
+
+	void verificaProcessoEmListaJulgamentoPrevista(ObjetoIncidente<?> objetoIncidente) throws ServiceException, ValidacaoLiberacaoParaJulgamentoException;
+
+	void verificaAgendamentoProcesso(ObjetoIncidente<?> objetoIncidente, TipoColegiadoConstante colegiado, Integer codigoMateria) throws ServiceException, ValidacaoLiberacaoParaJulgamentoException;
+
+	void verificaColegiadoAgendamento(ObjetoIncidente<?> objetoIncidente, TipoColegiadoConstante colegiado) throws ValidacaoLiberacaoParaJulgamentoException, ServiceException;
+
+	void verificaMateriaAgendamento(ObjetoIncidente<?> objetoIncidente, Integer codigoMateria) throws ValidacaoLiberacaoParaJulgamentoException, ServiceException;
+
+	void incluirProcessoListaJulgamento(ObjetoIncidente<?> objetoIncidente, ListaJulgamento listaJulgamento, DadosAgendamentoDto dadosAgendamento)
+																						throws ServiceException, ValidacaoLiberacaoParaJulgamentoException;
+
+	Integer defineCodigoDaTurmaDoMinistro(Ministro ministroDoGabinete, DadosAgendamentoDto dadosAgendamento);
+
+	void verificaProcessoEmSessaoPrevista(ObjetoIncidente<?> oi) throws ServiceException, ValidacaoLiberacaoParaJulgamentoException;
+
+	void verificaExigenciaDeRelatorioVoto(ObjetoIncidente<?> objetoIncidente, Ministro ministroDoGabinete, boolean isPautaDirigida) throws ProcessoNaoPodeSerAgendadoException;
+
+	boolean deslocarProcesso(Processo processoDoTexto, Setor setorDeDestino, Principal usuario) throws ErroAoDeslocarProcessoException;
+
+	Ministro recuperarMinistroRevisorIncidente(ObjetoIncidente<?> objetoIncidente);
+
+	boolean validarProcessoParaDeslocamento(Processo processo) throws ErroAoDeslocarProcessoException, ServiceException, ErroNoSetorDoProcessoException, DeslocamentoNaoEncontradoException,
+																						SetorInativoException, InterruptedException;
+
+	boolean isProcessoApenso(Processo processo) throws ServiceException;
+
+	Processo recuperarProcessoApensante(Processo processo) throws ServiceException;
+
+	SituacaoIncidenteJulgadoOuNao recuperarSituacaoJulgamentoIncidente(Long id) throws ServiceException;
+
+	void validarProcessosParaJulgamentoVirtual(ObjetoIncidente<?> oi, boolean devolucaoDeVista) throws ProcessoTipoRecursoPodePlanarioVirtualException;
+
+	Integer defineTipoDeAgendamento(DadosAgendamentoDto dadosAgendamentoDto) throws ServiceException;
+
+	public boolean temEmentaRelatorioEVotoRevisados(ObjetoIncidente<?> oi);
+
+	boolean temOABParaTodosOsRepresentantes(ObjetoIncidente<?> oi);
+
+	ListaJulgamento processoEmListaJulgamento(Agendamento agendamento);
+
+	Long getAndamentoProcessoCanceladoListaJulgamento(ListaJulgamento listaJulgamento, Agendamento agendamento);
+
+	public boolean temVotoVistaRevisado(ObjetoIncidente<?> oi);
+	
+	public boolean temVotoVistaRevisadoMinistro(ObjetoIncidente<?> oi, Ministro ministro);
+
+	public Agendamento consultaAgendamentoCadastrado(ObjetoIncidente<?> objetoIncidente) throws ServiceException, AgendamentoNaoDefinidoException;
+
+	public boolean isDevolucaoDeVistaPresencial(ObjetoIncidente<?> processo) throws ServiceException;
+
+	public ListaJulgamento findUltimaListaJulgamento(ObjetoIncidente<?> processo) throws ServiceException;
+
+	public void validarProcessoPermiteSustentacaoOral(ObjetoIncidente<?> oi, boolean permiteSustentacaoOral) throws SustentacaoOralException;
+
+	public void validarMinistroRelatorOuVistor(ObjetoIncidente<?> oi, Ministro ministro) throws ValidacaoLiberacaoParaJulgamentoException;
+
+	void cancelarPedidoDeDestaque(List<ObjetoIncidente<?>> listaDestaques, ListaJulgamento listaJulgamento, Usuario usuario, Ministro ministroDestaque) throws ServiceException;
+
+	ListaJulgamento liberarListaDestaquesCancelados(DadosAgendamentoDto montaDadosDoAgendamento, ListaJulgamento listaJulgamento, Usuario usuario) throws ServiceException;
+
+	ObjetoIncidente<?> deproxy(ObjetoIncidente<?> objetoIncidente) throws ClassCastException;
+
+	String montarNomeDaLista(DadosAgendamentoDto dadosAgendamento) throws ServiceException;
+	
+	public boolean isProcessoLiberadoAutomaticamente(ObjetoIncidente<?> objetoIncidente) throws ServiceException;
+
+	void excluir(ObjetoIncidente<?> referendo) throws ServiceException;
+
+	AndamentoProcesso criarAndamentoParaProcesso(DadosAgendamentoDto dados, ObjetoIncidente<?> objetoIncidente, Integer codigoColegiado, Long codigoAndamento, String observacao)
+					throws ServiceException;
+}

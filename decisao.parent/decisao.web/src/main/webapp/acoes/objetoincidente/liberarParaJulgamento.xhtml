@@ -1,0 +1,378 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:s="http://jboss.com/products/seam/taglib"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:rich="http://richfaces.org/rich"
+	xmlns:a="http://richfaces.org/a4j"
+	xmlns:c="http://java.sun.com/jstl/core"
+	xmlns:stf="http://www.stf.jus.br/custom-components">
+	
+
+	<s:decorate template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="principal" />
+		<ui:define name="descricao">Informe os dados abaixo para liberar para julgamento.</ui:define>
+		<ui:define name="conteudo">
+			<a:outputPanel id="panelMessage">
+				<stf:messages height="32px" styleClass="noBorder" />	
+			</a:outputPanel>
+			<div style="max-height: 500px; overflow: auto; margin-top: 10px; position: relative;">
+				<s:decorate template="/common/decorators/edit.xhtml">
+					<ui:define name="label">Ministro Relator:</ui:define>
+					<h:outputText value="#{actionFacesBean.ministroRelator.nome}" />
+				</s:decorate>
+				<s:decorate template="/common/decorators/edit.xhtml">
+					<ui:define name="label">Destino:</ui:define>
+					<h:selectOneRadio id="rdTipoDeAgendamento"
+						value="#{actionFacesBean.idTipoAgendamento}" >
+						<s:selectItems var="tipoAgendamento"
+							value="#{actionFacesBean.tiposDeAgendamento}"
+							itemValue="#{tipoAgendamento.id}"
+							label="#{tipoAgendamento.descricao}" />
+					</h:selectOneRadio>
+				</s:decorate>
+				<s:decorate template="/common/decorators/edit.xhtml">
+					<ui:define name="label">Colegiado:</ui:define>
+					<h:selectOneRadio id="rdTipoColegiadoAgendamento" value="#{actionFacesBean.idTipoColegiadoAgendamento}" >
+						<s:selectItems var="tipoColegiadoAgendamento"
+							value="#{actionFacesBean.tiposColegiadoAgendamento}"
+							itemValue="#{tipoColegiadoAgendamento.id}"
+							label="#{tipoColegiadoAgendamento.descricao}" />
+						<a:support event="onclick" action="#{actionFacesBean.verificarSessaoMinistro}" reRender="btnLiberar" ajaxSingle="true" />	
+					</h:selectOneRadio>
+				</s:decorate>
+				
+				<s:decorate template="/common/decorators/display.xhtml" >
+					<ui:define name="label">Sugestão de Data de Julgamento:</ui:define>
+					<stf:calendar value="#{actionFacesBean.dataJulgamento}" id="dataJulgamento" disabled="false" />
+				</s:decorate>
+				<s:decorate template="/common/decorators/edit.xhtml">
+					<ui:define name="label">Observação da Sugestão de Data de Julgamento:</ui:define>
+					<h:inputTextarea id="txtObservacaoDataJulgamento"
+						value="#{actionFacesBean.observacaoDataJulgamento}" cols="50" rows="2" />
+				</s:decorate>
+				
+				<c:if test="#{not actionFacesBean.liberarVariosProcessos}">
+					<a:outputPanel rendered="#{not empty actionFacesBean.assuntos}">
+						<div class="layout-1col" style="margin-top: 15px;">
+							<h3>Assunto</h3>
+							<h:dataTable id="tblAssuntoProcesso" var="assunto"
+								value="#{actionFacesBean.assuntos}"
+								rendered="#{not empty actionFacesBean.assuntos}" width="100%">
+								<h:column>
+									<h:outputText styleClass="Padrao" value="#{assunto.id}"/>
+									<h:outputText styleClass="Padrao" value=" - #{assunto.descricaoCompleta}"/>
+								</h:column>
+							</h:dataTable>
+						</div>
+					</a:outputPanel>
+					
+					<div class="layout-1col" style="margin-top: 15px;">
+						<h3>Processos Vinculados</h3>
+						<a:outputPanel id="panelProcesso">
+							<s:decorate template="/common/decorators/edit.xhtml">
+								<ui:define name="label">Processo:</ui:define>
+								<h:inputText id="identificacaoProcesso"
+									value="#{actionFacesBean.identificacaoProcessoVinculado}"
+									onkeyup="susgestionEmptyValue(#{rich:component('sgBoxProcessoVinculado')},this)" 
+									onclick="susgestionEmptyValue(#{rich:component('sgBoxProcessoVinculado')},this)"/>
+								<rich:suggestionbox id="sgBoxProcessoVinculado"
+									suggestionAction="#{incidenteFacesBean.searchWithoutFake}"
+									for="identificacaoProcesso" var="result" minChars="1"
+									fetchValue="#{result.identificacao}"
+									nothingLabel="Nenhum Objeto Incidente encontrado." width="350"
+									height="100">
+									<a:support event="onselect"
+										action="#{actionFacesBean.setNovoProcessoVinculado(result)}"
+										reRender="panelMessage, panelProcessoIncluso, panelProcesso"
+										eventsQueue="ajaxQueue"
+										ignoreDupResponses="true" />
+									<h:column>
+										<h:outputText rendered="#{result.eletronico}" value="e"
+											styleClass="vermelho" />
+										<h:outputText value="#{result.identificacao}"
+											styleClass="oiSuggestion" />
+										<h:outputText value=" -> " />
+										<h:outputText value="#{result.nomeRelator}"
+											styleClass="#{(result.idRelator != userFacesBean.principal.ministro.id)? 'oiSuggestion':'green'}" />
+									</h:column>
+								</rich:suggestionbox>
+							</s:decorate>
+							<s:decorate template="/common/decorators/edit.xhtml">
+								<ui:define name="label">Vinculação:</ui:define>
+								<h:selectOneRadio value="#{actionFacesBean.tipoVinculacao}">
+									<s:selectItems var="tipoVinculacao"
+										value="#{actionFacesBean.tiposVinculacao}"
+										itemValue="#{tipoVinculacao}"
+										label="#{tipoVinculacao.descricao}" />
+								</h:selectOneRadio>
+							</s:decorate>
+							<s:decorate template="/common/decorators/edit.xhtml">
+								<a:commandButton value="Incluir"
+									action="#{actionFacesBean.incluirProcessoVinculado}"
+									reRender="panelMessage, panelProcessosVinculados, panelProcesso" eventsQueue="ajaxQueue"
+									ignoreDupResponses="true"/>
+							</s:decorate>
+						</a:outputPanel>
+						<a:outputPanel id="panelProcessosVinculados" >
+							<s:decorate template="/common/decorators/edit.xhtml">
+								<div style="width: 500px;">
+									<div style="border: 1px solid #006699; border-top: none;">
+										<rich:dataTable	id="tbProcessosVinculados"
+											var="processoVinculado"
+											value="#{actionFacesBean.processosVinculados}"
+											rowClasses="dr-table-row-odd, dr-table-row-even"
+											styleClass="data-table">
+											<rich:column styleClass="dr-table-firstcol dr-table-col-center" headerClass="dr-table-firstcol dr-table-col-center largura20px">
+												<f:facet name="header">
+													<a:commandButton image="/common/images/setabaixo.gif"
+														action="#{actionFacesBean.selectAllProcessosVinculados}"
+														title="Página atual" eventsQueue="ajaxQueue"
+														ignoreDupResponses="true"
+														reRender="panelProcessosVinculados" />
+												</f:facet>
+												<h:selectBooleanCheckbox styleClass="Checkbox"
+													value="#{processoVinculado.selected}" />
+											</rich:column>
+											<rich:column>
+												<f:facet name="header">
+													<h:outputText value="Processo" />
+												</f:facet>
+												<h:outputText value="#{processoVinculado.objetoIncidente.identificacao}" />
+											</rich:column>
+											<rich:column styleClass="dr-table-lastcol" headerClass="dr-table-lastcol">
+												<f:facet name="header">
+													<h:outputText value="Vinculação" />
+												</f:facet>
+												<h:outputText value="#{processoVinculado.vinculacao.descricao}" />
+											</rich:column>
+										</rich:dataTable>
+									</div>
+								</div>
+							</s:decorate>
+							<s:decorate template="/common/decorators/edit.xhtml">
+								<a:commandButton value="Excluir"
+									action="#{actionFacesBean.excluirProcessosVinculados}"
+									reRender="panelMessage, panelProcessosVinculados" eventsQueue="ajaxQueue"
+									ignoreDupResponses="true" />
+							</s:decorate>
+						</a:outputPanel>
+					</div>
+					<a:outputPanel style="margin-top: 15px;" styleClass="layout-1col" layout="block">
+						<h3>Sustentações Orais</h3>
+						<a:outputPanel id="panelSustentacaoOral">
+							<s:decorate template="/common/decorators/edit.xhtml">
+								<ui:define name="label">Parte:</ui:define>
+								<h:selectOneMenu style="width: 293px;"
+									value="#{actionFacesBean.idParteSustentacaoOral}" >
+									<f:selectItem itemValue="" itemLabel="Selecione..." />
+									<s:selectItems var="parte"
+										value="#{actionFacesBean.partesProcesso}"
+										itemValue="#{parte.seqJurisdicionado}"
+										label="#{parte.nomeJurisdicionado}" />
+									<f:convertNumber />
+								</h:selectOneMenu>
+							</s:decorate>
+							<s:decorate template="/common/decorators/edit.xhtml">
+								<ui:define name="label">Advogado:</ui:define>
+								<h:inputText id="advogado" style="width: 300px;"
+									value="#{actionFacesBean.nomeAdvogado}" maxlength="100"
+									onkeyup="if(this.value.length>100){this.value = this.value.substring(0, 100);} susgestionEmptyValue(#{rich:component('sgBoxAdvogado')},this)" 
+									onclick="susgestionEmptyValue(#{rich:component('sgBoxAdvogado')},this)"/>
+								<rich:suggestionbox id="sgAdvogado"
+									suggestionAction="#{actionFacesBean.searchAdvogado}"
+									for="advogado" 
+									var="result" 
+									minChars="4" requestDelay="500"
+									fetchValue="#{result.nome}" 
+									eventsQueue="ajaxQueue"
+									ignoreDupResponses="true"
+									nothingLabel="Nenhum Advogado encontrado." 
+									width="350"
+									height="100" 
+									frequency="1" >
+									<a:support event="onselect"
+										action="#{actionFacesBean.setAdvogadoSustentacaoOral(result)}"
+										reRender="panelMessage, panelSustentacaoOral"
+										eventsQueue="ajaxQueue"
+										ignoreDupResponses="true" />
+									<h:column>
+										<h:outputText value="#{result.nome}"
+											styleClass="oiSuggestion" />
+									</h:column>
+								</rich:suggestionbox>
+							</s:decorate>
+							<s:decorate template="/common/decorators/edit.xhtml">
+								<ui:define name="label">Observação:</ui:define>
+								<h:inputTextarea id="txtObservacaoSustentacaoOral"
+									value="#{actionFacesBean.observacaoSustentacaoOral}" cols="50" rows="2" />
+							</s:decorate>
+							<s:decorate template="/common/decorators/edit.xhtml">
+								<a:commandButton value="Incluir"
+									action="#{actionFacesBean.incluirSustentacaoOral}"
+									reRender="panelMessage, panelSustentacaoOral" eventsQueue="ajaxQueue"
+									ignoreDupResponses="true" />
+							</s:decorate>
+							<s:decorate template="/common/decorators/edit.xhtml">
+								<div style="text-align: center; width: 500px;">
+									<div style="border: 1px solid #006699; border-top: none;">
+										<rich:dataTable	id="tbPartesSustentacaoOral"
+											var="sustentacaoOral"
+											value="#{actionFacesBean.sustentacoesOrais}"
+											rowClasses="dr-table-row-odd, dr-table-row-even"
+											styleClass="data-table">
+											<rich:column styleClass="dr-table-firstcol dr-table-col-center" headerClass="dr-table-firstcol dr-table-col-center largura20px">
+												<f:facet name="header">
+													<a:commandButton image="/common/images/setabaixo.gif"
+														action="#{actionFacesBean.selectAllSustentacoesOrais}"
+														title="Página atual" eventsQueue="ajaxQueue"
+														ignoreDupResponses="true"
+														reRender="panelSustentacaoOral" />
+												</f:facet>
+												<h:selectBooleanCheckbox styleClass="Checkbox"
+													value="#{sustentacaoOral.selected}" />
+											</rich:column>
+											<rich:column>
+												<f:facet name="header">
+													<h:outputText value="Parte" />
+												</f:facet>
+												<h:outputText value="#{sustentacaoOral.nomeParte}" />
+											</rich:column>
+											<rich:column>
+												<f:facet name="header">
+													<h:outputText value="Advogado" />
+												</f:facet>
+												<h:outputText value="#{sustentacaoOral.nomeAdvogado}" />
+											</rich:column>
+											<rich:column styleClass="dr-table-lastcol" headerClass="dr-table-lastcol">
+												<f:facet name="header">
+													<h:outputText value="Observação" />
+												</f:facet>
+												<h:outputText value="#{sustentacaoOral.observacao}" />
+											</rich:column>
+										</rich:dataTable>
+									</div>
+								</div>
+							</s:decorate>
+							<s:decorate template="/common/decorators/edit.xhtml">
+								<a:commandButton value="Excluir"
+									action="#{actionFacesBean.excluirSustentacaoOral}"
+									reRender="panelMessage, panelSustentacaoOral" eventsQueue="ajaxQueue"
+									ignoreDupResponses="true" />
+							</s:decorate>
+						</a:outputPanel>
+					</a:outputPanel>					
+					
+					<s:decorate template="/common/decorators/edit.xhtml">
+						<ui:define name="label">Repercussão Geral:</ui:define>
+						<h:selectBooleanCheckbox id="chkRepercussaoGeral"
+							value="#{actionFacesBean.repercussaoGeral}" disable="#{not empty actionFacesBean.temaRepercussaoGeral}" />
+					</s:decorate>
+					<s:decorate template="/common/decorators/edit.xhtml" rendered="#{not empty actionFacesBean.temaRepercussaoGeral}">
+						<ui:define name="label">Tema de Repercussão Geral:</ui:define>
+						<h:outputText value="#{actionFacesBean.temaRepercussaoGeral}" />
+					</s:decorate>
+					
+					<div style="height: 15px;">
+					</div>
+					
+					<s:decorate template="/common/decorators/edit.xhtml">
+						<ui:define name="label">Pauta Extra:</ui:define>
+						<h:selectBooleanCheckbox id="chkPautaExtra"
+							value="#{actionFacesBean.pautaExtra}" />
+					</s:decorate>
+					
+					<div style="height: 15px;">
+					</div>
+					
+					<s:decorate template="/common/decorators/edit.xhtml">
+						<ui:define name="label">Observação:</ui:define>
+						<h:inputTextarea id="txtObservacao"
+							value="#{actionFacesBean.observacao}" cols="50" rows="2" />
+					</s:decorate>
+					
+					<div class="layout-1col">
+						<h3>Informações Adicionais</h3>
+						<s:decorate template="/common/decorators/edit.xhtml">
+							<ui:define name="label">Data Distribuição:</ui:define>
+							<h:outputText value="#{actionFacesBean.dataDistribuicao}" />
+						</s:decorate>
+						<s:decorate template="/common/decorators/edit.xhtml">
+							<ui:define name="label">Preferências:</ui:define>
+							<h:outputText value="#{actionFacesBean.preferencias}" />
+						</s:decorate>
+					</div>
+				</c:if>
+			</div>
+		</ui:define>
+		<ui:define name="botoes">
+			<a:commandButton value="Liberar" id="btnLiberar"
+				action="#{actionFacesBean.validateAndExecute}"
+				reRender="actionModalPanel"
+				onclick="if (#{actionFacesBean.sessaoMinistroDiferente}) {if (!confirm('A turma para a qual está sendo liberado o processo para julgamento não é a mesma do #{actionFacesBean.ministro.nome}, deseja confirmar?')) {return;}}"
+				oncomplete="showActionPanel('panelItem', #{actionFacesBean.definition.width}, #{actionFacesBean.definition.height})" eventsQueue="ajaxQueue"
+							ignoreDupResponses="true"/>
+		</ui:define>
+	</s:decorate>
+
+	<s:decorate template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="warnings" />
+		<ui:define name="descricao">Verifique as informações abaixo antes de prosseguir</ui:define>
+		<ui:define name="conteudo">
+			<c:if test="#{actionFacesBean.processosParaConfirmacao.size()>0}">
+				<div>Os seguintes processos precisam de confirmação para serem
+				liberados para julgamento:</div>
+				<div><stf:messages level="WARN"/></div>
+				<div>
+					<a:outputPanel rendered="#{actionFacesBean.processosParaConfirmacao.size() > 0 and actionFacesBean.processosInvalidos.size() == 0}">
+						<h:selectBooleanCheckbox styleClass="Checkbox" 
+							value="#{actionFacesBean.confirmarProcessosPendentes}">
+							<a:support reRender="btnConfirmarPanel" event="onclick" eventsQueue="ajaxQueue" ignoreDupResponses="true" />
+						</h:selectBooleanCheckbox>
+						<span>Confirmar liberação para julgamento dos processos. </span>
+					</a:outputPanel>
+				</div>
+			</c:if>
+			<c:if test="#{actionFacesBean.processosInvalidos.size()>0}">
+				<div class="vermelho" style="margin-top: 5px;">Os processos abaixo não poderão ser
+				liberados para julgamento:</div>
+				<div><stf:messages level="ERROR"/></div>
+			</c:if>
+		</ui:define>
+		<ui:define name="botoes">
+			<a:outputPanel id="btnConfirmarPanel">
+				<a:commandButton value="Confirmar Liberação" rendered="#{actionFacesBean.processosParaConfirmacao.size() > 0 and actionFacesBean.processosInvalidos.size() == 0 and actionFacesBean.confirmarProcessosPendentes}"
+					action="#{actionFacesBean.execute}" reRender="actionModalPanel"
+					oncomplete="showActionPanel('panelItem', #{actionFacesBean.definition.width}, #{actionFacesBean.definition.height})" eventsQueue="ajaxQueue"
+								ignoreDupResponses="true"/>
+			</a:outputPanel>
+			<a:commandButton value="Voltar" action="#{actionFacesBean.voltar}"
+				reRender="actionModalPanel"
+				oncomplete="showActionPanel('panelItem', #{actionFacesBean.definition.width}, #{actionFacesBean.definition.height})" eventsQueue="ajaxQueue"
+							ignoreDupResponses="true"/>
+		</ui:define>
+	</s:decorate>
+	<s:decorate template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="nenhumProcessoSelecionado" />
+		<ui:define name="descricao">A opção "Confirmar cancelamento de julgamento dos processos." não foi selecionada para a execução da ação."</ui:define>
+		<ui:define name="botoes">
+			<a:commandButton value="Voltar"
+				action="#{actionFacesBean.voltar}" reRender="actionModalPanel"
+				oncomplete="showActionPanel('panelItem', #{actionFacesBean.definition.width}, #{actionFacesBean.definition.height})" eventsQueue="ajaxQueue"
+							ignoreDupResponses="true"/>
+		</ui:define>
+
+	</s:decorate> 
+
+	<s:decorate template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="validacao" />
+		<ui:define name="descricao">Os processos abaixo não poderão ser liberados para julgamento:</ui:define>
+		<ui:define name="conteudo">
+			<stf:messages level="WARN,ERROR"/>
+		</ui:define>
+	</s:decorate>
+
+</ui:composition>

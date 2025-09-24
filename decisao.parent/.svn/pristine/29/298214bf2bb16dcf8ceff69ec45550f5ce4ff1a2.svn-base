@@ -1,0 +1,166 @@
+'use strict';
+
+StfDecisao.facade('MobileNativeInterfaceFacade', function() {
+	function generateUUID() {
+		var d = new Date().getTime();
+		var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+			var r = (d + Math.random()*16)%16 | 0;
+			d = Math.floor(d/16);
+			return (c=='x' ? r : (r&0x3|0x8)).toString(16);
+		});
+		return uuid;
+	}
+	
+	var callbacks = [];
+	
+	var call = function(id, params, callback) {
+		var uuid = generateUUID();
+		callbacks.push({"id": uuid, "fn": callback});
+		var message = {"id": id, "params": params, "callback": uuid};
+		if (parent.location.protocol === "file:") { // Se está dentro de um iframe no app
+			parent.postMessage(message, "file://");
+		}
+		if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.cordova_iab) { // Se está dentro de um cordova inappbrowser
+			window.webkit.messageHandlers.cordova_iab.postMessage(JSON.stringify(message));
+		}
+	};
+	
+	window.addEventListener('message', function(event) {
+		var id = event.data.id;
+		for (var i in callbacks) {
+			if (callbacks[i].id == id) {
+				callbacks[i].fn(event.data);
+				if (!event.data.persistent) {
+					callbacks.splice(i, 1);
+				}
+				break;
+			}
+		}
+	}, false);
+	
+	this.assinarDigitalmente = function(hash, idCertificado, senha) {
+		var deferred = $.Deferred();
+		call('assinarDigitalmente', {"hash": hash, "idCertificado": idCertificado, "senha": senha}, function(data) {
+			console.log('call.assinarDigitalmente', data);
+			if (!data.callbackData.hasError) {				
+				deferred.resolve(data.callbackData);
+			} else {
+				deferred.reject(data.callbackData.error);
+			}
+		});
+		return deferred.promise();
+	};
+	this.recuperarCadeia = function(idCertificado) {
+	    var deferred = $.Deferred();
+	    call('recuperarCadeia', {"idCertificado": idCertificado}, function(data) {
+	        console.log('call.recuperarCadeia', data);
+	        if (!data.callbackData.hasError) {				
+				deferred.resolve(data.callbackData);
+			} else {
+				deferred.reject(data.callbackData.error);
+			}
+	    });
+	    return deferred.promise();
+	};
+	this.recuperarDadosCertificado = function(idCertificado) {
+	    var deferred = $.Deferred();
+	    call('recuperarDadosCertificado', {"idCertificado": idCertificado}, function(data) {
+	        console.log('call.recuperarDadosCertificado', data);
+	        if (!data.callbackData.hasError) {				
+				deferred.resolve(data.callbackData);
+			} else {
+				deferred.reject(data.callbackData.error);
+			}
+	    });
+	    return deferred.promise();
+	};
+	this.testarAssinatura = function(idCertificado, senha) {
+	    var deferred = $.Deferred();
+	    call('testarAssinatura', {"idCertificado": idCertificado, "senha": senha}, function(data) {
+	        console.log('call.testarAssinatura', data);
+	        if (!data.callbackData.hasError) {				
+				deferred.resolve(data.callbackData);
+			} else {
+				deferred.reject(data.callbackData.error);
+			}
+	    });
+	    return deferred.promise();
+	};
+	this.existeCertificadoParaImportacao = function() {
+	    var deferred = $.Deferred();
+	    call('existeCertificadoParaImportacao', {}, function(data) {
+	        console.log('call.existeCertificadoParaImportacao', data);
+	        if (!data.callbackData.hasError) {				
+				deferred.resolve(data.callbackData);
+			} else {
+				deferred.reject(data.callbackData.error);
+			}
+	    });
+	    return deferred.promise();
+	};
+	this.recuperarDadosImportacao = function(senha) {
+	    var deferred = $.Deferred();
+	    call('recuperarDadosImportacao', {"senha": senha}, function(data) {
+	        console.log('call.recuperarDadosImportacao', data);
+	        if (!data.callbackData.hasError) {				
+				deferred.resolve(data.callbackData);
+			} else {
+				deferred.reject(data.callbackData.error);
+			}
+	    });
+	    return deferred.promise();
+	};
+	this.setCallbackIniciarImportacaoCertificado = function(callback) {
+	    call('setCallbackIniciarImportacaoCertificado', {}, function(data) {
+	        callback();
+	    });
+	};
+	this.importarCertificado = function() {
+	    var deferred = $.Deferred();
+	    call('importarCertificado', {}, function(data) {
+	        console.log('call.importarCertificado', data);
+	        if (!data.callbackData.hasError) {				
+				deferred.resolve(data.callbackData);
+			} else {
+				deferred.reject(data.callbackData.error);
+			}
+	    });
+        return deferred.promise();
+	};
+	this.zerarImportacao = function() {
+	    var deferred = $.Deferred();
+	    call('zerarImportacao', {}, function(data) {
+	        console.log('call.zerarImportacao', data);
+	        if (!data.callbackData.hasError) {				
+				deferred.resolve(data.callbackData);
+			} else {
+				deferred.reject(data.callbackData.error);
+			}
+	    });
+        return deferred.promise();
+	};
+	this.excluirCertificado = function(idCertificado) {
+	    var deferred = $.Deferred();
+	    call('excluirCertificado', {}, function(data) {
+	        console.log('call.excluirCertificado', data);
+	        if (!data.callbackData.hasError) {				
+				deferred.resolve(data.callbackData);
+			} else {
+				deferred.reject(data.callbackData.error);
+			}
+	    });
+        return deferred.promise();
+	};
+	this.recuperarVersaoMobile = function() {
+		var deferred = $.Deferred();
+		call('recuperarVersaoMobile', {}, function(data) {
+			console.log('call.recuperarVersaoMobile', data);
+			if (!data.callbackData.hasError) {				
+				deferred.resolve(data.callbackData);
+			} else {
+				deferred.reject(data.callbackData.error);
+			}
+		});
+		return deferred.promise();
+	};
+});

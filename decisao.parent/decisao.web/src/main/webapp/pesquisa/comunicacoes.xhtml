@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:s="http://jboss.com/products/seam/taglib"
+    xmlns:ui="http://java.sun.com/jsf/facelets"
+    xmlns:f="http://java.sun.com/jsf/core"
+    xmlns:h="http://java.sun.com/jsf/html"
+    xmlns:rich="http://richfaces.org/rich"
+    xmlns:p="http://primefaces.prime.com.tr/ui" 
+    xmlns:a="http://richfaces.org/a4j"
+    xmlns:c="http://java.sun.com/jstl/core">
+
+	<c:set var="registros" value="#{principalFacesBean.currentContext.result}" />
+	
+    <rich:dataTable id="resultTable"
+    				var="_comunicacao"
+    				value="#{principalFacesBean.currentContext.result}"
+    				rendered="#{not empty principalFacesBean.currentContext.result}"
+    				rows="#{principalFacesBean.pageSize}"
+    				styleClass="data-table"
+    				rowClasses="dr-table-row-odd, dr-table-row-even">
+    				
+        <rich:column width="20px" styleClass="#{_comunicacao.idModeloComunicacao == 8014 || _comunicacao.idModeloComunicacao == 8035 ? 'dr-table-row-red' : '' }"  headerClass="dr-table-firstcol dr-table-col-center">
+            <f:facet name="header">
+				<a:commandButton image="/common/images/setabaixo.gif" action="#{principalFacesBean.currentContext.result.selectAll()}" reRender="actionPanel, resultTable, panelMenuAssinar" ajaxSingle="true" eventsQueue="ajaxQueue" ignoreDupResponses="true"/>
+            </f:facet>
+            <h:selectBooleanCheckbox value="#{_comunicacao.selected}">
+            	<a:support event="onchange" action="#{principalFacesBean.currentContext.result.changeSelection(_comunicacao)}" reRender="actionPanel, panelMenuAssinar" ajaxSingle="true" eventsQueue="ajaxQueue" ignoreDupResponses="true"/>
+            </h:selectBooleanCheckbox>
+        </rich:column>
+        <rich:column width="10%" styleClass="#{_comunicacao.idModeloComunicacao == 8014 || _comunicacao.idModeloComunicacao == 8035 ? 'dr-table-row-red' : '' }" >
+            <f:facet name="header">Processo</f:facet>
+			<h:outputText value="#{_comunicacao.processo}" />
+        </rich:column>
+        <rich:column width="20%" styleClass="#{_comunicacao.idModeloComunicacao == 8014 || _comunicacao.idModeloComunicacao == 8035 ? 'dr-table-row-red' : '' }" >
+            <f:facet name="header">Relator</f:facet>
+            <h:outputText value="#{_comunicacao.nomeMinistroRelator}"/>
+        </rich:column>
+        <rich:column width="35%" styleClass="#{_comunicacao.idModeloComunicacao == 8014 || _comunicacao.idModeloComunicacao == 8035 ? 'dr-table-row-red' : '' }" >
+            <f:facet name="header" >Nome Documento</f:facet>
+            <h:outputText value="#{_comunicacao.dscNomeDocumento}"/>
+        </rich:column>
+        <rich:column width="10%" styleClass="#{_comunicacao.idModeloComunicacao == 8014 || _comunicacao.idModeloComunicacao == 8035 ? 'dr-table-row-red' : '' }" >
+            <f:facet name="header">Data de Entrada</f:facet>
+            <h:outputText value="#{_comunicacao.dataDisponibilizacaoGabinete}"/>
+        </rich:column>
+        <rich:column width="5%" styleClass="#{_comunicacao.idModeloComunicacao == 8014 || _comunicacao.idModeloComunicacao == 8035 ? 'dr-table-row-red' : '' }" >
+            <f:facet name="header">PDF</f:facet>
+            	<h:commandLink action="#{comunicacaoFacesBean.gerarPDFComunicacao(_comunicacao)}" rendered="#{not empty _comunicacao.id}">
+				<h:graphicImage value="/common/images/pdf.png" title="Imprimir Expediente" style="margin-right: 3px"/>
+			</h:commandLink>
+        </rich:column>
+       <rich:column width="25%" styleClass="#{_comunicacao.idModeloComunicacao == 8014 || _comunicacao.idModeloComunicacao == 8035 ? 'dr-table-row-red' : '' }" headerClass="dr-table-lastcol" >
+            <f:facet name="header">Peça(s) Vinculada(s)</f:facet>
+            	  
+            	  <rich:dataTable value="#{_comunicacao.pecasProcessoEletronico}" var="pecaVinculada" id="idPecaVinculada" >
+                	<rich:column style="border: 1px">
+               			 <h:outputText value="" title="#{pecaVinculada.pecaProcessoEletronico.documentos[0].documentoEletronico}" />
+                    		<h:commandLink value="#{pecaVinculada.pecaProcessoEletronico.documentos[0].pecaProcessoEletronico.tipoPecaProcesso.descricao}" action="#{comunicacaoFacesBean.gerarPDFVinculado(pecaVinculada.pecaProcessoEletronico.documentos[0].documentoEletronico)}" 
+                    		title="#{pecaVinculada.pecaProcessoEletronico.documentos[0].pecaProcessoEletronico.tipoPecaProcesso.descricao}" />
+                	</rich:column>
+            </rich:dataTable>
+
+
+        </rich:column>     
+       
+    </rich:dataTable>
+
+</ui:composition>

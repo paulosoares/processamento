@@ -1,0 +1,188 @@
+package br.jus.stf.estf.decisao.objetoincidente.web;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
+import org.jboss.seam.Component;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import br.gov.stf.estf.entidade.julgamento.Colegiado;
+import br.gov.stf.estf.entidade.julgamento.ListaJulgamento;
+import br.gov.stf.estf.entidade.julgamento.Sessao;
+import br.gov.stf.estf.entidade.julgamento.Sessao.TipoAmbienteConstante;
+import br.gov.stf.estf.entidade.julgamento.Sessao.TipoJulgamentoVirtual;
+import br.gov.stf.estf.entidade.julgamento.Sessao.TipoSessaoConstante;
+import br.gov.stf.estf.entidade.processostf.ObjetoIncidente;
+import br.gov.stf.estf.entidade.processostf.PreListaJulgamento;
+import br.gov.stf.estf.entidade.processostf.PreListaJulgamentoObjetoIncidente;
+import br.gov.stf.estf.julgamento.model.service.SessaoService;
+import br.gov.stf.estf.processostf.model.service.PreListaJulgamentoService;
+import br.gov.stf.estf.publicacao.model.service.FeriadoService;
+import br.gov.stf.framework.model.service.ServiceException;
+import br.jus.stf.estf.decisao.objetoincidente.support.DadosAgendamentoDto;
+import br.jus.stf.estf.decisao.objetoincidente.support.TipoAgendamento;
+import br.jus.stf.estf.decisao.objetoincidente.support.TipoColegiadoAgendamento;
+import br.jus.stf.estf.decisao.support.action.handlers.RequiresResources;
+import br.jus.stf.estf.decisao.support.action.handlers.RequiresResources.Mode;
+import br.jus.stf.estf.decisao.support.action.handlers.Restrict;
+import br.jus.stf.estf.decisao.support.action.support.Action;
+import br.jus.stf.estf.decisao.support.action.support.ActionIdentification;
+import br.jus.stf.estf.decisao.support.action.support.ActionSupport;
+
+@Action(id = "liberarPreListaDestaquesCanceladosActionFacesBean", name = "Liberar Pré Lista de Destaques Cancelados", view = "/acoes/objetoincidente/liberarPreListaDestaquesCancelados.xhtml", width = 650)
+@Restrict({ ActionIdentification.LIBERAR_PARA_JULGAMENTO })
+@RequiresResources(Mode.Many)
+public class LiberarPreListaDestaquesCanceladosActionFacesBean extends ActionSupport<PreListaJulgamento> {
+
+	@Autowired
+	private SessaoService sessaoService;
+	
+	@Autowired
+	private PreListaJulgamentoService preListaJulgamentoService;
+	
+	@Autowired
+	private FeriadoService feriadoService;
+	
+	private List<PreListaJulgamentoObjetoIncidente> processos;
+
+	private PreListaJulgamento preLista;
+
+	@Override
+	public void load() {
+		
+		addError("A liberação de lista de destaques cancelados deve ser feita pelo STF-Digital!");
+		sendToErrors();
+		setRefresh(true);
+		
+//		setProcessos(new ArrayList<PreListaJulgamentoObjetoIncidente>());
+//		
+//		try {
+//			preLista = getResources().iterator().next();
+//
+//			PreListaJulgamento preListaJulgamento = preListaJulgamentoService.recuperarPorIdComObjetoIncidente(preLista.getId());
+//			
+//			for (PreListaJulgamentoObjetoIncidente ploi : preListaJulgamento.getObjetosIncidentes())
+//				if (Boolean.TRUE.equals(ploi.getRevisado()))
+//					getProcessos().add(ploi);
+//
+//		} catch (ServiceException e) {
+//			addError("Erro ao recuperar a pré-lista.");
+//			logger.error(e);
+//			sendToErrors();
+//		}
+//		
+//		setRefresh(true);
+	}
+
+	public void execute() {
+		try {
+			Map<ListaJulgamento, List<ObjetoIncidente<?>>> mapDestaques = new TreeMap<ListaJulgamento, List<ObjetoIncidente<?>>>();
+			
+			for (PreListaJulgamentoObjetoIncidente ploi : getProcessos()) {
+				ListaJulgamento listaJulgamento = ploi.getListaJulgamento();
+				ObjetoIncidente<?> oi = ploi.getObjetoIncidente();
+				
+				if (!mapDestaques.containsKey(listaJulgamento))
+					mapDestaques.put(listaJulgamento, new ArrayList<ObjetoIncidente<?>>());
+					
+				mapDestaques.get(listaJulgamento).add(oi);
+			}
+
+			if (mapDestaques.size() > 0)
+				for (ListaJulgamento listaJulgamento : mapDestaques.keySet()) {
+					List<ObjetoIncidente<?>> listaDestaques = mapDestaques.get(listaJulgamento);
+					ListaJulgamento novaListaJulgamento = objetoIncidenteService.liberarListaDestaquesCancelados(montaDadosDoAgendamento(listaDestaques, listaJulgamento), listaJulgamento, getUsuario());
+					
+					PreListaJulgamento preListaJulgamento = preListaJulgamentoService.recuperarPorId(preLista.getId());
+					preListaJulgamentoService.removerProcessosRevisados(preListaJulgamento);
+					
+					RevisarListasFacesBean revisarListasFacesBean = (RevisarListasFacesBean)Component.getInstance(RevisarListasFacesBean.class, true);
+					revisarListasFacesBean.atualizarColuna(preListaJulgamento);
+					
+					addInformation("A lista de processos [" + novaListaJulgamento.getNome() + "] foi liberada para julgamento virtual no período de " 
+								+ new SimpleDateFormat("dd/MM/yyyy").format(novaListaJulgamento.getSessao().getDataPrevistaInicio())
+								+ " a "
+								+ new SimpleDateFormat("dd/MM/yyyy").format(novaListaJulgamento.getSessao().getDataPrevistaFim())
+								+ ".");
+																									
+				}
+			
+			sendToInformations();
+		} catch (Exception e) {
+			addError(e.getMessage());
+			logger.error(e);
+			sendToErrors();
+		}
+		
+		setRefresh(true);
+	}
+
+	private DadosAgendamentoDto montaDadosDoAgendamento(List<ObjetoIncidente<?>> lista, ListaJulgamento listaJulgamento) throws ServiceException {
+
+		try {
+			GregorianCalendar dataLiberacaoCalendar = new GregorianCalendar();
+			Colegiado colegiado = listaJulgamento.getSessao().getColegiado();
+
+			Sessao sessaoVirtual = sessaoService.recuperarSessao(dataLiberacaoCalendar, colegiado, false, TipoJulgamentoVirtual.LISTAS_DE_JULGAMENTO);
+			sessaoVirtual = sessaoService.salvar(sessaoVirtual);
+			sessaoService.flushSession();
+			
+			DadosAgendamentoDto dadosAgendamento = new DadosAgendamentoDto();
+			dadosAgendamento.setMinistro(listaJulgamento.getMinistro());
+			dadosAgendamento.setNomeLista(listaJulgamento.getNome());
+			dadosAgendamento.setMinistroDoGabinete(getMinistro());
+			dadosAgendamento.setTipoAgendamento(TipoAgendamento.INDICE);
+			dadosAgendamento.setUsuario(getUsuario());
+			dadosAgendamento.setSetorDoUsuario(getSetorMinistro());
+			dadosAgendamento.setTipoColegiadoAgendamento(TipoColegiadoAgendamento.getById(listaJulgamento.getSessao().getColegiado().getId()));
+			dadosAgendamento.setSessao(sessaoVirtual);
+			dadosAgendamento.setTipoListaJulgamento(listaJulgamento.getTipoListaJulgamento());
+			dadosAgendamento.setIdTipoAmbienteColegiadoEscolhido(TipoAmbienteConstante.VIRTUAL.getSigla());
+			dadosAgendamento.setAdmiteSustentacaoOral(listaJulgamento.getAdmiteSustentacaoOral());
+			dadosAgendamento.setJulgamentoTese(listaJulgamento.getJulgamentoTese());
+			dadosAgendamento.setJulgamentoModulacao(listaJulgamento.getJulgamentoModulacao());
+			dadosAgendamento.setSessaoExtraordinaria(false);
+			dadosAgendamento.setListaObjetoIncidente(lista);
+			dadosAgendamento.setAdmiteSustentacaoOral(listaJulgamento.getAdmiteSustentacaoOral());
+			dadosAgendamento.setJulgamentoTese(listaJulgamento.getJulgamentoTese());
+			dadosAgendamento.setJulgamentoModulacao(listaJulgamento.getJulgamentoModulacao());
+			dadosAgendamento.setListaComPedidoDeDestaque(true);
+			dadosAgendamento.setMinistroDestaque(getMinistro());
+			dadosAgendamento.setCabecalho(listaJulgamento.getCabecalho());
+			dadosAgendamento.setCabecalhoVistor(listaJulgamento.getCabecalhoVistor());
+			return dadosAgendamento;
+			
+		} catch (Exception e) {
+			throw new ServiceException(e);
+		}
+	}
+
+	public List<PreListaJulgamentoObjetoIncidente> getProcessos() {
+		return processos;
+	}
+
+	public void setProcessos(List<PreListaJulgamentoObjetoIncidente> processos) {
+		this.processos = processos;
+	}
+
+	public PreListaJulgamento getPreLista() {
+		return preLista;
+	}
+
+	public void setPreLista(PreListaJulgamento preLista) {
+		this.preLista = preLista;
+	}
+
+	public FeriadoService getFeriadoService() {
+		return feriadoService;
+	}
+
+	public void setFeriadoService(FeriadoService feriadoService) {
+		this.feriadoService = feriadoService;
+	}
+}

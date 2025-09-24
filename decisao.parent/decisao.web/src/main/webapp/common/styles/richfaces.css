@@ -1,0 +1,161 @@
+/* Rich modal */
+.dr-mpnl-mask-div							{ background-color:#000000; filter:alpha(opacity=20); opacity: 0.2;}
+.dr-mpnl-header 							{ background-color:#142E5A; }
+.dr-mpnl-pnl 								{ padding: 0px; border:2px solid #142E5A; -moz-border-radius: 4px; -webkit-border-radius: 4px; border-radius: 4px;
+											 -moz-box-shadow: 3px 3px 3px rgba(0,0,0,0.3); -webki-box-shadow: 3px 3px 3px rgba(0,0,0,0.3); box-shadow: 3px 3px 3px rgba(0,0,0,0.3)}
+.dr-mpnl-pnl-h								{ border: none; background-image: none; padding : 7px 5px; color: #fff; font-weight: bold; font-size: 1.1em;}
+.dr-mpnl-pnl-b								{ padding : 10px; background-color: #ffffff; vertical-align: top;}
+.dr-mpnl-shadow 							{ display: none; }
+.rich-mpnl-controls 						{ display: none; }
+                                			
+/* Suggestion Box */            			
+.dr-sb-int-sel								{ cursor: default; background-color: #122C59; color: #FFFFFF; }
+.dr-sb-cell-padding							{ padding: 2px 3px 2px 5px;}
+.dr-sb-int									{ cursor : pointer; font-weight: bold; }
+                                			
+.dr-sb-ext-decor-1							{ background-color: #ffffff; border: 1px solid #006699; 
+											  -moz-border-radius: 3px; -webkit-border-radius: 3px; border-radius: 3px;
+											  -webkit-box-shadow: rgba(0, 0, 0, 0.2) 2px 2px 3px; -moz-box-shadow: rgba(0, 0, 0, 0.2) 2px 2px 3px; box-shadow: rgba(0, 0, 0, 0.2) 2px 2px 3px; }
+.dr-sb-ext-decor-2							{ border: none; }
+.dr-sb-shadow								{ display: none; }
+.dr-sb-overflow								{ overflow-y: auto; overflow-x: hidden;}
+.dr-sb-int-decor-table						{ margin: 5px; }
+
+/* Rich Calendar */                  			
+.rich-calendar-exterior						{ width: 180px;  border: 2px solid  #1E4D9C; background-color: #ffffff; font-size: 0.9em;
+											  -webkit-box-shadow: rgba(0, 0, 0, 0.2) 2px 2px 3px; -moz-box-shadow: rgba(0, 0, 0, 0.2) 2px 2px 3px; box-shadow: #dddddd 2px 2px 3px}
+.rich-calendar-btn							{ cursor : pointer; color: #000099; background-color: #E7EDFA}
+.rich-calendar-tool-btn-hover				{ border: none; padding:2px 3px; text-decoration: underline;}
+.rich-calendar-hover						{ background-color: #C2D0EF; font-weight: bold; text-decoration: underline;}
+.rich-calendar-header-optional				{ padding : 7px; height : 22px; font-weight: bold; }
+.rich-calendar-header						{ background-color: #1E4D9C; border:none; color:#FFFFFF; }
+.rich-calendar-cell							{ border: none; }
+.rich-calendar-cell-size					{ width : 25px; height : 22px; }
+.rich-calendar-boundary-dates				{ cursor: default; color: #999999; }
+.rich-calendar-days							{ cursor: default; font-weight: bold; border: none; }
+.rich-calendar-weekends						{ color: #000000; }
+.rich-calendar-select						{ background-color: #C2D0EF; color: #000099; font-weight: bold; text-decoration: underline; }
+.rich-calendar-today						{ color: #990000; background-color: #EFC2C4; font-weight: bold; }
+
+/* Rich Calendar Date Select */
+.rich-calendar-date-layout					{ background-color: #ffffff; border: 1px solid #006699; font-size: 0.9em; padding: 2px;}
+.rich-calendar-date-layout-ok				{ background:#F1EEE9; border-top:1px solid #C4C0B9; padding:5px 1px 5px 5px;}
+.rich-calendar-date-layout-cancel			{ background:#F1EEE9; border-top:1px solid #C4C0B9; padding:5px 5px 5px 1px; }
+.rich-calendar-date-layout-split			{ border-right: 1px solid #C4C0B9; }
+.rich-calendar-editor-layout-shadow			{ background-color: #000000; filter:alpha(opacity=40); opacity: 0.4; }
+.rich-calendar-editor-btn-over				{ cursor:pointer; margin:2px; padding:1px; background-color: #fafafa; border: 1px solid #cccccc; }
+.rich-calendar-editor-btn-selected			{ cursor:pointer; margin:2px; padding:1px; text-align:center; width:36px;
+											  color: #000099; background-color: #E7EDFA; border: 1px solid #006699; }
+.rich-calendar-time-btn						{ background:none repeat scroll 0 0 #F1EEE9; border-color:#FFFFFF #C4C0B9 #C4C0B9 #FFFFFF;
+											  border-style: solid; border-width: 1px; cursor:pointer; padding:2px; }
+.rich-calendar-editor-tool-over				{ cursor:pointer; margin:2px; padding:1px; background-color: #fafafa; border: 1px solid #cccccc; }
+.rich-calendar-editor-tool-press			{ cursor:pointer; margin:2px; padding:1px; background-color: #eeeeee; border: 1px solid #cccccc; }
+
+/* Datascroller */
+.dr-dscr-t									{ border: none; }
+.dr-dscr-pages								{ padding: 0px 15px; font-weight: bold; }
+.dr-dscr-button, .dr-dscr-sepctrl			{ cursor: pointer; padding: 0px 3px; color: #000099; border: none;}
+.dr-dscr-button-dsbld						{ cursor: default; color: #999999 }
+
+.dr-dscr-button:hover,
+.dr-dscr-sepctrl:hover						{ text-decoration: underline; }
+.dr-dscr-button-dsbld:hover					{ text-decoration: none; }
+
+/* Datatable */
+.dr-table									{ width: 100%; border-collapse: separate; border: none;}
+.dr-table-row-odd							{ background-color: #EDF3FC }
+.dr-table-row-red							{ background-color: #FF6666 }
+.dr-table-row-even							{ background-color: #FFFFFF }
+.dr-table-col-center						{ text-align: center !important; }
+.dr-table-subheadercell						{ text-align: left; border: none; padding: 3px; }
+.dr-table-cell								{ border: none; padding: 3px}
+.dr-table-firstcol							{  }
+.dr-table-lastcol							{  }
+
+/* Rich Menu */
+.dr-menu-icon								{ display: none; }
+.rich-menu-item, .rich-menu-group			{ padding: 0px; }
+.rich-menu-item-hover,
+.rich-menu-group-hover						{ cursor : pointer; background-color: #122C59 !important; border: 0px; }
+.rich-menu-group-label-selected				{ color: #ffffff; text-decoration: none; }
+.rich-menu-item-hover a						{ color: #ffffff; }
+.rich-menu-item-label						{ display: inline-block; padding: 2px 25px;}
+.rich-menu-item-label a						{ display: block; }
+.rich-menu-item-label a:hover				{ text-decoration: none; }
+.rich-menu-list-border						{ border : 1px solid #006699; background: #ffffff; ;
+											  -moz-border-radius: 3px; -webkit-border-radius: 3px; border-radius: 3px;
+											  box-shadow: #dddddd 2px 2px 3px; -webkit-box-shadow: rgba(0, 0, 0, 0.3) 2px 2px 3px;
+											  -moz-box-shadow: rgba(0, 0, 0, 0.3) 2px 2px 3px; }
+.rich-menu-list-bg 							{ background: #ffffff; background-image: none; margin: 3px; border: none; }
+.dr-menu-label 								{ left: 0px; top: 0px; padding : 2px 5px 2px 5px; white-space : nowrap; width : auto; height : auto; }
+.dr-menu-label-select						{ border: none; }
+
+.dr-label-text-decor,
+.dr-menu-label								{ color: #000099; cursor: pointer;}
+
+/* Panel */
+.dr-pnl										{ margin: 15px 0px;  border: none; padding: 0px;}
+.dr-pnl-h									{ padding: 7px; border: none; background: transparent; background-image: none;}
+.dr-pnl-b									{ padding: 0px; }
+
+/* Outros */
+.richfacesSimpleSkin table.mceLayout 		{ border: 0px !important; }
+.richfacesSimpleSkin iframe					{ border: 1px solid #006699 !important; -moz-border-radius: 4px; -webkit-border-radius: 4px; border-radius: 4px;
+											  -webkit-box-shadow: inset rgba(0, 0, 0, 0.3) 0px 0px 5px; -moz-box-shadow: inset rgba(0, 0, 0, 0.3) 0px 0px 5px;
+											  box-shadow: inset rgba(0, 0, 0, 0.3) 0px 0px 5px;}
+.richfacesSkin table, 
+.richfacesSkin tbody, 
+.richfacesSkin a, 
+.richfacesSkin img, 
+.richfacesSkin tr, 
+.richfacesSkin div, 
+.richfacesSkin td, 
+.richfacesSkin iframe, 
+.richfacesSkin span, 
+.richfacesSkin *, 
+.richfacesSkin .mceText 					{ background-color: #FFFFFF !important;}
+.richfacesSimpleSkin .mceToolbar			{ display: none; }
+.mceLayout									{ width: 100% !important; }
+.rich-messages-label						{ vertical-align: top }
+.dr-rich-tool-tip							{ -moz-border-radius:3px; -webkit-border-radius: 3px; border-radius: 3px; background-color:#FFFFFF; border:1px solid #006699;
+											  -webkit-box-shadow: rgba(0, 0, 0, 0.2) 2px 2px 3px; -moz-box-shadow: rgba(0, 0, 0, 0.2) 2px 2px 3px; box-shadow: rgba(0, 0, 0, 0.2) 2px 2px 3px;
+											  font-size:0.8em; padding:2px 3px; position:absolute; text-decoration:none; }
+.dr-rich-tool-tip td						{ border: none !important; }
+
+/* Rich picklist */
+.rich-list-picklist-button,
+.rich-list-picklist-button-light,
+.rich-picklist-control-disabled,
+.rich-list-picklist-button-press 			{ border: 1px solid #006699; padding: 0px 15px; height: 1.9em; font-weight: bold; margin-right: 5px; font-size: 1em;
+											  background: url('../images/bg-button-1.png') 0px 0px repeat-x;
+											  box-sizing: border-box; -ms-box-sizing: border-box; -moz-box-sizing: border-box; -webkit-box-sizing: border-box;
+											  -moz-border-radius: 2px; -webkit-border-radius: 2px; border-radius: 2px}
+
+.rich-picklist-control-disabled				{ color: #999999; }
+
+.rich-list-picklist-button .rich-list-picklist-button-content,
+.rich-list-picklist-button-light .rich-list-picklist-button-content,
+.rich-list-picklist-button-press .rich-list-picklist-button-content	{ margin: 3px 0px 0px 3px; }
+
+.rich-picklist-source-cell					{ cursor: default; border-width: 1px 0px; border-color: transparent; }
+.rich-picklist-source-cell-selected			{ cursor: default; border-width: 1px 0px; border-color: transparent; background-color: #E7EDFA;}
+.rich-picklist-source-cell-active			{ padding: 2px; }
+
+.rich-picklist-control-copy,
+.rich-picklist-control-copyall,
+.rich-picklist-control-remove,
+.rich-picklist-control-removeall			{ border: none; }
+
+.rich-picklist-list-content					{ border: 1px solid #006699; }
+
+/*Rich tab panel*/
+.rich-tab-inactive							{ background-color: #CCCCCC; color: #999999; }
+.rich-tab-active							{ font-weight: bold; }
+.rich-tab-bottom-line, 
+.rich-tabpanel-content,
+.rich-tab-active,
+.rich-tab-inactive							{ border-color: #006699; }
+.rich-tabpanel-content						{ -webkit-box-shadow: rgba(0, 0, 0, 0.3) 2px 2px 3px; -moz-box-shadow: rgba(0, 0, 0, 0.3) 2px 2px 3px; box-shadow: #999999 2px 2px 3px;
+									  		  border: 1px solid #006699; -webkit-border-radius: 4px; -moz-border-radius: 4px; border-radius: 4px;
+									  		  background-color: #ffffff;} 
+.rich-tab-bottom-line 						{ border: none; }

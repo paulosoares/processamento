@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:s="http://jboss.com/products/seam/taglib"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:rich="http://richfaces.org/rich"
+	xmlns:a="http://richfaces.org/a4j"
+	xmlns:c="http://java.sun.com/jstl/core"
+	xmlns:stf="http://www.stf.jus.br/custom-components">
+
+	<s:decorate id="imprimirInformacoesJulgamento"
+		template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="principal" />
+		<ui:define name="descricao">Opções de relatório</ui:define>
+		
+		<ui:define name="conteudo">
+			<s:decorate template="/common/decorators/edit.xhtml">
+				<ui:define name="label">Agrupar Relatório por Sessão</ui:define>
+				<h:selectBooleanCheckbox value="#{actionFacesBean.agruparRelatorioPorSessao}" />
+			</s:decorate>		
+		</ui:define>
+		
+		<ui:define name="botoes">
+			<h:commandButton value="Imprimir" action="#{actionFacesBean.report}" />
+		</ui:define>
+	</s:decorate>
+</ui:composition>

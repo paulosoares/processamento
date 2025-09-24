@@ -1,0 +1,3098 @@
+package br.jus.stf.estf.decisao.objetoincidente.service.impl;
+
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+
+import org.hibernate.Hibernate;
+import org.hibernate.proxy.HibernateProxy;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
+import br.gov.stf.estf.documento.model.service.TextoService;
+import br.gov.stf.estf.documento.model.util.ConsultaDadosDoTextoVO;
+import br.gov.stf.estf.entidade.documento.Texto;
+import br.gov.stf.estf.entidade.documento.TipoFaseComunicacao;
+import br.gov.stf.estf.entidade.documento.TipoTexto;
+import br.gov.stf.estf.entidade.documento.tipofase.FaseTexto;
+import br.gov.stf.estf.entidade.julgamento.Colegiado;
+import br.gov.stf.estf.entidade.julgamento.Colegiado.TipoColegiadoConstante;
+import br.gov.stf.estf.entidade.julgamento.Envolvido;
+import br.gov.stf.estf.entidade.julgamento.InformacaoPautaProcesso;
+import br.gov.stf.estf.entidade.julgamento.InformacaoPautaProcesso.TipoSituacaoPauta;
+import br.gov.stf.estf.entidade.julgamento.JulgamentoProcesso;
+import br.gov.stf.estf.entidade.julgamento.ListaJulgamento;
+import br.gov.stf.estf.entidade.julgamento.PrevisaoSustentacaoOral;
+import br.gov.stf.estf.entidade.julgamento.ProcessoListaJulgamento;
+import br.gov.stf.estf.entidade.julgamento.Sessao;
+import br.gov.stf.estf.entidade.julgamento.Sessao.TipoAmbienteConstante;
+import br.gov.stf.estf.entidade.julgamento.TipoListaJulgamento;
+import br.gov.stf.estf.entidade.julgamento.TipoSituacaoProcessoSessao;
+import br.gov.stf.estf.entidade.julgamento.TipoVoto;
+import br.gov.stf.estf.entidade.julgamento.TipoVoto.TipoVotoConstante;
+import br.gov.stf.estf.entidade.julgamento.VotoJulgamentoProcesso;
+import br.gov.stf.estf.entidade.julgamento.VotoJulgamentoProcesso.TipoSituacaoVoto;
+import br.gov.stf.estf.entidade.julgamento.enuns.SituacaoListaJulgamento;
+import br.gov.stf.estf.entidade.jurisdicionado.Jurisdicionado;
+import br.gov.stf.estf.entidade.localizacao.Setor;
+import br.gov.stf.estf.entidade.ministro.Ministro;
+import br.gov.stf.estf.entidade.ministro.Ocorrencia;
+import br.gov.stf.estf.entidade.processosetor.ProcessoSetor;
+import br.gov.stf.estf.entidade.processostf.Agendamento;
+import br.gov.stf.estf.entidade.processostf.Agendamento.AgendamentoId;
+import br.gov.stf.estf.entidade.processostf.Andamento;
+import br.gov.stf.estf.entidade.processostf.Andamento.Andamentos;
+import br.gov.stf.estf.entidade.processostf.AndamentoProcesso;
+import br.gov.stf.estf.entidade.processostf.Categoria;
+import br.gov.stf.estf.entidade.processostf.Classe;
+import br.gov.stf.estf.entidade.processostf.DeslocaProcesso;
+import br.gov.stf.estf.entidade.processostf.IncidenteJulgamento;
+import br.gov.stf.estf.entidade.processostf.ListaProcessos;
+import br.gov.stf.estf.entidade.processostf.ModeloComunicacaoEnum;
+import br.gov.stf.estf.entidade.processostf.ObjetoIncidente;
+import br.gov.stf.estf.entidade.processostf.OrigemAndamentoDecisao;
+import br.gov.stf.estf.entidade.processostf.OrigemAndamentoDecisao.ConstanteOrigemDecisao;
+import br.gov.stf.estf.entidade.processostf.Parte;
+import br.gov.stf.estf.entidade.processostf.PreListaJulgamento;
+import br.gov.stf.estf.entidade.processostf.PreListaJulgamentoObjetoIncidente;
+import br.gov.stf.estf.entidade.processostf.Processo;
+import br.gov.stf.estf.entidade.processostf.ProcessoDependencia;
+import br.gov.stf.estf.entidade.processostf.RecursoProcesso;
+import br.gov.stf.estf.entidade.processostf.SituacaoMinistroProcesso;
+import br.gov.stf.estf.entidade.processostf.TipoIncidenteJulgamento;
+import br.gov.stf.estf.entidade.processostf.TipoMeioProcesso;
+import br.gov.stf.estf.entidade.processostf.TipoObjetoIncidente;
+import br.gov.stf.estf.entidade.processostf.TipoRecurso;
+import br.gov.stf.estf.entidade.processostf.TipoVinculoObjeto;
+import br.gov.stf.estf.entidade.processostf.VinculoObjeto;
+import br.gov.stf.estf.entidade.processostf.enuns.SituacaoIncidenteJulgadoOuNao;
+import br.gov.stf.estf.entidade.publicacao.EstruturaPublicacao;
+import br.gov.stf.estf.entidade.publicacao.ProcessoPublicado;
+import br.gov.stf.estf.entidade.usuario.Usuario;
+import br.gov.stf.estf.entidade.util.ObjetoIncidenteUtil;
+import br.gov.stf.estf.intimacao.model.service.TipoComunicacaoLocalService;
+import br.gov.stf.estf.julgamento.model.service.EnvolvidoService;
+import br.gov.stf.estf.julgamento.model.service.InformacaoPautaProcessoService;
+import br.gov.stf.estf.julgamento.model.service.JulgamentoProcessoService;
+import br.gov.stf.estf.julgamento.model.service.ListaJulgamentoService;
+import br.gov.stf.estf.julgamento.model.service.PrevisaoSustentacaoOralService;
+import br.gov.stf.estf.julgamento.model.service.ProcessoListaJulgamentoService;
+import br.gov.stf.estf.julgamento.model.service.SessaoService;
+import br.gov.stf.estf.julgamento.model.service.TipoVotoService;
+import br.gov.stf.estf.julgamento.model.service.VotoJulgamentoProcessoService;
+import br.gov.stf.estf.jurisdicionado.model.service.JurisdicionadoService;
+import br.gov.stf.estf.jurisdicionado.model.service.impl.ConsultaConteudoPublicacao;
+import br.gov.stf.estf.localizacao.model.service.SetorService;
+import br.gov.stf.estf.ministro.model.service.MinistroPresidenteService;
+import br.gov.stf.estf.ministro.model.service.MinistroService;
+import br.gov.stf.estf.processosetor.model.service.ProcessoSetorService;
+import br.gov.stf.estf.processostf.model.service.AgendamentoService;
+import br.gov.stf.estf.processostf.model.service.AndamentoProcessoService;
+import br.gov.stf.estf.processostf.model.service.DeslocaProcessoService;
+import br.gov.stf.estf.processostf.model.service.ListaProcessosService;
+import br.gov.stf.estf.processostf.model.service.OrigemAndamentoDecisaoService;
+import br.gov.stf.estf.processostf.model.service.PreListaJulgamentoService;
+import br.gov.stf.estf.processostf.model.service.ProcessoDependenciaService;
+import br.gov.stf.estf.processostf.model.service.ProcessoService;
+import br.gov.stf.estf.processostf.model.service.SituacaoMinistroProcessoService;
+import br.gov.stf.estf.processostf.model.service.TipoRecursoService;
+import br.gov.stf.estf.processostf.model.service.VinculoObjetoService;
+import br.gov.stf.estf.processostf.model.service.exception.AgendamentoNaoDefinidoException;
+import br.gov.stf.estf.publicacao.model.service.ConteudoPublicacaoService;
+import br.gov.stf.estf.publicacao.model.service.ProcessoPublicadoService;
+import br.gov.stf.estf.repercussaogeral.model.service.RepercussaoGeralService;
+import br.gov.stf.estf.util.DataUtil;
+import br.gov.stf.framework.model.dataaccess.DaoException;
+import br.gov.stf.framework.model.service.ServiceException;
+import br.jus.stf.estf.decisao.comunicacao.service.ComunicacaoServicLocalImpl;
+import br.jus.stf.estf.decisao.objetoincidente.service.ObjetoIncidenteService;
+import br.jus.stf.estf.decisao.objetoincidente.support.AgendamentoNaoPodeSerCanceladoException;
+import br.jus.stf.estf.decisao.objetoincidente.support.ConsultaDeAgendamentoVO;
+import br.jus.stf.estf.decisao.objetoincidente.support.DadosAgendamentoDto;
+import br.jus.stf.estf.decisao.objetoincidente.support.ProcessoNaoPodeSerAgendadoException;
+import br.jus.stf.estf.decisao.objetoincidente.support.ProcessoPautaDeJulgamentoAdapter;
+import br.jus.stf.estf.decisao.objetoincidente.support.ProcessoPrecisaDeConfirmacaoException;
+import br.jus.stf.estf.decisao.objetoincidente.support.ProcessoTipoRecursoPodePlanarioVirtualException;
+import br.jus.stf.estf.decisao.objetoincidente.support.SustentacaoOralException;
+import br.jus.stf.estf.decisao.objetoincidente.support.TipoAgendamento;
+import br.jus.stf.estf.decisao.objetoincidente.support.TipoColegiadoAgendamento;
+import br.jus.stf.estf.decisao.objetoincidente.support.ValidacaoLiberacaoParaJulgamentoException;
+import br.jus.stf.estf.decisao.objetoincidente.web.CancelarLiberacaoParaJulgamentoActionFacesBean;
+import br.jus.stf.estf.decisao.objetoincidente.web.LiberarParaJulgamentoActionFacesBean.AdvogadoSustentacaoOral;
+import br.jus.stf.estf.decisao.objetoincidente.web.LiberarParaJulgamentoActionFacesBean.PrevisaoSustentacaoOralDto;
+import br.jus.stf.estf.decisao.pesquisa.domain.ObjetoIncidenteDto;
+import br.jus.stf.estf.decisao.support.security.Principal;
+import br.jus.stf.estf.decisao.support.service.ConfiguracaoSistemaService;
+import br.jus.stf.estf.decisao.support.util.ListaJulgamentoUI;
+import br.jus.stf.estf.decisao.support.util.NestedRuntimeException;
+import br.jus.stf.estf.decisao.texto.support.DeslocamentoNaoEncontradoException;
+import br.jus.stf.estf.decisao.texto.support.ErroAoDeslocarProcessoException;
+import br.jus.stf.estf.decisao.texto.support.ErroNoSetorDoProcessoException;
+import br.jus.stf.estf.decisao.texto.support.SetorInativoException;
+
+/**
+ * Implementação default para interface {@link ObjetoIncidenteService}.
+ * 
+ * @author Rodrigo Barreiros
+ * @see 05.05.2010
+ */
+@Service("objetoIncidenteServiceLocal")
+public class ObjetoIncidenteServiceImpl implements ObjetoIncidenteService {	
+	private static final String SIGLA_QO = "QO";
+	private static final String MSG_PROCESSO_LIBERADO_OUTRO_COLEGIADO = "Processo está liberado para julgamento em outro colegiado.";
+	private static final String MSG_PROCESSO_LIBERADO_OUTRA_MATERIA   = "Processo está liberado para julgamento em outra matéria.";
+	private static final String MSG_PROCESSO_OUTRA_SESSAO_PREVISTA    = "Processo está associado a uma sessão prevista.";
+	private static final String MSG_LISTA_DE_JULGAMENTO_PREVISTA      = "Processo faz parte de lista de julgamento prevista.";
+	private static final String MSG_PROCESSO_SEM_RELATORIO            = "O texto de relatório ainda não foi elaborado e não poderá ser liberado para julgamento.";
+	private static final String MSG_MIN_NAO_RELATOR                   = "Este Ministro NÃO é relator deste processo.";
+	private static final String MSG_ERRO_SESSAO_NAO_CARREGADA         = "Erro ao carregar sessão. Informe à STI.";
+	private static final String MSG_PROCESSO_SEM_EMENTA_RELATORIO_OU_VOTO = "Processo sem ementa, relatório ou voto revisados.";
+	public static final String  MSG_ERRO_PAUTA_NAO_CONFIRMADA         = "Pauta não confirmada! Favor entrar em contato com a Secretaria de Sessões.";
+	public static final String  MSG_ERRO_ALTERAR_LISTA_JULGAMENTO_VIRTUAL_INICIO_SESSAO = "Após o início da sessão de julgamento a lista não poderá ser alterada/excluída.";
+	public static final String  MSG_ERRO_CLONAR_JULGAMENTO_VIRTUAL    = "Erro ao agendar processos com vistas.";
+	public static final String MSG_COMUNICAO_REQUISAO_PROCESSO        = "Requisição de Processo";
+	private static final String MSG_PROCESSO_SEM_VOTO_VISTA_REVISADO  = "Processo sem voto vista revisado.";
+	private static final String MSG_RELATOR_VISTOR = "Este processo só pode ser adicionado pelo ministro(a) relator(a) ou vistor(a).";
+	
+	public static final Long SEQ_PESSOA_PGR = 238916L;
+	public static final Long SEQ_PESSOA_AGU = 137643L;
+
+	public static Long TIPO_ANDAMENTO_LIBERACAO_PARA_JULGAMENTO = 8546L;
+	
+	public static Long TIPO_ANDAMENTO_DEVOLUCAO_VISTAS = 8305L;
+	/**
+	 * Classes de processo que não precisam de relatório para serem agendadas
+	 * Alterado conforme issue DECISAO-1375 e Regimento Interno
+	 * Seção III
+	 * DO REVISOR
+     * Art. 23. Há revisão nos seguintes processos:
+     *
+     * I - ação rescisória; AR
+     * II - revisão criminal; RvC
+     * III - ação penal originária prevista no art. 5º, I e II; AP
+     * IV - recurso ordinário criminal previsto no art. 6º, III, RCR
+     * V - declaração de suspensão de direitos do art. 5º, VI, SD
+	 */
+	private static Set<String> classesDeProcessoSemRelatorio = new HashSet<String>(Arrays.asList(
+			 Classe.SIGLA_ACAO_ORIGINARIA
+			,Classe.SIGLA_ACAO_PENAL
+			,Classe.SIGLA_ACAO_RESCISORIA
+			,Classe.SIGLA_REVISAO_CRIMINAL
+			,Classe.SIGLA_RECURSO_ORDINARIO_CRIMINAL
+			,Classe.SIGLA_DECLARACAO_DE_SUSPENSAO_DE_DIREITOS
+			,Classe.SIGLA_RECURSO_CRIME
+			));
+	
+	private static List<Andamentos> andamentosQueImpedemDeslocamentoAutomatico = Arrays.asList(
+			Andamentos.BAIXA_EM_DILIGENCIA,
+			Andamentos.REMESSA_EXTERNA_DOS_AUTOS,
+			Andamentos.BAIXA_AO_ARQUIVO_DO_STF_GUIA_NO,
+			Andamentos.BAIXA_DEFINITIVA_DOS_AUTOS,
+			Andamentos.REMESSA_AO_JUIZO_COMPETENTE,
+			Andamentos.AUTOS_DEVOLVIDOS_A_ORIGEM);
+
+	@Autowired
+	private br.gov.stf.estf.processostf.model.service.ObjetoIncidenteService objetoIncidenteService;
+
+	@Autowired
+	private ListaProcessosService listaProcessosService;
+	
+	@Autowired
+	private PreListaJulgamentoService preListaJulgamentoService;
+	
+	@Autowired
+	private ConfiguracaoSistemaService configuracaoSistemaService;
+
+	@Autowired
+	private RepercussaoGeralService repercussaoGeralService;
+
+	@Autowired
+	private MinistroService ministroService;
+
+	@Autowired
+	private ProcessoPublicadoService processoPublicadoService;
+
+	@Autowired
+	private AgendamentoService agendamentoService;
+
+	@Autowired
+	private TextoService textoService;
+
+	@Autowired
+	private MinistroPresidenteService ministroPresidenteService;
+
+	@Autowired
+	private ConteudoPublicacaoService conteudoPublicacaoService;
+
+	@Autowired
+	private SetorService setorService;
+
+	@Autowired
+	private AndamentoProcessoService andamentoProcessoService;
+	
+	@Autowired
+	private DeslocaProcessoService deslocaProcessoService;
+	
+	@Autowired
+	private ProcessoSetorService processoSetorService;
+	
+	@Autowired
+	private TipoRecursoService tipoRecursoService;
+	
+	@Autowired
+	private PrevisaoSustentacaoOralService previsaoSustentacaoOralService;
+	
+	@Autowired
+	private EnvolvidoService envolvidoService;
+	
+	@Autowired
+	private JurisdicionadoService jurisdicionadoService;
+	
+	@Autowired
+	private SituacaoMinistroProcessoService situacaoMinistroProcessoService;
+	
+	@Autowired
+	private InformacaoPautaProcessoService informacaoPautaProcessoService;
+	
+	@Autowired
+	private VinculoObjetoService vinculoObjetoService;
+	
+	@Autowired
+	private ListaJulgamentoService listaJulgamentoService;
+	
+	@Autowired
+	private ProcessoListaJulgamentoService processoListaJulgamentoService;
+	
+	@Autowired
+	private JulgamentoProcessoService julgamentoProcessoService;
+	
+	@Autowired
+	private SessaoService sessaoService;
+	
+	@Autowired
+	private ProcessoDependenciaService processoDependenciaService;
+	
+	@Autowired
+	private ProcessoService processoService;
+	
+	@Autowired
+	private ComunicacaoServicLocalImpl comunicacaoService;
+	
+	@Autowired
+	private TipoComunicacaoLocalService tipoComunicacaoLocalService;
+	
+	@Autowired
+	private OrigemAndamentoDecisaoService origemAndamentoDecisaoService;
+	
+	@Autowired
+	private VotoJulgamentoProcessoService votoJulgamentoProcessoService;
+	
+	@Autowired
+	private TipoVotoService tipoVotoService;
+	
+	@Override
+	public List<ListaProcessos> pesquisarListasIncidentes(String nome) {
+		Principal principal = (Principal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		try {
+			return principal.getMinistro() != null ? listaProcessosService.pesquisarListaProcessos(nome, true, principal.getMinistro().getSetor().getId()) : null;
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+
+	/**
+	 * @see br.jus.stf.estf.decisao.objetoincidente.service.ObjetoIncidenteService#recuperarObjetoIncidentePorId(java.lang.Long)
+	 */
+	@Override
+	public ObjetoIncidente<?> recuperarObjetoIncidentePorId(Long id) {
+		try {
+			return objetoIncidenteService.recuperarPorId(id);
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+
+	public String recuperarDescricaoRepercussaoGeral(ObjetoIncidente<?> objetoIncidente) {
+		try {
+			Processo processoPrincipal = (Processo) objetoIncidente.getPrincipal();
+			JulgamentoProcesso julgamento = repercussaoGeralService.recuperarJulgamentoRepercussaGeral(processoPrincipal);
+			if (julgamento != null) {
+				return " - " + julgamento.getDescricaoSituacaoAtual();
+			}
+			return "";
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+
+	private void validarProcessoParaPauta(Ministro ministroDoGabinete, ObjetoIncidente<?> objetoIncidente) throws ProcessoPrecisaDeConfirmacaoException {
+		try {
+			verificaRelatoriaDoProcesso(objetoIncidente, ministroDoGabinete);
+			verificaSeProcessoEstaEmPauta(objetoIncidente);
+			verificaSeProcessoEstaAgendadoPauta(objetoIncidente);
+			//Comentado em função do DECISAO-2250
+			//verificaNecessidadeDePauta(objetoIncidente);
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+
+	}
+
+	/**
+	 * Para dado objetoIncidente verifica primeiro se TEM tipo de recurso
+	 * e pode ser pautado, ver tabela JUDICIARIO.TIPO_RECURSO.
+	 * Se não tem tipo de recurso verifica se a classe pode ser pautada,
+	 * ver tabela JUDICIARIO.CLASSE.
+	 * @param objetoIncidente
+	 * @return 
+	 * @throws ServiceException
+	 */
+	private Boolean isProcessoPrecisaDePauta(ObjetoIncidente<?> objetoIncidente) throws ServiceException {
+		TipoRecurso tipoRecurso = this.ObjetoIncidenteUtilGetTipoRecurso(objetoIncidente);
+		if (tipoRecurso == null) {
+			Processo processo = this.objetoIncidenteUtilGetProcesso(objetoIncidente);
+			Classe classe = processo.getClasseProcessual();
+			return classe.getAdmitePautaJulgamento();
+		}
+		return tipoRecurso.getAdmitePautaJulgamento();
+	}
+
+	private void verificaSeProcessoEstaAgendadoPauta(ObjetoIncidente<?> processo) throws ServiceException
+																						,ProcessoPrecisaDeConfirmacaoException {
+		List<Agendamento> agendamentos = consultaAgendamentosDoProcesso(processo,Agendamento.COD_MATERIA_AGENDAMENTO_PAUTA);
+		if (!agendamentos.isEmpty()) {
+			Agendamento agendamento = agendamentos.get(0);
+			String mensagem = montaMensagemDeProcessoAgendadoPauta(agendamento);
+			throw new ProcessoPrecisaDeConfirmacaoException(mensagem);
+		}
+
+	}
+
+	private List<Agendamento> consultaAgendamentosDoProcesso(ObjetoIncidente<?> objetoIncidente, Integer codigoDaMateria)
+			throws ServiceException {
+		ProcessoPautaDeJulgamentoAdapter consulta = new ProcessoPautaDeJulgamentoAdapter(objetoIncidente);
+		consulta.setCodigoDaMateria(codigoDaMateria);
+		// Só inclui o tipo de julgamento se for índice, pois para pauta
+		// sempre é mérito
+		if (codigoDaMateria.equals(Agendamento.COD_MATERIA_AGENDAMENTO_JULGAMENTO)) {
+			if (objetoIncidente.getTipoObjetoIncidente().equals(TipoObjetoIncidente.INCIDENTE_JULGAMENTO)) {
+				TipoRecurso tipoJulgamento = this.ObjetoIncidenteUtilGetTipoRecurso(objetoIncidente);
+				consulta.setTipoJulgamento(tipoJulgamento.getId());
+			}
+		}
+		return agendamentoService.consultaAgendamentosParaPauta(consulta);
+	}
+
+	private String montaMensagemDeProcessoAgendadoPauta(Agendamento agendamento) {
+		int idAgendamento = agendamento.getId().getCodigoMateria().intValue();
+		String capituloDoProcesso = getCapituloDoProcesso(idAgendamento);
+		return "Processo já foi liberado para a pauta "+ capituloDoProcesso;
+	}
+
+	private void verificaSeProcessoEstaEmPauta(ObjetoIncidente<?> objetoIncidente) throws ServiceException
+																						 ,ProcessoPrecisaDeConfirmacaoException {
+		List<ProcessoPublicado> processosPublicados = consultaDadosParaPautaDeJulgamento(objetoIncidente);
+		if (!processosPublicados.isEmpty()) {
+			ProcessoPublicado processoPublicado = processosPublicados.get(0);
+			String montaMensagemDeProcessoEmPauta = montaMensagemDeProcessoEmPauta(processoPublicado);
+			throw new ProcessoPrecisaDeConfirmacaoException(montaMensagemDeProcessoEmPauta);
+		}
+	}
+
+	private String montaMensagemDeProcessoEmPauta(ProcessoPublicado processoPublicado) {
+		Integer numeroMateria = processoPublicado.getNumeroMateria();
+		Short anoMateria = processoPublicado.getAnoMateria();
+		Integer codigoMateria = processoPublicado.getCodigoMateria();
+		String capituloDoProcesso = getCapituloDoProcesso(codigoMateria);
+		
+		String mensgem = String.format("Processo na pauta nº %s/%s %s.", numeroMateria, anoMateria, capituloDoProcesso);
+		return mensgem;
+	}
+
+	private String getCapituloDoProcesso(Integer codigoDaMateria) {
+		if (codigoDaMateria.equals(EstruturaPublicacao.COD_CAPITULO_PLENARIO)) {
+			return "do Plenário.";
+		} else if (codigoDaMateria.equals(EstruturaPublicacao.COD_CAPITULO_PRIMEIRA_TURMA)) {
+			return "da 1ª Turma.";
+		} else if (codigoDaMateria.equals(EstruturaPublicacao.COD_CAPITULO_SEGUNDA_TURMA)) {
+			return "da 2ª Turma.";
+		}
+		return "Capítulo não identificado!";
+
+	}
+
+	private List<ProcessoPublicado> consultaDadosParaPautaDeJulgamento(ObjetoIncidente<?> objetoIncidente)
+			throws ServiceException {
+
+		ProcessoPautaDeJulgamentoAdapter consulta = new ProcessoPautaDeJulgamentoAdapter(objetoIncidente);
+		consulta.setCodigoDaMateria(EstruturaPublicacao.COD_MATERIA_PAUTA_JULGAMENTO);
+		return processoPublicadoService.pesquisarProcessoEmPautaDeJulgamento(consulta);
+	}
+	
+	private void verificaRelatoriaDoProcesso(ObjetoIncidente<?> processo, Ministro ministroDoGabinete)	throws ServiceException
+																											 , ProcessoPrecisaDeConfirmacaoException {
+		boolean isMinistroRelatorIncluindoPresidencia = processo.getRelatorIncidenteId().equals(ministroDoGabinete.getId());
+		if (!isMinistroRelatorIncluindoPresidencia) {
+			throw new ProcessoPrecisaDeConfirmacaoException(MSG_MIN_NAO_RELATOR);
+		}
+	}
+
+	private boolean isMinistroRelatorIncluindoPresidencia(ObjetoIncidente<?> objetoIncidente, Ministro ministroDoGabinete) throws ServiceException {
+		// TODO: Verificar quem é o relator do processo: O relator do mérito, ou do incidente?
+
+		//Solucao Contorno do problema Javassist  DECISAO-2483
+		Processo processo =null;
+		if (objetoIncidente.getTipoObjetoIncidente().getCodigo().equals(TipoObjetoIncidente.PROCESSO.getCodigo())) {
+			//Hibernate.initialize(objetoIncidente.getPrincipal());
+			processo = (Processo) objetoIncidente;
+		}else {
+			Hibernate.initialize(objetoIncidente.getPrincipal());
+			processo = (Processo) objetoIncidente.getPrincipal();
+		}
+		//Solucao Contorno do problema Javassist  DECISAO-2483
+		Hibernate.initialize(processo.getMinistroRelatorAtual());
+		
+		// DECISAO-2654
+		Hibernate.initialize(ministroDoGabinete);
+		
+		boolean isMinistroRelator = isMinistroRelator(processo, ministroDoGabinete);
+		boolean ministroTemRelatoriaDaPresidencia = ministroService.isMinistroTemRelatoriaDaPresidencia(ministroDoGabinete, processo);
+		return isMinistroRelator || ministroTemRelatoriaDaPresidencia;
+	}
+
+	private boolean isMinistroRelator(Processo processo, Ministro ministroDoGabinete) throws ServiceException {
+		return ministroService.isMinistroRelatorDoProcesso(ministroDoGabinete, processo);
+	}
+
+	public void validarProcessoParaAgendamento(DadosAgendamentoDto dadosAgendamento) throws ProcessoPrecisaDeConfirmacaoException
+																						  , ProcessoNaoPodeSerAgendadoException {
+		Long idObjetoIncidente          = dadosAgendamento.getObjetoIncidenteDto().getId();
+		Ministro ministroDoGabinete     = dadosAgendamento.getMinistro();
+		TipoAgendamento tipoAgendamento = dadosAgendamento.getTipoAgendamento();
+		boolean pautaDirigida           = dadosAgendamento.isPautaDirigida();
+
+		if (ministroDoGabinete != null) {
+			try {
+				ministroDoGabinete = ministroService.recuperarPorId(ministroDoGabinete.getId());
+			} catch (ServiceException e) {
+				throw new NestedRuntimeException(e);
+			}
+		}
+		
+		ObjetoIncidente<?> objetoIncidente = recuperarObjetoIncidentePorId(idObjetoIncidente);
+		verificaExigenciaDeRelatorioVoto(objetoIncidente, ministroDoGabinete, pautaDirigida);
+		
+		if (isPauta(tipoAgendamento)) {
+			validarProcessoParaPauta(ministroDoGabinete, objetoIncidente);
+		} else if (isIndice(tipoAgendamento)) {
+			validarDadosParaIndice(ministroDoGabinete, objetoIncidente);
+		}
+	}
+
+	@Override
+	public void verificaExigenciaDeRelatorioVoto(ObjetoIncidente<?> objetoIncidente
+												,Ministro ministroDoGabinete
+												,boolean isPautaDirigida) throws ProcessoNaoPodeSerAgendadoException {
+		try {
+			Processo processo = this.objetoIncidenteUtilGetProcesso(objetoIncidente);
+			boolean isRelatorioGerado = isRelatorioGerado(objetoIncidente, ministroService.recuperarMinistroRelatorIncidente(objetoIncidente));
+			if (isPautaDirigida) {
+				verificaVotoGerado(ministroDoGabinete, objetoIncidente, isRelatorioGerado);
+			} else {
+				if (!isRelatorioGerado && processoExigeRelatorio(processo)) {
+					throw new ProcessoNaoPodeSerAgendadoException(MSG_PROCESSO_SEM_RELATORIO);
+				}
+			}
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+
+	private boolean processoExigeRelatorio(ObjetoIncidente<?> objetoIncidente) {
+		Processo processo = this.objetoIncidenteUtilGetProcesso(objetoIncidente);
+		return !classesDeProcessoSemRelatorio.contains(processo.getClasseProcessual().getId());
+	}
+
+	private void verificaVotoGerado(Ministro ministroDoGabinete, ObjetoIncidente<?> processo, boolean isRelatorioGerado)
+			throws ServiceException, ProcessoNaoPodeSerAgendadoException {
+		boolean isVotoGerado = isVotoGerado(processo, ministroDoGabinete);
+		if (!(isRelatorioGerado && isVotoGerado)) {
+			defineTextoQueEstaFaltando(isRelatorioGerado, isVotoGerado);
+		}
+	}
+
+	private void defineTextoQueEstaFaltando(boolean isRelatorioGerado, boolean isVotoGerado)
+			throws ProcessoNaoPodeSerAgendadoException {
+		if (isRelatorioGerado) {
+			if (!isVotoGerado) {
+				throw new ProcessoNaoPodeSerAgendadoException(
+						"O texto de voto ainda não foi elaborado e não poderá ser agendado para pauta dirigida.");
+			}
+		} else {
+			if (isVotoGerado) {
+				throw new ProcessoNaoPodeSerAgendadoException(
+						"O texto de relatório ainda não foi elaborado e não poderá ser agendado para pauta dirigida.");
+			} else {
+				throw new ProcessoNaoPodeSerAgendadoException(
+						"Os textos de relatório e voto ainda não foram elaborados e não poderão ser agendados para pauta dirigida.");
+			}
+		}
+	}
+
+	private boolean isVotoGerado(ObjetoIncidente<?> processo, Ministro ministroDoGabinete) throws ServiceException {
+		List<Texto> textos = consultarVotos(processo, ministroDoGabinete);
+		return !textos.isEmpty();
+	}
+
+	private List<Texto> consultarVotos(ObjetoIncidente<?> processo, Ministro ministroDoGabinete)
+			throws ServiceException {
+		ConsultaDadosDoTextoVO consulta = montaDadosBasicosDeConsultaDeTexto(processo, ministroDoGabinete);
+		consulta.setTipoDeTexto(TipoTexto.VOTO);
+		return textoService.pesquisar(consulta);
+	}
+
+	private boolean isRelatorioGerado(ObjetoIncidente<?> processo, Ministro ministroDoGabinete) throws ServiceException {
+		List<Texto> textos = consultarRelatorioDoProcesso(processo, ministroDoGabinete);
+		return !textos.isEmpty();
+	}
+
+	private List<Texto> consultarRelatorioDoProcesso(ObjetoIncidente<?> processo, Ministro ministroDoGabinete)
+			throws ServiceException {
+		ConsultaDadosDoTextoVO consulta = montaConsultaDeTexto(processo, ministroDoGabinete, TipoTexto.RELATORIO);
+		return textoService.pesquisar(consulta);
+	}
+
+	private ConsultaDadosDoTextoVO montaConsultaDeTexto(ObjetoIncidente<?> processo, Ministro ministroDoGabinete, TipoTexto tipoTexto)
+			throws ServiceException {
+		ConsultaDadosDoTextoVO consulta = montaDadosBasicosDeConsultaDeTexto(processo, ministroDoGabinete);
+		consulta.setIncluirPresidencia(isMinistroPresidente(ministroDoGabinete));
+		consulta.setIncluirVicePresidencia(isMinistroVicePresidente(ministroDoGabinete));
+		consulta.setTipoDeTexto(tipoTexto);
+		return consulta;
+	}
+	
+	private ConsultaDadosDoTextoVO montaDadosBasicosDeConsultaDeTexto(ObjetoIncidente<?> objetoIncidente,
+			Ministro ministroDoGabinete) {
+		ConsultaDadosDoTextoVO consulta = new ConsultaDadosDoTextoVO();
+		if (ministroDoGabinete !=null) {
+			consulta.setCodigoDoMinistro(ministroDoGabinete.getId());
+		}
+		consulta.setSequencialObjetoIncidente(objetoIncidente.getId());
+		return consulta;
+	}
+
+	private boolean isIndice(TipoAgendamento tipoAgendamento) {
+		return TipoAgendamento.INDICE.equals(tipoAgendamento);
+	}
+
+	private boolean isPauta(TipoAgendamento tipoAgendamento) {
+		boolean isPauta = TipoAgendamento.PAUTA.equals(tipoAgendamento);
+		return isPauta;
+	}
+
+	private void validarDadosParaIndice(Ministro ministroDoGabinete, ObjetoIncidente<?> objetoIncidente)
+			throws ProcessoPrecisaDeConfirmacaoException {
+		try {
+			verificaNecessidadeDePautaParaIndice(objetoIncidente);
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+
+	private boolean isMinistroVicePresidente(Ministro ministroDoGabinete) throws ServiceException {
+		return ministroPresidenteService.getMinistroVicePresidente().getId().getMinistro().getId()
+				.equals(ministroDoGabinete.getId());
+	}
+
+	private boolean isMinistroPresidente(Ministro ministroDoGabinete) throws ServiceException {
+		return ministroPresidenteService.getMinistroPresidente().getId().getMinistro().getId()
+				.equals(ministroDoGabinete.getId());
+	}
+
+	/*
+	 * private void verificaPedidoDeVistas(ObjetoIncidente<?> processo, Ministro
+	 * ministroDoGabinete) throws ServiceException {
+	 * getMapaDeVistas().put(processo.getId(),
+	 * !isMinistroRelatorIncluindoPresidencia(processo, ministroDoGabinete)); }
+	 */
+
+	private void verificaNecessidadeDePautaParaIndice(ObjetoIncidente<?> objetoIncidente) throws ServiceException,
+																								 ProcessoPrecisaDeConfirmacaoException {
+		Boolean isProcessoPrecisaDePauta = isProcessoPrecisaDePauta(objetoIncidente);
+		if (isProcessoPrecisaDePauta != null && isProcessoPrecisaDePauta) {
+			List<Agendamento> agendamentos = consultaAgendamentosDoProcesso(objetoIncidente,Agendamento.COD_MATERIA_AGENDAMENTO_JULGAMENTO);
+			if (agendamentos.isEmpty() && isProcessoPrecisaDePauta && isPautaDeveEstarPublicada(objetoIncidente)) {
+				List<ProcessoPublicado> processosPublicados = consultaDadosParaPautaDeJulgamento(objetoIncidente);
+				if (processosPublicados.isEmpty()) {
+					throw new ProcessoPrecisaDeConfirmacaoException("Este processo tem que ser liberado para pauta.");
+				}
+			}
+		}
+	}
+
+	/**
+	* Verifica se a pauta deve estar publicada. Isso ocorre em duas situações:
+	* 1 - A classe do processo não é uma ADI 
+	* 2 - A classe do processo é uma ADI, e o tipo de julgamento não é QO, QO2 e QO3
+	* 
+	* @param objetoIncidente
+	* @return
+	*/
+	private boolean isPautaDeveEstarPublicada(ObjetoIncidente<?> objetoIncidente) {
+		Processo processo = this.objetoIncidenteUtilGetProcesso(objetoIncidente);
+		TipoRecurso tipoRecurso = this.ObjetoIncidenteUtilGetTipoRecurso(objetoIncidente);
+		return ((!processo.getClasseProcessual().getId().equals(Classe.SIGLA_ACAO_DIRETA_DE_INCONSTITUCIONALIDADE) || (isTipoDeJulgamentoObrigaPublicacao(tipoRecurso))));
+	}
+
+	/**
+	 * A Questão de Ordem obriga a publicação.
+	 * @param tipoJulgamento
+	 * @return
+	 */
+	private boolean isTipoDeJulgamentoObrigaPublicacao(TipoRecurso tipoJulgamento) {
+		return tipoJulgamento != null && SIGLA_QO.equals(tipoJulgamento.getSigla());
+	}
+
+	public void salvarAgendamentoProcesso(DadosAgendamentoDto dadosAgendamento) {
+		try {
+			ObjetoIncidente<?> processo = recuperarObjetoIncidentePorId(dadosAgendamento.getObjetoIncidenteDto()
+					.getId());
+			Ministro ministroDoGabinete = dadosAgendamento.getMinistro();
+			Integer codigoColegiado = defineCapituloParaVerificacaoDaPauta(dadosAgendamento);
+			//if (isPauta(dadosAgendamento.getTipoAgendamento())) {
+			//	verificaFechamentoDaPauta(ministroDoGabinete, codigoColegiado);
+			//}
+			gravaAgendamento(dadosAgendamento, processo, codigoColegiado);
+			liberarRelatorioParaSalaDeJulgamento(ministroDoGabinete, processo);
+			liberarVotosParaSalaDeJulgamento(dadosAgendamento, processo);
+			liberarTextosDoMinistroRelator(ministroDoGabinete, processo);
+			
+			if (dadosAgendamento.getJulgamentoConjunto() != null) {
+				for (ObjetoIncidenteDto dto : dadosAgendamento.getJulgamentoConjunto()) {
+					ObjetoIncidente<?> oi = recuperarObjetoIncidentePorId(dto.getId());
+					gravaAgendamento(dadosAgendamento, oi, codigoColegiado);
+					liberarRelatorioParaSalaDeJulgamento(ministroDoGabinete, oi);
+					liberarVotosParaSalaDeJulgamento(dadosAgendamento, oi);
+					liberarTextosDoMinistroRelator(ministroDoGabinete, oi);
+				}
+			}
+			InformacaoPautaProcesso informacaoPautaProcesso = informacaoPautaProcessoService.recuperar(processo);
+			informacaoPautaProcesso = alterarInformacaoPautaProcesso(informacaoPautaProcesso, dadosAgendamento);
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+
+	}
+
+	private InformacaoPautaProcesso alterarInformacaoPautaProcesso(
+		InformacaoPautaProcesso informacaoPautaProcesso,
+		DadosAgendamentoDto dadosAgendamento) throws ServiceException {
+		if (informacaoPautaProcesso != null) {
+			informacaoPautaProcesso = informacaoPautaProcessoService.recuperarPorId(informacaoPautaProcesso.getId());
+		} else {
+			ObjetoIncidente<?> objetoIncidente = recuperarObjetoIncidentePorId(dadosAgendamento.getObjetoIncidenteDto()
+					.getId());
+			informacaoPautaProcesso = new InformacaoPautaProcesso();
+			informacaoPautaProcesso.setObjetoIncidente(objetoIncidente);
+		}
+		
+		informacaoPautaProcesso.setObservacao(dadosAgendamento.getObservacao());
+		informacaoPautaProcesso.setRepercussaoGeral(dadosAgendamento.isRepercussaoGeral());
+		informacaoPautaProcesso.setPautaExtra(dadosAgendamento.isPautaExtra());
+		informacaoPautaProcesso.setDataJulgamentoSugerida(dadosAgendamento.getDataJulgamentoSugerida());
+		informacaoPautaProcesso.setObservacaoDataSugerida(dadosAgendamento.getObservacaoDataJulgamento());
+		informacaoPautaProcesso.setDataLiberacaoGabinete(new Date());
+		informacaoPautaProcesso.setSituacaoPauta(TipoSituacaoPauta.P);
+		informacaoPautaProcesso.setMateriaRelevante(Boolean.FALSE);
+		informacaoPautaProcesso.setAguardaLiberacao(Boolean.FALSE);
+		
+		informacaoPautaProcesso = informacaoPautaProcessoService.salvar(informacaoPautaProcesso);
+		
+		informacaoPautaProcesso = gravarSustentacoesOrais(informacaoPautaProcesso, dadosAgendamento.getSustentacoesOrais());
+		
+		informacaoPautaProcesso = atualizarProcessosVinculados(informacaoPautaProcesso, dadosAgendamento);
+		
+		return informacaoPautaProcesso;
+	}
+
+	/**
+	 * @param informacaoPautaProcesso
+	 * @param dadosAgendamento
+	 * @return
+	 * @throws ServiceException
+	 */
+	private InformacaoPautaProcesso atualizarProcessosVinculados(
+			InformacaoPautaProcesso informacaoPautaProcesso,
+			DadosAgendamentoDto dadosAgendamento) throws ServiceException {
+		List<Long> listasJulgamentoConjunto = obterListasJulgamentoConjunto(dadosAgendamento, informacaoPautaProcesso);
+		
+		// Remove processos excluídos da lista de julgamento conjunto
+		if (listasJulgamentoConjunto != null && listasJulgamentoConjunto.size() > 0) {
+			informacaoPautaProcesso = removerProcessosListaJulgamentoConjunto(
+					informacaoPautaProcesso,
+					dadosAgendamento.getJulgamentoConjunto(),
+					dadosAgendamento.getPrecedentes(), listasJulgamentoConjunto);
+		}
+		
+		if (dadosAgendamento.getJulgamentoConjunto() != null && dadosAgendamento.getJulgamentoConjunto().size() > 0) {
+			if (informacaoPautaProcesso.getSeqListaJulgamentoConjunto() == null) {
+				if (listasJulgamentoConjunto.size() > 0) {
+					informacaoPautaProcesso.setSeqListaJulgamentoConjunto(listasJulgamentoConjunto.get(0));
+				} else {
+					informacaoPautaProcesso.setSeqListaJulgamentoConjunto(informacaoPautaProcessoService.recuperarProximaSequenciaListaJulgamentoConjunto());
+					listasJulgamentoConjunto.add(informacaoPautaProcesso.getSeqListaJulgamentoConjunto());
+				}
+				informacaoPautaProcesso = informacaoPautaProcessoService.salvar(informacaoPautaProcesso);
+			}
+
+			for (ObjetoIncidenteDto oi : dadosAgendamento.getJulgamentoConjunto()) {
+				ObjetoIncidente<?> objetoIncidente = recuperarObjetoIncidentePorId(oi.getId());
+				InformacaoPautaProcesso ipp = informacaoPautaProcessoService.recuperar(objetoIncidente);
+				if (ipp == null) {
+					ipp = new InformacaoPautaProcesso();
+					ipp.setObjetoIncidente(objetoIncidente);
+				}
+				ipp.setDataJulgamentoSugerida(informacaoPautaProcesso.getDataJulgamentoSugerida());
+				ipp.setObservacaoDataSugerida(informacaoPautaProcesso.getObservacaoDataSugerida());
+				ipp.setDataLiberacaoGabinete(new Date());
+				ipp.setSeqListaJulgamentoConjunto(informacaoPautaProcesso.getSeqListaJulgamentoConjunto());
+				ipp.setDataJulgamentoSugerida(informacaoPautaProcesso.getDataJulgamentoSugerida());
+				ipp.setSituacaoPauta(TipoSituacaoPauta.P);
+				ipp.setRepercussaoGeral(Boolean.valueOf(dadosAgendamento.isRepercussaoGeral()));
+				ipp.setPautaExtra(Boolean.valueOf(dadosAgendamento.isPautaExtra()));
+				ipp.setAguardaLiberacao(Boolean.FALSE);
+				ipp.setMateriaRelevante(Boolean.FALSE);
+				informacaoPautaProcessoService.salvar(ipp);
+			}
+		}
+		
+		// Atualizar lista de processos precedentes
+		if ( dadosAgendamento.getPrecedentes() != null ) {
+			for (ObjetoIncidenteDto dto : dadosAgendamento.getPrecedentes()) {
+				ObjetoIncidente<?> vinculado = recuperarObjetoIncidentePorId(dto.getId());
+				List<VinculoObjeto> listaVinculosObjetoGravados = vinculoObjetoService.pesquisarPorVinculado(vinculado, TipoVinculoObjeto.DEPENDE_DO_JULGAMENTO);
+				List<ObjetoIncidente<?>> julgamentoConjunto = informacaoPautaProcessoService.recuperarProcessosJulgamentoConjunto(informacaoPautaProcesso.getObjetoIncidente(), true);
+				vinculador: for (ObjetoIncidente<?> vinculador : julgamentoConjunto) {
+					for (VinculoObjeto vinculo : listaVinculosObjetoGravados) {
+						if (vinculo.getObjetoIncidenteVinculador().getId().equals(vinculador.getId())) {
+							continue vinculador;
+						}
+					}
+					VinculoObjeto novoVinculo = new VinculoObjeto();
+					novoVinculo.setObjetoIncidenteVinculador(vinculador);
+					novoVinculo.setObjetoIncidente(vinculado);
+					novoVinculo.setTipoVinculoObjeto(TipoVinculoObjeto.DEPENDE_DO_JULGAMENTO);
+					vinculoObjetoService.salvar(novoVinculo);
+				}
+			}
+		}
+		
+		return informacaoPautaProcesso;
+	}
+
+	private InformacaoPautaProcesso removerProcessosListaJulgamentoConjunto(
+			InformacaoPautaProcesso informacaoPautaProcesso,
+			List<ObjetoIncidenteDto> julgamentoConjunto, List<ObjetoIncidenteDto> dependentes, List<Long> listasJulgamentoConjunto) throws ServiceException {
+		for (Long listaJulgamentoConjunto : listasJulgamentoConjunto) {
+			List<ObjetoIncidente<?>> paraRemover = new ArrayList<ObjetoIncidente<?>>();
+			List<ObjetoIncidente<?>> processosJulgamentoConjunto = informacaoPautaProcessoService.recuperarProcessosJulgamentoConjunto(listaJulgamentoConjunto);
+			for (ObjetoIncidente<?> oi : processosJulgamentoConjunto) {
+				if (!julgamentoConjunto.contains(ObjetoIncidenteDto.valueOf(oi))) {
+					paraRemover.add(oi);
+				}
+			}
+			
+			if (processosJulgamentoConjunto.size() == paraRemover.size() - 1) {
+				processosJulgamentoConjunto.removeAll(paraRemover);
+				InformacaoPautaProcesso ipp = informacaoPautaProcessoService.recuperar(processosJulgamentoConjunto.get(0));
+				ipp.setSeqListaJulgamentoConjunto(null);
+				informacaoPautaProcessoService.alterar(ipp);
+			} else {
+				List<InformacaoPautaProcesso> ipps = new ArrayList<InformacaoPautaProcesso>();
+				for (ObjetoIncidente<?> oi : paraRemover) {
+					InformacaoPautaProcesso ipp = informacaoPautaProcessoService.recuperar(oi);
+					ipp.setSeqListaJulgamentoConjunto(null);
+					ipps.add(ipp);
+					List<VinculoObjeto> listaVinculosObjeto = vinculoObjetoService.pesquisarPorVinculador(oi, TipoVinculoObjeto.DEPENDE_DO_JULGAMENTO);
+					vinculoObjetoService.excluirTodos(listaVinculosObjeto);
+				}
+				informacaoPautaProcessoService.alterarTodos(ipps);
+			}
+		}
+		
+		return informacaoPautaProcessoService.recuperar(informacaoPautaProcesso.getObjetoIncidente());
+	}
+
+	private List<Long> obterListasJulgamentoConjunto(
+			DadosAgendamentoDto dadosAgendamento,
+			InformacaoPautaProcesso informacaoPautaProcesso)
+			throws ServiceException {
+		List<Long> listasJulgamentoConjunto = new ArrayList<Long>();
+		if (informacaoPautaProcesso.getSeqListaJulgamentoConjunto() != null && informacaoPautaProcesso.getSeqListaJulgamentoConjunto().intValue() > 0) {
+			listasJulgamentoConjunto.add(informacaoPautaProcesso.getSeqListaJulgamentoConjunto());
+		} else {
+			if (dadosAgendamento.getJulgamentoConjunto() != null) {
+				for (ObjetoIncidenteDto oi : dadosAgendamento.getJulgamentoConjunto()) {
+					InformacaoPautaProcesso ipp = informacaoPautaProcessoService.recuperar(recuperarObjetoIncidentePorId(oi.getId()));
+					if (ipp != null
+							&& ipp.getSeqListaJulgamentoConjunto() != null
+							&& ipp.getSeqListaJulgamentoConjunto().intValue() > 0
+							&& !listasJulgamentoConjunto.contains(ipp.getSeqListaJulgamentoConjunto())) {
+						listasJulgamentoConjunto.add(ipp.getSeqListaJulgamentoConjunto());
+					}
+				}
+			}
+		}
+		return listasJulgamentoConjunto;
+	}
+	
+	private void liberarTextosDoMinistroRelator(Ministro ministroDoGabinete, ObjetoIncidente<?> objetoIncidente)
+			throws ServiceException {
+		// Demétrius Jubé - Essa funcionalidade não estava constando na função
+		// agendarProcesso do modFuncoes5, e estava somente na lista de
+		// agendamento!
+		Processo processo = this.objetoIncidenteUtilGetProcesso(objetoIncidente);
+		if (isMinistroRelator(processo, ministroDoGabinete)) {
+			List<Texto> textosSemRelatorioEVoto = consultaTextosSemRelatorioVoto(ministroDoGabinete, objetoIncidente);
+			liberaTextosParaSalaDeJulgamento(textosSemRelatorioEVoto);
+		}
+	}
+
+	private List<Texto> consultaTextosSemRelatorioVoto(Ministro ministroDoGabinete, ObjetoIncidente<?> processo)
+			throws ServiceException {
+		ConsultaDadosDoTextoVO consulta = montaDadosBasicosDeConsultaDeTexto(processo, ministroDoGabinete);
+		consulta.setTiposDeTextoParaExcluir(TipoTexto.RELATORIO, TipoTexto.VOTO);
+		return textoService.pesquisar(consulta);
+	}
+
+	private void liberarRelatorioParaSalaDeJulgamento(Ministro ministroDoGabinete, ObjetoIncidente<?> processo)
+			throws ServiceException {
+		List<Texto> relatorios = consultarRelatorioDoProcesso(processo, ministroDoGabinete);
+		liberaTextosParaSalaDeJulgamento(relatorios);
+	}
+
+	private void liberarVotosParaSalaDeJulgamento(DadosAgendamentoDto dadosAgendamento, ObjetoIncidente<?> processo)
+			throws ServiceException {
+		if (dadosAgendamento.isPautaDirigida() && dadosAgendamento.isLiberarVoto()) {
+			List<Texto> votos = consultarVotos(processo, dadosAgendamento.getMinistro());
+			liberaTextosParaSalaDeJulgamento(votos);
+		}
+	}
+
+	private void liberaTextosParaSalaDeJulgamento(List<Texto> textos) throws ServiceException {
+		if (textos != null && textos.size() > 0) {
+			for (Texto texto : textos) {
+				texto.setSalaJulgamento(true);
+			}
+			textoService.alterarTodos(textos);
+		}
+	}
+	/*********************************************************************/
+	private void gravaAgendamentoLista(DadosAgendamentoDto dadosAgendamento, ObjetoIncidente<?> processo,
+			Integer codigoColegiado) throws ServiceException {
+		Agendamento agendamento;
+		
+		// 8546 - Incluído na lista de julgamento
+		if (dadosAgendamento.isListaComPedidoDeDestaque()) {
+			processo = recuperarObjetoIncidentePorId(processo.getId());
+			// 8546 - liberação para julgamento
+			AndamentoProcesso andamentoProcessoInclusaoEmLista = geraAndamentoParaProcessoInclusaoLista(dadosAgendamento, processo, codigoColegiado);
+			andamentoProcessoInclusaoEmLista = andamentoProcessoService.recuperarAndamentoProcesso(andamentoProcessoInclusaoEmLista.getId());
+			andamentoProcessoInclusaoEmLista.setObjetoIncidente(processo);
+			andamentoProcessoService.persistirAndamentoProcesso(andamentoProcessoInclusaoEmLista);
+			return;
+		}
+				
+		try {
+			
+			//Se for devolução de vista, deve-se buscar o agendamento independentemente do ministro do gabinete.
+			if (dadosAgendamento.isListaComPedidoDeVista())
+				agendamento = consultaAgendamentoCadastrado(processo);
+				//agendamento.setMinistro(dadosAgendamento.getMinistro());
+			else
+				agendamento = consultaAgendamentoCadastrado(processo, dadosAgendamento.getMinistro());
+			
+			//8546 - liberação para julgamento
+			AndamentoProcesso andamentoProcessoInclusaoEmLista  = geraAndamentoParaProcessoInclusaoLista(dadosAgendamento, processo, codigoColegiado);
+			andamentoProcessoInclusaoEmLista = andamentoProcessoService.recuperarAndamentoProcesso(andamentoProcessoInclusaoEmLista.getId());
+			andamentoProcessoInclusaoEmLista.setObjetoIncidente(processo);
+			andamentoProcessoService.salvar(andamentoProcessoInclusaoEmLista);
+			
+		} catch (AgendamentoNaoDefinidoException e) {
+			agendamento = incluiAgendamentoNovo(dadosAgendamento, processo, codigoColegiado);
+			
+			//7600 (mesa) ou 7601 (pauta)
+			AndamentoProcesso andamentoProcesso = geraAndamentoParaProcessoLista(dadosAgendamento, processo, codigoColegiado);
+			andamentoProcesso = andamentoProcessoService.recuperarAndamentoProcesso(andamentoProcesso.getId());
+			andamentoProcesso.setObjetoIncidente(processo);
+			andamentoProcessoService.persistirAndamentoProcesso(andamentoProcesso);
+		}
+		
+		//8305 - Devolução de vistas
+		if (dadosAgendamento.isListaComPedidoDeVista()){
+			AndamentoProcesso andamentoProcessoDevolucaoVistas  = geraAndamentoParaDevolucaoVistas(dadosAgendamento, processo, codigoColegiado);
+			andamentoProcessoDevolucaoVistas = andamentoProcessoService.recuperarAndamentoProcesso(andamentoProcessoDevolucaoVistas.getId());
+			andamentoProcessoDevolucaoVistas.setObjetoIncidente(processo);
+			andamentoProcessoService.persistirAndamentoProcesso(andamentoProcessoDevolucaoVistas);
+		}
+	}
+	
+	private void gravaAgendamento(DadosAgendamentoDto dadosAgendamento, ObjetoIncidente<?> processo,
+			Integer codigoColegiado) throws ServiceException {
+		Agendamento agendamento;
+		try {
+			agendamento = consultaAgendamentoCadastrado(processo, dadosAgendamento.getMinistro());
+			agendamento.setObservacaoProcesso(dadosAgendamento.getObservacao());
+			agendamentoService.alterar(agendamento);
+
+			
+		} catch (AgendamentoNaoDefinidoException e) {
+			agendamento = incluiAgendamentoNovo(dadosAgendamento, processo, codigoColegiado);
+			AndamentoProcesso andamentoProcesso = geraAndamentoParaProcesso(dadosAgendamento, processo, codigoColegiado);
+			
+			andamentoProcesso = andamentoProcessoService.recuperarAndamentoProcesso(andamentoProcesso.getId());
+			andamentoProcesso.setObjetoIncidente(processo);
+			andamentoProcessoService.persistirAndamentoProcesso(andamentoProcesso);
+			
+		}
+	}
+
+	/*********************************************************************/
+	//7600 ou 7601 - agendamento - antiga descrição 
+	private AndamentoProcesso geraAndamentoParaProcesso(DadosAgendamentoDto dados, ObjetoIncidente<?> objetoIncidente,
+			Integer codigoColegiado) throws ServiceException {
+		return criarAndamentoParaProcessoLista(dados, objetoIncidente, codigoColegiado, defineCodigoDoAndamento(dados));
+	}
+	
+	//8546 - liberação para julgamento - Nova descrição
+	private AndamentoProcesso geraAndamentoParaProcessoInclusaoLista(DadosAgendamentoDto dados, ObjetoIncidente<?> objetoIncidente,
+			Integer codigoColegiado) throws ServiceException {
+		return criarAndamentoParaProcessoLista(dados, objetoIncidente, codigoColegiado, TIPO_ANDAMENTO_LIBERACAO_PARA_JULGAMENTO);
+	}
+	//7600 ou 7601 - agendamento - Nova descrição
+	private AndamentoProcesso geraAndamentoParaProcessoLista(DadosAgendamentoDto dados, ObjetoIncidente<?> objetoIncidente,
+			Integer codigoColegiado) throws ServiceException {
+		
+		return criarAndamentoParaProcessoLista(dados, objetoIncidente, codigoColegiado, defineCodigoDoAndamento(dados));
+	}
+	
+	//8305 - devolução de vistas - nova descrição
+	private AndamentoProcesso geraAndamentoParaDevolucaoVistas(DadosAgendamentoDto dados, ObjetoIncidente<?> objetoIncidente,
+			Integer codigoColegiado) throws ServiceException {
+		return criarAndamentoParaProcessoLista(dados, objetoIncidente, codigoColegiado, TIPO_ANDAMENTO_DEVOLUCAO_VISTAS);
+	}
+	/*********************************************************************/
+	
+	
+//	public AndamentoProcesso criarAndamentoParaProcesso(DadosAgendamentoDto dados, ObjetoIncidente<?> objetoIncidente, Integer codigoColegiado, Long codigoAndamento, String observacao) throws ServiceException {
+//		Long numeroUltimoAndamento = andamentoProcessoService.recuperarUltimoNumeroSequencia(objetoIncidente);
+//		numeroUltimoAndamento++;
+//		Date dataAtual = new Date();
+//		AndamentoProcesso andamentoProcesso = new AndamentoProcesso();
+//		andamentoProcesso.setCodigoAndamento(codigoAndamento);
+//		andamentoProcesso.setObjetoIncidente(objetoIncidente);
+//		andamentoProcesso.setCodigoUsuario(dados.getUsuario().getId());
+//		andamentoProcesso.setDataAndamento(dataAtual);
+//		andamentoProcesso.setDataHoraSistema(dataAtual);
+//		andamentoProcesso.setLancamentoIndevido(false);
+//		
+//		if (observacao == null)
+//			observacao = defineObservacao(codigoColegiado, dataAtual, objetoIncidente, dados.getSessao());
+//		
+//		andamentoProcesso.setDescricaoObservacaoAndamento(observacao);		
+//		andamentoProcesso.setNumeroSequencia(numeroUltimoAndamento);
+//		andamentoProcesso.setSetor(dados.getSetorDoUsuario());
+//		
+//		if (dados.isListaComPedidoDeVista()) {
+//			OrigemAndamentoDecisao origemDecisao = getOrigemAndamentoDecisao(dados.getSetorDoUsuario());
+//			
+//			if (origemDecisao == null)
+//				origemDecisao = getOrigemAndamentoDecisao(dados, codigoColegiado);
+//			
+//			andamentoProcesso.setOrigemAndamentoDecisao(origemDecisao);
+//		} else {
+//			if (codigoColegiado != null)
+//				andamentoProcesso.setOrigemAndamentoDecisao(getOrigemAndamentoDecisao(dados, codigoColegiado));
+//		}
+//		return andamentoProcessoService.incluir(andamentoProcesso);
+//	}
+	
+	@Override
+	public AndamentoProcesso criarAndamentoParaProcessoLista(DadosAgendamentoDto dados, ObjetoIncidente<?> objetoIncidente, Integer codigoColegiado, Long codigoAndamento) throws ServiceException{
+		objetoIncidente = deproxy(objetoIncidente);
+		
+		Long numeroUltimoAndamento = andamentoProcessoService.recuperarUltimoNumeroSequencia(objetoIncidente);
+		numeroUltimoAndamento++;
+		Date dataAtual = new Date();
+		AndamentoProcesso andamentoProcesso = new AndamentoProcesso();
+		andamentoProcesso.setCodigoAndamento(codigoAndamento);
+		andamentoProcesso.setObjetoIncidente(objetoIncidente);
+		andamentoProcesso.setCodigoUsuario(dados.getUsuario().getId());
+		andamentoProcesso.setDataAndamento(dataAtual);
+		andamentoProcesso.setDataHoraSistema(dataAtual);
+		String observacao = defineObservacaoAgendamento(dataAtual, objetoIncidente, dados.getSessao(), dados, codigoAndamento);
+		andamentoProcesso.setDescricaoObservacaoAndamento(observacao);		
+		andamentoProcesso.setNumeroSequencia(numeroUltimoAndamento);
+		andamentoProcesso.setSetor(dados.getSetorDoUsuario());
+		
+		if (dados.isListaComPedidoDeVista()) {
+			OrigemAndamentoDecisao origemDecisao = getOrigemAndamentoDecisao(dados.getSetorDoUsuario());
+			
+			if (origemDecisao == null)
+				origemDecisao = getOrigemAndamentoDecisao(dados, codigoColegiado);
+			
+			andamentoProcesso.setOrigemAndamentoDecisao(origemDecisao);
+		} else {
+			andamentoProcesso.setOrigemAndamentoDecisao(getOrigemAndamentoDecisao(dados, codigoColegiado));
+		}
+		
+		try {
+			andamentoProcesso = andamentoProcessoService.incluir(andamentoProcesso);
+		} catch (Exception e) {
+			String mensagem = tratarErroBanco(e.getMessage());
+			throw new ServiceException(mensagem, e);
+		}
+		
+		return andamentoProcesso;
+	}
+	
+	private String tratarErroBanco(String message) {
+		return message.contains("TRG_BI_ANDAMENTO_PROCESSOS")?"Não há pedido de vista ativo no controle de vista.":message;
+	}
+
+	/*********************************************************************/
+	private OrigemAndamentoDecisao getOrigemAndamentoDecisao(Setor setor) throws ServiceException {
+		return origemAndamentoDecisaoService.pesquisarOrigemDecisao(setor);
+	}
+
+	private OrigemAndamentoDecisao getOrigemAndamentoDecisao(DadosAgendamentoDto dados, Integer codigoColegiado) throws ServiceException {
+		String siglaColegiado = TipoColegiadoConstante.valueOfCodigoCapitulo(codigoColegiado).getSigla();
+		String siglaTipoAmbiente = "F"; // V: virtual, F: físico
+		
+		if (dados.getSessao() != null) {
+			siglaColegiado = dados.getSessao().getColegiado().getId();
+			siglaTipoAmbiente = dados.getSessao().getTipoAmbiente(); 
+		}
+		
+		ConstanteOrigemDecisao constanteOrigemDecisao = ConstanteOrigemDecisao.valueOf(siglaColegiado, siglaTipoAmbiente);
+		
+		if (constanteOrigemDecisao != null)
+			return origemAndamentoDecisaoService.recuperarPorId(constanteOrigemDecisao.getCodigo());
+		
+		return null;
+	}
+
+	private ObjetoIncidente<?> getProcessoOuRecurso(ObjetoIncidente<?> objetoIncidente) {
+		ObjetoIncidente<?> processoRecurso = objetoIncidente;
+		while(!processoRecurso.getTipoObjetoIncidente().equals(TipoObjetoIncidente.PROCESSO) && !processoRecurso.getTipoObjetoIncidente().equals(TipoObjetoIncidente.RECURSO)) {
+			processoRecurso = processoRecurso.getPai();
+		}
+		
+		return processoRecurso;
+	}
+
+	private String defineObservacao(Integer codigoColegiado, Date dataAtual, ObjetoIncidente<?> objetoIncidente, Sessao sessao) {
+		String observacao = "";
+
+		if (EstruturaPublicacao.COD_CAPITULO_PLENARIO.equals(codigoColegiado)) {
+			observacao = "Pleno";
+		} else if (EstruturaPublicacao.COD_CAPITULO_PRIMEIRA_TURMA.equals(codigoColegiado)) {
+			observacao = "1ª Turma";
+		} else if (EstruturaPublicacao.COD_CAPITULO_SEGUNDA_TURMA.equals(codigoColegiado)) {
+			observacao = "2ª Turma";
+		}
+
+		String siglaCadeiaIncidente = getSiglaCadeiaIncidente(objetoIncidente);
+
+		observacao += " em " + DataUtil.date2String(dataAtual,true) + " - " + siglaCadeiaIncidente;
+		
+		if(sessao != null) {
+			if(sessao.getTipoAmbiente().equals(Sessao.TipoAmbienteConstante.VIRTUAL.getSigla())) {
+				observacao = "Julgamento Virtual: " + siglaCadeiaIncidente + " - Agendado para: "+ DataUtil.date2String(sessao.getDataPrevistaInicio(),true) + ".";
+			}
+		}
+		return observacao;
+	}
+	
+	private String defineObservacaoAgendamento(Date dataAtual, ObjetoIncidente<?> objetoIncidente, Sessao sessao, DadosAgendamentoDto dadosAgendamento, Long codigoAndamento) {
+		String observacao = "";
+		
+		if (AndamentoProcesso.COD_ANDAMENTO_RETIRADO_PAUTA.equals(codigoAndamento)) {
+			TipoColegiadoConstante colegiadoConstante = TipoColegiadoConstante.valueOfSigla(sessao.getColegiado().getId());
+			return colegiadoConstante.getSiglaEstendida() + " em " + DataUtil.date2String(new Date(), true) + " - " + getSiglaCadeiaIncidente(objetoIncidente);
+		}
+		
+		String siglaCadeiaIncidente = getSiglaCadeiaIncidente(objetoIncidente);
+		
+		if(sessao != null ) {
+			if(sessao.getTipoAmbiente().equals(Sessao.TipoAmbienteConstante.VIRTUAL.getSigla())) {
+				observacao = "Julgamento Virtual: "; 
+			} else {
+				observacao = "Julgamento Presencial: ";
+			}
+			if (dadosAgendamento.isAvulso()){
+				observacao +=  siglaCadeiaIncidente + (siglaCadeiaIncidente.isEmpty()?"":". Avulso ");
+			} else {
+				observacao +=  siglaCadeiaIncidente + (siglaCadeiaIncidente.isEmpty()?"":". ") + "Incluído na Lista ";
+			}
+			observacao +=  dadosAgendamento.getNomeLista() + "." +dadosAgendamento.getMinistro().getSigla() + 
+					" - Agendado para: "+ DataUtil.date2String(sessao.getDataPrevistaInicio(), false);
+			
+			if (sessao.getTipoAmbiente().equals(Sessao.TipoAmbienteConstante.VIRTUAL.getSigla()))
+				observacao += " a " + DataUtil.date2String(sessao.getDataPrevistaFim(),false)  + ".";
+			else
+				observacao += ".";
+			
+			if (sessao.getTipoAmbiente().equals(Sessao.TipoAmbienteConstante.VIRTUAL.getSigla()) && dadosAgendamento.getSessaoExtraordinaria() == true) {
+				Date diaInicioSessao = sessao.getDataPrevistaInicio();
+				Date diaFimSustentacao = new Date(diaInicioSessao.getTime() - 1440);
+				
+				Calendar diaAnteriorInicioSessao = Calendar.getInstance();
+				diaAnteriorInicioSessao.setTime(diaFimSustentacao);
+				
+				String diaAnterior = DataUtil.date2String(diaAnteriorInicioSessao.getTime(),false);
+				String horaAnterior = DataUtil.date2String(diaAnteriorInicioSessao.getTime(),true).substring(11, 16).replace(":", "h");
+				
+				observacao += " Sessão Virtual Extraordinária, podendo os advogados e procuradores apresentar sustentações orais até às "+ horaAnterior +" do dia " + diaAnterior + ".";
+			}
+			
+			if (dadosAgendamento.isAgendamentoAutomatico() && TIPO_ANDAMENTO_DEVOLUCAO_VISTAS.equals(codigoAndamento)) {
+				observacao += " Processo automaticamente liberado para a continuação do julgamento, conforme Emenda Regimental 58, de 19 de dezembro de 2022.";
+			}
+			
+		} else {
+			observacao  = siglaCadeiaIncidente;
+		}
+		
+		return observacao;
+	}
+
+	private String getSiglaCadeiaIncidente(ObjetoIncidente<?> objetoIncidente) {
+		String siglaCadeiaIncidente = "";
+		if (objetoIncidente instanceof RecursoProcesso) {
+			siglaCadeiaIncidente =  ((RecursoProcesso) objetoIncidente).getSiglaCadeiaIncidente();
+		} else if (objetoIncidente instanceof IncidenteJulgamento) {
+			siglaCadeiaIncidente =  ((IncidenteJulgamento) objetoIncidente).getSiglaCadeiaIncidente();
+		} else if (objetoIncidente instanceof Processo) {
+			siglaCadeiaIncidente =  ((Processo) objetoIncidente).getSiglaClasseProcessual();
+		}
+		return siglaCadeiaIncidente;
+	}
+
+	private Long defineCodigoDoAndamento(DadosAgendamentoDto dadosAndamento) {
+		if (isPauta(dadosAndamento.getTipoAgendamento())) {
+			return AndamentoProcesso.COD_ANDAMENTO_INCLUA_EM_PAUTA_MIN_EXT;
+		}
+		return AndamentoProcesso.COD_ANDAMENTO_APRESENTACAO_MESA_JULG;
+	}
+
+	private Agendamento incluiAgendamentoNovo(DadosAgendamentoDto dadosAgendamento, ObjetoIncidente<?> objetoIncidente,
+			Integer codigoColegiado) throws ServiceException {
+		Agendamento agendamento;
+		agendamento = new Agendamento();
+		AgendamentoId agendamentoId = new AgendamentoId();
+		agendamentoId.setCodigoCapitulo(codigoColegiado);
+		agendamentoId.setCodigoMateria(defineTipoDeAgendamento(dadosAgendamento));
+		agendamentoId.setObjetoIncidente(objetoIncidente.getId());
+		agendamento.setObjetoIncidente(objetoIncidente);
+		agendamento.setId(agendamentoId);
+		agendamento.setMinistro(dadosAgendamento.getMinistro());
+		agendamento.setVista(isProcessoComVistas(objetoIncidente, dadosAgendamento.getMinistro()));
+		agendamento.setObservacaoProcesso(dadosAgendamento.getObservacao());
+		agendamento.setJulgado(false);
+		agendamento.setDirigida(dadosAgendamento.isPautaDirigida());
+		agendamentoService.incluir(agendamento);
+		return agendamento;
+	}
+
+	private Boolean isProcessoComVistas(ObjetoIncidente<?> objetoIncidente, Ministro ministroDoGabinete)
+			throws ServiceException {
+		return !isMinistroRelatorIncluindoPresidencia(objetoIncidente, ministroDoGabinete);
+	}
+
+	public Integer defineTipoDeAgendamento(DadosAgendamentoDto dadosAgendamento) throws ServiceException {
+		TipoAgendamento tipoAgendamento = dadosAgendamento.getTipoAgendamento();
+		boolean isPauta = isPauta(tipoAgendamento);
+		if (isPauta) {
+			return Agendamento.COD_MATERIA_AGENDAMENTO_PAUTA;
+		} else {
+			return Agendamento.COD_MATERIA_AGENDAMENTO_JULGAMENTO;
+		}
+	}
+	
+	public Agendamento consultaAgendamentoCadastrado(ObjetoIncidente<?> objetoIncidente) throws ServiceException, AgendamentoNaoDefinidoException {
+		ConsultaDeAgendamentoVO consulta = new ConsultaDeAgendamentoVO();
+		consulta.setSequencialObjetoIncidente(objetoIncidente.getId());
+		return agendamentoService.consultarAgendamento(consulta);
+	}
+
+	private Agendamento consultaAgendamentoCadastrado(ObjetoIncidente<?> objetoIncidente, Ministro ministroDoGabinete)
+			throws ServiceException, AgendamentoNaoDefinidoException {
+		ConsultaDeAgendamentoVO consulta = new ConsultaDeAgendamentoVO();
+		consulta.setCodigoDoMinistro(ministroDoGabinete.getId());
+		consulta.setSequencialObjetoIncidente(objetoIncidente.getId());
+		return agendamentoService.consultarAgendamento(consulta);
+	}
+
+	private Integer defineCapituloParaVerificacaoDaPauta(DadosAgendamentoDto dadosAgendamento) throws ServiceException {
+		if (isGabineteOuPresidencia(dadosAgendamento)) {
+			if (dadosAgendamento.getTipoColegiadoAgendamento().equals(TipoColegiadoAgendamento.PLENARIO)) {
+				return EstruturaPublicacao.COD_CAPITULO_PLENARIO;
+			}
+			return defineCodigoDaTurmaDoMinistro(dadosAgendamento.getMinistro(), dadosAgendamento);
+		}
+		return dadosAgendamento.getSetorDoUsuario().getCodigoCapitulo();
+	}
+
+	private boolean isGabineteOuPresidencia(DadosAgendamentoDto dadosAgendamento) throws ServiceException {
+		return isSetorDeGabinete(dadosAgendamento)
+				|| dadosAgendamento.getSetorDoUsuario().getId().equals(Setor.CODIGO_SETOR_PRESIDENCIA)
+				|| dadosAgendamento.getSetorDoUsuario().getId().equals(Setor.CODIGO_SETOR_VICE_PRESIDENCIA);
+	}
+
+	private Boolean isSetorDeGabinete(DadosAgendamentoDto dadosAgendamento) throws ServiceException {
+		return setorService.isSetorGabinete(dadosAgendamento.getSetorDoUsuario());
+	}
+
+	@Override
+	public Integer defineCodigoDaTurmaDoMinistro(Ministro ministroDoGabinete, DadosAgendamentoDto dadosAgendamento) {
+		//método alterado pois o usuário agora poderá liberar o processo para uma turma que não é a do ministro.
+		if (dadosAgendamento == null){
+			if (Ministro.CODIGO_PRIMEIRA_TURMA.equals(ministroDoGabinete.getCodigoTurma())) {
+				return EstruturaPublicacao.COD_CAPITULO_PRIMEIRA_TURMA;
+			}
+			return EstruturaPublicacao.COD_CAPITULO_SEGUNDA_TURMA;			
+		}else{
+			if (dadosAgendamento.getTipoColegiadoAgendamento().getId().equals("1T")){
+				return EstruturaPublicacao.COD_CAPITULO_PRIMEIRA_TURMA;
+			}
+			return EstruturaPublicacao.COD_CAPITULO_SEGUNDA_TURMA;
+		}
+	}
+
+	@Override
+	public List<Agendamento> consultarAgendamentos(Set<ObjetoIncidenteDto> processosSelecionados) {
+		try {
+			ConsultaDeAgendamentoVO consulta = new ConsultaDeAgendamentoVO();
+			Collection<Long> sequenciais = new ArrayList<Long>();
+			for (ObjetoIncidenteDto objetoIncidente : processosSelecionados) {
+				sequenciais.add(objetoIncidente.getId());
+			}
+			consulta.setSequenciaisObjetosIncidentes(sequenciais);
+			return agendamentoService.consultaAgendamentos(consulta);
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+
+	}
+
+	@Override
+	public boolean isCancelamentoPrecisaDeConfirmacao(Agendamento agendamento, Setor setor)
+			throws AgendamentoNaoPodeSerCanceladoException {
+		try {
+			if (isAgendamentoEmPautaComposta(agendamento)) {
+				throw new AgendamentoNaoPodeSerCanceladoException(
+						"O processo se encontra em pauta para publicação e não poderá ter o agendamento desfeito.");
+			}
+			if (isIncluirAndamentoDeRetiradoDeMesa(agendamento, setor) || isIncluirAndamentoDeRetiradoDePauta(agendamento, setor)) {
+				return true;
+			}
+			return false;
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+
+	}
+
+	private boolean isAgendamentoEmPautaComposta(Agendamento agendamento) throws ServiceException {
+		if (isAgendamentoParaPauta(agendamento)) {
+			Integer codigoCapitulo = agendamento.getId().getCodigoCapitulo();
+			Integer codigoMateria  = agendamento.getId().getCodigoMateria();
+			ObjetoIncidente<?> objetoIncidente = agendamento.getObjetoIncidente();
+			List<ProcessoPublicado> processosPublicados = processoPublicadoService.pesquisar(codigoCapitulo, codigoMateria, objetoIncidente, false);
+			return (processosPublicados != null && processosPublicados.size() > 0);
+		}
+		return false;
+	}
+
+	boolean isAgendamentoParaIndice(Agendamento agendamento) {
+		boolean agendamentoDaMateriaPreIndicie  = this.isAgendamentoDaMateria(agendamento, Agendamento.COD_MATERIA_AGENDAMENTO_INDICE);
+		boolean agendamentoDaMateriaIndice      = this.isAgendamentoDaMateria(agendamento, Agendamento.COD_MATERIA_AGENDAMENTO_JULGAMENTO);
+		return agendamentoDaMateriaPreIndicie || agendamentoDaMateriaIndice;
+	}
+
+	boolean isAgendamentoParaPauta(Agendamento agendamento) {
+		boolean agendamentoDaMateria = isAgendamentoDaMateria(agendamento, Agendamento.COD_MATERIA_AGENDAMENTO_PAUTA);
+		return agendamentoDaMateria;
+	}
+
+	private boolean isAgendamentoDaMateria(Agendamento agendamento, Integer codigoMateria) {
+		return codigoMateria.equals(agendamento.getId().getCodigoMateria());
+	}
+
+	/**
+	 * Verifica se, com a exclusão do agendamento, o andamento deverá ser retirado de mesa. Segundo 
+	 * o MTT, isso deve acontecer quando o Setor for um gabinete, e 
+	 * 
+	 * @param agendamento
+	 * @return
+	 * @throws ServiceException
+	 */
+	boolean isIncluirAndamentoDeRetiradoDeMesa(Agendamento agendamento, Setor setor) throws ServiceException {
+		boolean setorGabinete         = setorService.isSetorGabinete(setor);
+		boolean agendamentoParaIndice = this.isAgendamentoParaIndice(agendamento);
+		return setorGabinete && agendamentoParaIndice;
+	}
+	
+	/**
+	 * Verifica se, com a exclusão do agendamento, o andamento deverá ser retirado de pauta.
+	 * 
+	 * @param agendamento
+	 * @return
+	 * @throws ServiceException
+	 */
+	boolean isIncluirAndamentoDeRetiradoDePauta(Agendamento agendamento, Setor setor) throws ServiceException {
+		boolean setorGabinete        = setorService.isSetorGabinete(setor);
+		boolean agendamentoParaPauta = this.isAgendamentoParaPauta(agendamento);
+		return setorGabinete && agendamentoParaPauta;
+	}
+	
+	@Override
+	@Transactional(propagation=Propagation.REQUIRED)
+	public void cancelarAgendamentoDoProcesso(ObjetoIncidenteDto objetoIncidente, Principal usuario, String removerJulgamentoConjunto, String removerListaJulgamento, String tipoAmbiente) throws ProcessoPrecisaDeConfirmacaoException {
+		try {
+			Agendamento agendamento = consultarAgendamentoDoObjetoIncidente(objetoIncidente);
+			Ministro ministro = usuario.getMinistro();
+			if(ministro != null){
+				this.inserirAndamentoProcessoCancelado(usuario, agendamento, tipoAmbiente);
+			}
+			/* Remove vínculo de Processos em Julgamento Conjunto */
+			removerProcessoDeJulgamentoConjunto( agendamento, removerJulgamentoConjunto, usuario );
+			/* Remove vínculo de Processos em Lista de Julgamento */
+			removerProcessoDeListaJulgamento( agendamento, removerListaJulgamento, usuario );
+			removerJulgamentoProcesso( objetoIncidente );
+			agendamentoService.excluir(agendamento);
+			
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+
+	void inserirAndamentoProcessoCancelado(Principal usuario
+			                             ,Agendamento agendamento, String tipoAmbiente) throws ServiceException, ProcessoPrecisaDeConfirmacaoException {
+		ListaJulgamento listaJulgamento = this.processoEmListaJulgamento(agendamento); 
+		if(listaJulgamento != null){
+			this.defineAndamentoProcessoCanceladoListaJulgamento(listaJulgamento,agendamento,usuario);
+		}else{
+			Setor setor = usuario.getMinistro().getSetor();
+			boolean incluirAndamentoDeRetiradoDeMesa    = this.isIncluirAndamentoDeRetiradoDeMesa(agendamento, setor);
+			boolean isIncluirAndamentoDeRetiradoDePauta = this.isIncluirAndamentoDeRetiradoDePauta(agendamento, setor);
+			if (incluirAndamentoDeRetiradoDeMesa) {
+				this.inserirAndamentoDeRetiradoDeMesa(agendamento, usuario);
+			} else if (isIncluirAndamentoDeRetiradoDePauta) {
+				this.inserirAndamentoDeRetiradoDePauta(agendamento, usuario, tipoAmbiente);
+			}
+		}
+	}
+
+	void defineAndamentoProcessoCanceladoListaJulgamento(ListaJulgamento listaJulgamento
+														,Agendamento agendamento
+														,Principal usuario) throws ServiceException, ProcessoPrecisaDeConfirmacaoException {
+		this.validarAlterarListaJulgamentoVirtual(listaJulgamento);
+		Long idTipoAndamentoListaJulgamento = this.getAndamentoProcessoCanceladoListaJulgamento(listaJulgamento,agendamento);
+		if(ListaJulgamentoUI.TIPO_ANDAMENTO_LIBERACAO_MESA.equals(idTipoAndamentoListaJulgamento)){
+			this.inserirAndamentoDeRetiradoDeMesa(agendamento, usuario);
+		}else{
+			String tipoAmbiente = (listaJulgamento!=null && listaJulgamento.getSessao()!=null)?listaJulgamento.getSessao().getTipoAmbiente():null;
+			this.inserirAndamentoDeRetiradoDePauta(agendamento, usuario, tipoAmbiente);
+		}
+	}
+
+	public Long getAndamentoProcessoCanceladoListaJulgamento(ListaJulgamento listaJulgamento
+													        ,Agendamento agendamento){
+		
+		boolean isProcessoEmListaJulgamentoVirtual = this.isProcessoEmListaJulgamentoVirtual(listaJulgamento);
+		Long idTipoAndamentoListaJulgamentoRetorno = ListaJulgamentoUI.TIPO_ANDAMENTO_LIBERACAO_PAUTA;
+		if(!isProcessoEmListaJulgamentoVirtual){
+			Andamento andamento = listaJulgamento.getAndamentoLiberacao();
+			Long idTipoAndamentoDaLista = andamento.getId();
+			if(ListaJulgamentoUI.TIPO_ANDAMENTO_LIBERACAO_PAUTA.equals(idTipoAndamentoDaLista)){
+				idTipoAndamentoListaJulgamentoRetorno = ListaJulgamentoUI.TIPO_ANDAMENTO_LIBERACAO_PAUTA;
+			}else{
+				idTipoAndamentoListaJulgamentoRetorno = ListaJulgamentoUI.TIPO_ANDAMENTO_LIBERACAO_MESA;
+			}
+		}
+		return idTipoAndamentoListaJulgamentoRetorno;
+	}
+	
+	/**
+	 * Verica se o processo faz parte Julgamento Virtual de Listas
+	 * @param agendamento
+	 * @return
+	 */
+	boolean isProcessoEmListaJulgamentoVirtual(ListaJulgamento listaJulgamento){
+		boolean isProcessoEmListaJulgamentoVirtual = false;
+		if (listaJulgamento != null) {
+            Sessao sessao         = listaJulgamento.getSessao();
+            String tipoAmbiente   = sessao.getTipoAmbiente();
+			boolean isAmbienteVirtual = TipoAmbienteConstante.VIRTUAL.equals(TipoAmbienteConstante.valueOfSigla(tipoAmbiente));
+            if(isAmbienteVirtual){
+            	isProcessoEmListaJulgamentoVirtual = true;
+            }
+		}
+		return isProcessoEmListaJulgamentoVirtual;
+	}
+	
+	public ListaJulgamento processoEmListaJulgamento(Agendamento agendamento){
+		ListaJulgamento listaJulgamento = null;		
+		List<ListaJulgamento> listDeListaJulgamento = this.carregarProcessosEmListaJulgamento(agendamento);
+		if (listDeListaJulgamento != null && listDeListaJulgamento.size() == 1) {
+            listaJulgamento = listDeListaJulgamento.get(0);
+		}
+		return listaJulgamento;
+	}	
+	
+	void validarAlterarListaJulgamentoVirtual(ListaJulgamento listaJulgamento) throws ProcessoPrecisaDeConfirmacaoException {
+		Sessao sessao                 = listaJulgamento.getSessao();
+		Date datePrevistaInicioSessao = sessao.getDataPrevistaInicio();
+		GregorianCalendar calendarPrevistaInicioSessao = this.date2GregorianCalendar(datePrevistaInicioSessao);
+		GregorianCalendar hoje = this.getNow();
+		Integer datMaior = hoje.compareTo(calendarPrevistaInicioSessao);
+		
+		if(datMaior >= 0)
+			throw new ProcessoPrecisaDeConfirmacaoException(MSG_ERRO_ALTERAR_LISTA_JULGAMENTO_VIRTUAL_INICIO_SESSAO);
+	}
+	
+	//Facilitar Junit
+	GregorianCalendar getNow(){
+		return DataUtil.getNow();
+	}
+
+	//Facilitar Junit
+	GregorianCalendar date2GregorianCalendar(Date datePrevistaInicioSessao) throws ProcessoPrecisaDeConfirmacaoException {
+			return DataUtil.date2GregorianCalendar(datePrevistaInicioSessao);	
+	}
+
+	/** Remove o JulgamentoProcesso para o Objeto Incidente
+	 *  que terá o Julgamento cancelado. 
+	 *  @param objetoIncidente O processo a ser cancelado o Julgamento
+	 *                         Processo. */
+	private void removerJulgamentoProcesso( ObjetoIncidenteDto objetoIncidente  ){
+		try {
+			removerJulgamentoProcesso( objetoIncidenteService.recuperarPorId( objetoIncidente.getId() ) );
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException( e );
+		}
+	}
+	
+	private Sessao recuperarSessaoDoObjetoIncidente(ObjetoIncidente<?> objetoIncidente){
+		Sessao retorno = null;
+		try {
+			retorno = sessaoService.recuperar( objetoIncidente );
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+		return retorno;
+	}
+	
+	
+	/** Remove o JulgamentoProcesso para o Objeto Incidente
+	 *  que terá o Julgamento cancelado. 
+	 *  @param objetoIncidente O processo a ser cancelado o Julgamento
+	 *                         Processo. */
+	private void removerJulgamentoProcesso( ObjetoIncidente<?> objetoIncidente  ){
+		try {
+			Sessao sessao = recuperarSessaoDoObjetoIncidente( objetoIncidente );
+			if ( sessao != null ){
+				JulgamentoProcesso julgamentoProcesso = julgamentoProcessoService.recuperar( objetoIncidente, sessao );
+				if (julgamentoProcesso != null ) {
+					julgamentoProcessoService.excluir( julgamentoProcesso );
+				}
+			}
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException( e );
+		}
+	}
+	
+	/** Remove o vínculo de Julgamento Conjunto do Processo **/
+	private void removerProcessoDeJulgamentoConjunto(Agendamento agendamento, String removerProcessoJulgamentoConjunto, Principal usuario){
+		Long idSeqListaJulgamentoConjunto = new Long( 0L );
+		List<ObjetoIncidente<?>> procJulgamentoConjuntoTodosMinistros = new ArrayList<ObjetoIncidente<?>>();
+		try {
+			List<ObjetoIncidente<?>> procJulgConjPorMinistro = carregaProcessosEmJulgamentoConjunto( agendamento, true );
+			if ( procJulgConjPorMinistro != null && procJulgConjPorMinistro.size() > 0 ) {
+				idSeqListaJulgamentoConjunto = recuperarIdSeqListaJulgamentoConjunto( agendamento.getObjetoIncidente() );
+				removerVinculoJulgamentoConjunto( agendamento.getObjetoIncidente() );
+				if (CancelarLiberacaoParaJulgamentoActionFacesBean.REMOVER_TODOS_PROCESSOS_EM_JULGAMENTO_CONJUNTO.equalsIgnoreCase(removerProcessoJulgamentoConjunto)) {
+					if ( idSeqListaJulgamentoConjunto !=  0L ){
+						cancelarAgendamentoDeProcessosEmJulgamentoConjunto( agendamento, usuario, idSeqListaJulgamentoConjunto );
+					}
+					for ( ObjetoIncidente<?> oi: procJulgConjPorMinistro ) {
+						removerVinculoJulgamentoConjunto( oi );
+						removerJulgamentoProcesso( oi );
+					}
+				}
+			}
+			/* Verifico se a lista possui apenas 1 único elemento, caso positivo, eliminar a lista */
+			if ( idSeqListaJulgamentoConjunto !=  0L ){
+				procJulgamentoConjuntoTodosMinistros = informacaoPautaProcessoService.recuperarProcessosJulgamentoConjunto( idSeqListaJulgamentoConjunto );
+				/* Verifica se a lista restante possui somente um elemento, caso positivo, excluir a lista */
+				if ( procJulgamentoConjuntoTodosMinistros != null && procJulgamentoConjuntoTodosMinistros.size() == 1 ){
+					desfazerListaJulgamentoConjunto( procJulgamentoConjuntoTodosMinistros );
+				}
+			}
+		} catch (Exception e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+	
+	/** Remove o Processo de uma Lista de Julgamento **/
+	private void removerProcessoDeListaJulgamento(Agendamento agendamento, String removerProcessosListaJulgamento, Principal usuario) throws ProcessoPrecisaDeConfirmacaoException{
+		List<ListaJulgamento> listaJulgamento = carregarProcessosEmListaJulgamento( agendamento );
+		if ( listaJulgamento != null && listaJulgamento.size() > 0 ) {
+			if ( CancelarLiberacaoParaJulgamentoActionFacesBean.REMOVER_SOMENTE_O_PROCESSO_LISTA_JULGAMENTO.equalsIgnoreCase(removerProcessosListaJulgamento) ){
+				removerVinculoListaJulgamento( agendamento, false);
+			} else {
+				cancelarAgendamentoDeProcessosEmListaJulgamento(agendamento, usuario);
+				removerVinculoListaJulgamento( agendamento, true);
+			}
+		}
+		listaJulgamento = carregarProcessosEmListaJulgamento( agendamento );
+		if ( listaJulgamento.size() > 0 ){
+			/* Varre cada lista, verificando se ela não possui Objeto Incidente */
+			for ( ListaJulgamento lista: listaJulgamento ) {
+				if ( lista.getElementos() != null && lista.getElementos().size() == 0 ){
+					desfazerListaJulgamento( lista );
+				}
+			}
+		}
+	}
+	
+	/** Recupera o ID da Lista de Julgamento Conjunto, a qual o Objeto Incidente pertence **/
+	private Long recuperarIdSeqListaJulgamentoConjunto(ObjetoIncidente<?> objetoIncidente){
+		Long retorno = new Long( 0L );
+		try {
+			InformacaoPautaProcesso informacaoPautaProcesso = informacaoPautaProcessoService.recuperar( objetoIncidente );
+			if ( informacaoPautaProcesso != null && informacaoPautaProcesso.getSeqListaJulgamentoConjunto() != null ){
+				retorno = informacaoPautaProcesso.getSeqListaJulgamentoConjunto();
+			}
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);		
+		}
+		return retorno;
+	}
+
+	/** Utilizado quando a quantidade de processo na lista é igula a 1 **/
+	private void desfazerListaJulgamentoConjunto(List<ObjetoIncidente<?>> listaJulgamentoConjunto){
+		try {
+			for ( ObjetoIncidente<?> oi: listaJulgamentoConjunto ) {
+				InformacaoPautaProcesso informacaoPautaProcesso = informacaoPautaProcessoService.recuperar( oi );
+				if ( informacaoPautaProcesso != null ){
+					if ( informacaoPautaProcesso.getSeqListaJulgamentoConjunto() != null ){
+						informacaoPautaProcesso.setSeqListaJulgamentoConjunto( null );
+						informacaoPautaProcessoService.alterar( informacaoPautaProcesso );
+					}
+				}
+			}
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+	
+	/** Desfaz a lista de Julgamento, caso ela possua apenas um processo **/
+	private void desfazerListaJulgamento(List<ListaJulgamento> listaJulgamento){
+		if ( listaJulgamento != null && listaJulgamento.size() > 0 ){
+			for ( ListaJulgamento lista: listaJulgamento ){
+				desfazerListaJulgamento( lista );
+			}
+		}
+	}
+	
+	/** Desfaz a lista de Julgamento, caso ela possua apenas um processo **/
+	private void desfazerListaJulgamento(ListaJulgamento listaJulgamento){
+		try {
+			listaJulgamentoService.excluir( listaJulgamento );
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+	
+	/** Cancela o Agendamento dos Processos com Vínculo de Julgamento Conjunto **/
+	private void cancelarAgendamentoDeProcessosEmJulgamentoConjunto(Agendamento agendamento, Principal usuario, Long idSeqListaJulgamentoConjunto) throws ProcessoPrecisaDeConfirmacaoException{
+		try {
+			List<ObjetoIncidente<?>> procJulgConjPorMinistro = carregaProcessosEmJulgamentoConjunto( agendamento, idSeqListaJulgamentoConjunto, true );
+			if ( procJulgConjPorMinistro != null && procJulgConjPorMinistro.size() > 0 ){
+				for ( ObjetoIncidente<?> oi: procJulgConjPorMinistro ) {
+					ObjetoIncidenteDto objetoIncidenteDto = new ObjetoIncidenteDto();
+					objetoIncidenteDto.setId( oi.getId() );
+					Agendamento agendamentoRecuperado = consultarAgendamentoDoObjetoIncidente( objetoIncidenteDto );
+					this.inserirAndamentoProcessoCancelado(usuario,agendamentoRecuperado, null);
+					agendamentoService.excluir( agendamentoRecuperado );
+				}
+			}
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+	
+	
+	/** Cancela o Agendamento dos Processos em lista de Julgamento 
+	 * @param agendamento o agendamento do qual será carregado os processo em lista de Julgamento
+	 * @param usuario para fins de andamento**/
+	private void cancelarAgendamentoDeProcessosEmListaJulgamento(Agendamento agendamento, Principal usuario) throws ProcessoPrecisaDeConfirmacaoException{
+		try {
+			List<ListaJulgamento> listaJulgamento = carregarProcessosEmListaJulgamento( agendamento );
+			if ( listaJulgamento != null && listaJulgamento.size() > 0 ) {
+				for ( ListaJulgamento lista: listaJulgamento ) {
+					if ( lista.getElementos() != null && lista.getElementos().size() > 0 ) {
+						String tipoAmbiente = (lista.getSessao() != null)?lista.getSessao().getTipoAmbiente():null;
+						for ( ObjetoIncidente<?> oi: lista.getElementos() ) {
+							if ( !oi.equals( agendamento.getObjetoIncidente() ) ){
+								ObjetoIncidenteDto objetoIncidenteDto = new ObjetoIncidenteDto();
+								objetoIncidenteDto.setId( oi.getId() );
+								Agendamento agendamentoRecuperado = consultarAgendamentoDoObjetoIncidente( objetoIncidenteDto );
+								this.inserirAndamentoProcessoCancelado(usuario,agendamentoRecuperado, tipoAmbiente);
+								agendamentoService.excluir( agendamentoRecuperado );
+							}
+						}
+					}
+				}
+			}
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+	
+	/** Carrega a lista de Julgamento Conjunto, levando em consideração o Ministro
+	 * @param agendamento o agendamento a ser considerado. 
+	 * @param somenteProcessosMinistroRelator 
+	 * 		Quando TRUE, somente os processos do Ministro Relator serão considerados.
+	 * 		Quando FALSE, o Ministro Relator não é considerado, 
+	 * 		Quando NULL, não se filtra por Ministro, apenas o fato de que estão vinculados é considerado **/	
+	private List<ObjetoIncidente<?>> carregaProcessosEmJulgamentoConjunto(Agendamento agendamento, Boolean somenteProcessosMinistroRelator){
+		List<ObjetoIncidente<?>> retorno = new ArrayList<ObjetoIncidente<?>>();
+		ObjetoIncidenteDto objetoIncidenteDto = new ObjetoIncidenteDto();
+		objetoIncidenteDto.setId( agendamento.getObjetoIncidente().getId() );
+		try {
+			List<ObjetoIncidenteDto> processosJulgamentoConjunto = recuperarProcessosJulgamentoConjunto( objetoIncidenteDto );		
+			for ( ObjetoIncidenteDto oi: processosJulgamentoConjunto ) {
+				ObjetoIncidente<?> oiRelator = recuperarObjetoIncidentePorId( oi.getId() );
+				Ministro minRelator = recuperarMinistroRelatorIncidente( oiRelator );
+				// TODO verificar regra de Ministro Relator
+				if ( somenteProcessosMinistroRelator != null && somenteProcessosMinistroRelator ) {
+					if ( agendamento.getMinistroRelator() != null ){
+						if ( minRelator.equals( agendamento.getMinistroRelator() ) ){
+							retorno.add( oiRelator );
+						}
+					} else {
+						retorno.add( oiRelator );
+					}
+				} else {
+					if ( agendamento.getMinistroRelator() != null && somenteProcessosMinistroRelator != null){
+						if ( !minRelator.equals( agendamento.getMinistroRelator() ) ){
+							retorno.add( oiRelator );
+						}
+					} else {
+						retorno.add( oiRelator );
+					}
+				}
+			}	
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+		return retorno;
+	}
+	
+	/** Carrega a lista de Julgamento Conjunto, levando em consideração o Ministro
+	 * @param agendamento o agendamento a ser considerado. 
+	 * @param idSeqListaJulgamentoConjunto identifica a lista no qual o processo pertence.
+	 * @param somenteProcessosMinistroRelator 
+	 * 		Quando TRUE, somente os processos do Ministro Relator serão considerados.
+	 * 		Quando FALSE, o Ministro Relator não é considerado, 
+	 * 		Quando NULL, não se filtra por Ministro, apenas o fato de que estão vinculados é considerado **/	
+	private List<ObjetoIncidente<?>> carregaProcessosEmJulgamentoConjunto(Agendamento agendamento, Long idSeqListaJulgamentoConjunto, Boolean somenteProcessosMinistroRelator){
+		List<ObjetoIncidente<?>> retorno = new ArrayList<ObjetoIncidente<?>>();
+		try {
+			List<ObjetoIncidente<?>> processosJulgamentoConjunto = informacaoPautaProcessoService.recuperarProcessosJulgamentoConjunto( idSeqListaJulgamentoConjunto );		
+			for ( ObjetoIncidente<?> oi: processosJulgamentoConjunto ) {
+				Ministro minRelator = recuperarMinistroRelatorIncidente( oi );
+				// TODO verificar regra de Ministro Relator
+				if ( somenteProcessosMinistroRelator != null && somenteProcessosMinistroRelator ) {
+					if ( agendamento.getMinistroRelator() != null ){
+						if ( minRelator.equals( agendamento.getMinistroRelator() ) ){
+							retorno.add( oi );
+						}
+					} else {
+						retorno.add( oi );
+					}
+				} else {
+					if ( agendamento.getMinistroRelator() != null && somenteProcessosMinistroRelator != null){
+						if ( !minRelator.equals( agendamento.getMinistroRelator() ) ){
+							retorno.add( oi );
+						}
+					} else {
+						retorno.add( oi );
+					}
+				}
+			}	
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+		return retorno;
+	}
+
+	
+	/** Carrega so Processo que estão em Lista de Julgamento **/
+	List<ListaJulgamento> carregarProcessosEmListaJulgamento(Agendamento agendamento){
+		List<ListaJulgamento> retorno = new ArrayList<ListaJulgamento>();
+		try {
+			ObjetoIncidente<?> objetoIncidente = agendamento.getObjetoIncidente();
+			retorno = listaJulgamentoService.pesquisar( objetoIncidente, Boolean.TRUE );
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+		return retorno;
+	}
+
+	/** Remove o vínculo do Julgamento Conjunto **/
+	private void removerVinculoJulgamentoConjunto(ObjetoIncidente<?> objetoIncidente){
+		try {
+			InformacaoPautaProcesso informacaoPautaProcesso = informacaoPautaProcessoService.recuperar( objetoIncidente );
+			if ( informacaoPautaProcesso != null ){
+				if ( informacaoPautaProcesso.getSeqListaJulgamentoConjunto() != null ){
+					informacaoPautaProcesso.setSeqListaJulgamentoConjunto( null );
+					informacaoPautaProcessoService.alterar( informacaoPautaProcesso );
+				}
+			}
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+	
+	/** Remove o vínculo da Lista de Julgamento 
+	 * @param objetoIncidente o objeto incidente a ser desvinculado
+	 * @param excluirTodaLista se TRUE, desfaz toda a lista de julgamento, 
+	 *                     se FALSE, remove somente o objetoIncidente da lista **/
+	private void removerVinculoListaJulgamento(Agendamento agendamento, Boolean excluirTodaLista){
+		try {
+			List<ListaJulgamento> listaJulgamento = listaJulgamentoService.pesquisar( agendamento.getObjetoIncidente(), Boolean.TRUE );
+			List<ListaJulgamento> listaJulgamentoExcluir = new ArrayList<ListaJulgamento>();
+			if ( listaJulgamento != null && listaJulgamento.size() > 0 ){
+				for ( ListaJulgamento lista: listaJulgamento ) {
+					if ( excluirTodaLista ) {
+						listaJulgamentoExcluir.add( lista );
+					} else {
+						lista.getElementos().remove( agendamento.getObjetoIncidente() );
+						listaJulgamentoService.alterar( lista );	
+					}
+				}
+				if ( excluirTodaLista && listaJulgamentoExcluir.size() > 0 ) {
+					desfazerListaJulgamento( listaJulgamentoExcluir );
+				}
+			}
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+
+	Agendamento consultarAgendamentoDoObjetoIncidente(ObjetoIncidenteDto objetoIncidente) throws ServiceException, ProcessoPrecisaDeConfirmacaoException {
+		Agendamento agendamento =  new Agendamento();		
+		ConsultaDeAgendamentoVO consulta       = this.setConsultaDeAgendamentoVO(objetoIncidente);
+		List<Agendamento> consultaAgendamentos = agendamentoService.consultaAgendamentos(consulta);
+		if (consultaAgendamentos.size() > 0){
+			agendamento = consultaAgendamentos.get(0);
+		}else{
+			throw new ProcessoPrecisaDeConfirmacaoException(ObjetoIncidenteServiceImpl.MSG_ERRO_PAUTA_NAO_CONFIRMADA);
+		}
+		return agendamento;
+	}
+
+	// Criado para facilitar testes unitarios. 
+	ConsultaDeAgendamentoVO setConsultaDeAgendamentoVO(ObjetoIncidenteDto objetoIncidente) {
+		ConsultaDeAgendamentoVO consulta = new ConsultaDeAgendamentoVO();
+		consulta.setSequencialObjetoIncidente(objetoIncidente.getId());
+		return consulta;
+	}
+	
+	void inserirAndamento(Agendamento agendamento
+			           , Principal usuario
+			           , Long codAndamento
+			           , String tipoAmbiente) throws ServiceException {
+		ObjetoIncidente<?> objetoIncidente = agendamento.getObjetoIncidente();
+		Long numeroUltimoAndamento = andamentoProcessoService.recuperarUltimoNumeroSequencia(objetoIncidente);
+		numeroUltimoAndamento++;
+		Date dataAtual = new Date();
+		AndamentoProcesso andamentoProcesso = new AndamentoProcesso();		
+		andamentoProcesso.setCodigoAndamento(codAndamento);
+		andamentoProcesso.setObjetoIncidente(objetoIncidente);
+		andamentoProcesso.setCodigoUsuario(usuario.getUsuario().getId());
+		andamentoProcesso.setDataAndamento(dataAtual);
+		andamentoProcesso.setDataHoraSistema(dataAtual);
+		
+		String observacao = defineObservacao(agendamento.getId().getCodigoCapitulo(), dataAtual,objetoIncidente, null);		
+		//TODO - Incluir condição para inserir julgamento virtual no andamento.
+		if(Sessao.TipoAmbienteConstante.VIRTUAL.getSigla().equals(tipoAmbiente)){
+			observacao = " Julgamento Virtual - "+observacao;
+		}
+		andamentoProcesso.setDescricaoObservacaoAndamento(observacao);
+		andamentoProcesso.setNumeroSequencia(numeroUltimoAndamento);
+		andamentoProcesso.setSetor(usuario.getMinistro().getSetor());
+		andamentoProcesso = andamentoProcessoService.incluir(andamentoProcesso);
+		
+		andamentoProcesso = andamentoProcessoService.recuperarAndamentoProcesso(andamentoProcesso.getId());
+		andamentoProcesso.setObjetoIncidente(objetoIncidente);
+		andamentoProcessoService.persistirAndamentoProcesso(andamentoProcesso);
+	}
+	
+	void inserirAndamentoDeRetiradoDeMesa(Agendamento agendamento, Principal usuario) throws ServiceException {
+		Long codAndamento = AndamentoProcesso.COD_ANDAMENTO_RETIRADO_MESA;
+		inserirAndamento(agendamento, usuario, codAndamento, null);
+	}	
+	
+	void inserirAndamentoDeRetiradoDePauta(Agendamento agendamento, Principal usuario, String tipoAmbiente) throws ServiceException {
+		Long codAndamento = AndamentoProcesso.COD_ANDAMENTO_RETIRADO_PAUTA;
+		inserirAndamento(agendamento, usuario, codAndamento, tipoAmbiente);
+	}
+
+	@Override
+	public Setor consultarSetorPeloId(Long id) {
+		try {
+			return setorService.recuperarPorId(id);
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+
+	@Override
+	public ProcessoSetor recuperarProcessoSetor(ObjetoIncidenteDto dto, Setor setor) throws ServiceException {
+		Long idObjetoDTO = dto.getId();
+		ObjetoIncidente<?> objetoIncidente = recuperarObjetoIncidentePorId(idObjetoDTO);
+		Long idObjetoIncidentePrincipal = objetoIncidente.getPrincipal().getId();
+		Long idSetor = setor.getId();
+		ProcessoSetor recuperarProcessoSetor = processoSetorService.recuperarProcessoSetor(idObjetoIncidentePrincipal, idSetor);
+		return recuperarProcessoSetor;
+	}
+
+	@Override
+	public List<TipoRecurso> recuperarTiposRecurso(boolean ativos) {
+		try {
+			return tipoRecursoService.recuperarTiposRecurso(ativos);
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+
+	@Override
+	public Ministro recuperarMinistroRelatorIncidente(
+			ObjetoIncidente<?> objetoIncidente) throws ServiceException {
+		return ministroService.recuperarMinistroRelatorIncidente(objetoIncidente);
+	}
+
+	@Override
+	public InformacaoPautaProcesso gravarSustentacoesOrais(
+			InformacaoPautaProcesso informacaoPautaProcesso,
+			List<PrevisaoSustentacaoOralDto> sustentacoesOrais) throws ServiceException {
+		removerSustentacoesOrais(informacaoPautaProcesso, sustentacoesOrais);
+		incluirSustentacoesOrais(informacaoPautaProcesso, sustentacoesOrais);
+		return informacaoPautaProcessoService.recuperarPorId(informacaoPautaProcesso.getId());
+	}
+
+	private void incluirSustentacoesOrais(InformacaoPautaProcesso informacaoPautaProcesso, List<PrevisaoSustentacaoOralDto> sustentacoesOrais) throws ServiceException {
+		List<PrevisaoSustentacaoOral> paraIncluir = new ArrayList<PrevisaoSustentacaoOral>();
+
+		if (sustentacoesOrais != null) {
+			for (PrevisaoSustentacaoOralDto dto : sustentacoesOrais) {
+				if (dto.getId() == null) {
+					PrevisaoSustentacaoOral pso = new PrevisaoSustentacaoOral();
+					if (dto.getIdEnvolvido() != null) {
+						pso.setEnvolvido(envolvidoService.recuperarPorId(dto.getIdEnvolvido()));
+					}
+					if (dto.getIdAdvogado() != null) {
+						pso.setJurisdicionado(jurisdicionadoService.recuperarPorId(dto.getIdAdvogado()));
+					}
+					pso.setRepresentado(jurisdicionadoService.recuperarPorId(dto.getIdParte()));
+					pso.setObservacao(dto.getObservacao());
+					pso.setInformacaoPautaProcesso(informacaoPautaProcesso);
+					paraIncluir.add(pso);
+				}
+			}
+		}
+		previsaoSustentacaoOralService.incluirTodos(paraIncluir);
+	}
+
+	private void removerSustentacoesOrais(
+			InformacaoPautaProcesso informacaoPautaProcesso,
+			List<PrevisaoSustentacaoOralDto> sustentacoesOrais) throws ServiceException {
+		List<PrevisaoSustentacaoOral> paraExcluir = new ArrayList<PrevisaoSustentacaoOral>();
+		List<PrevisaoSustentacaoOral> gravados = previsaoSustentacaoOralService.pesquisar(informacaoPautaProcesso);
+		for (PrevisaoSustentacaoOral pso : gravados) {
+			if (isPrevisaoSustentacaoOralRemovida(pso, sustentacoesOrais)) {
+				paraExcluir.add(pso);
+			}
+		}
+		previsaoSustentacaoOralService.excluirTodos(paraExcluir);
+	}
+
+	private boolean isPrevisaoSustentacaoOralRemovida(
+			PrevisaoSustentacaoOral pso,
+			List<PrevisaoSustentacaoOralDto> sustentacoesOrais) {
+		if (sustentacoesOrais != null) {
+			for (PrevisaoSustentacaoOralDto dto : sustentacoesOrais) {
+				if (pso.getId().equals(dto.getId())) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
+	@Override
+	public List<AdvogadoSustentacaoOral> pesquisarAdvogados(String sugestaoNome) throws ServiceException {
+		List<AdvogadoSustentacaoOral> resultado = new ArrayList<AdvogadoSustentacaoOral>();
+		List<Envolvido> envolvidos = envolvidoService.pesquisar(sugestaoNome);
+		List<Jurisdicionado> jurisdicionados = jurisdicionadoService.pesquisar(sugestaoNome);
+		for (Envolvido envolvido : envolvidos) {
+			AdvogadoSustentacaoOral aso = new AdvogadoSustentacaoOral();
+			aso.setEnvolvido(envolvido);
+			resultado.add(aso);
+		}
+		for (Jurisdicionado jurisdicionado : jurisdicionados) {
+			AdvogadoSustentacaoOral aso = new AdvogadoSustentacaoOral();
+			aso.setJurisdicionado(jurisdicionado);
+			resultado.add(aso);
+		}
+		
+		Collections.sort(resultado, new Comparator<AdvogadoSustentacaoOral>() {
+
+			@Override
+			public int compare(AdvogadoSustentacaoOral o1, AdvogadoSustentacaoOral o2) {
+				return o1.getNome().compareToIgnoreCase(o2.getNome());
+			}
+			
+		});
+		
+		return resultado;
+	}
+
+	@Override
+	public SituacaoMinistroProcesso recuperarDistribuicaoProcesso(ObjetoIncidente<?> objetoIncidente) throws ServiceException {
+		List<SituacaoMinistroProcesso> lista = situacaoMinistroProcessoService.pesquisar(objetoIncidente, Ocorrencia.RELATOR);
+		if ( lista != null && lista.size() > 0 ){
+			return lista.get(0);
+		}
+		return null;
+	}
+
+	@Override
+	public List<ObjetoIncidenteDto> recuperarProcessosJulgamentoConjunto(
+			ObjetoIncidenteDto objetoIncidente) throws ServiceException {
+		List<ObjetoIncidente<?>> processosJulgamentoConjunto = informacaoPautaProcessoService.recuperarProcessosJulgamentoConjunto(
+				recuperarObjetoIncidentePorId(objetoIncidente.getId()));
+		List<ObjetoIncidenteDto> lista = new ArrayList<ObjetoIncidenteDto>();
+		if (processosJulgamentoConjunto != null) {
+			for (ObjetoIncidente<?> oi : processosJulgamentoConjunto) {
+				if (oi.getId().equals(objetoIncidente.getId())) {
+					continue;
+				}
+				lista.add(ObjetoIncidenteDto.valueOf(oi));
+			}
+		}
+		return lista;
+	}
+
+	@Override
+	public void incluirProcessoListaJulgamento(ObjetoIncidente<?> objetoIncidente, ListaJulgamento listaJulgamento, DadosAgendamentoDto dadosAgendamento) throws ServiceException, ValidacaoLiberacaoParaJulgamentoException{
+		verificaProcessoEmListaJulgamentoPrevista(objetoIncidente);
+		verificaAgendamentoProcesso(objetoIncidente,
+				TipoColegiadoConstante.valueOfSigla(listaJulgamento.getSessao().getColegiado().getId()),
+				Agendamento.COD_MATERIA_AGENDAMENTO_JULGAMENTO);
+		
+		ProcessoListaJulgamento processoListaJulgamento = new ProcessoListaJulgamento();
+		processoListaJulgamento.setListaJulgamento(listaJulgamento);
+		processoListaJulgamento.setObjetoIncidente(objetoIncidente);
+		processoListaJulgamentoService.salvar(processoListaJulgamento);
+		Integer codigoColegiado = defineCapituloParaVerificacaoDaPauta(dadosAgendamento);
+		gravaAgendamento(dadosAgendamento, objetoIncidente, codigoColegiado);
+	}
+	
+	
+	Andamento getAndamentoEscolhido(TipoAgendamento tipoAgendamento) throws ServiceException {
+		Andamento andamento = new Andamento();
+		if(TipoAgendamento.INDICE.equals(tipoAgendamento)){			
+			//andamento = andamentoService.recuperarPorId(7600L);
+			andamento.setId(ListaJulgamentoUI.TIPO_ANDAMENTO_LIBERACAO_MESA);
+		}else{			
+			//andamento = andamentoService.recuperarPorId(7601L);
+			andamento.setId(ListaJulgamentoUI.TIPO_ANDAMENTO_LIBERACAO_PAUTA);
+		}		
+		return andamento;
+	}
+	
+	private ListaJulgamento criarListaJulgamento (DadosAgendamentoDto dadosAgendamento) throws ServiceException {
+		Ministro ministro = dadosAgendamento.getMinistro();
+		Sessao sessao     = dadosAgendamento.getSessao();
+		sessao.setExclusivoDigital(false);
+		Integer codigoColegiado     = defineCapituloParaVerificacaoDaPauta(dadosAgendamento);		
+		Integer ordemSessao         = recuperarMaiorOrdemSessaoListaJulgamento(sessao) + 1;
+		Integer ordemSessaoMinistro = contagemDasSessoesNaoFinalizadas(dadosAgendamento);
+		String nomeListaJulgamento  = dadosAgendamento.getNomeLista();
+		TipoListaJulgamento tipoListaJulgamento = dadosAgendamento.getTipoListaJulgamento();
+
+		// Criar lista de julgamento
+		ListaJulgamento listaJulgamento = null;
+		listaJulgamento = new ListaJulgamento();
+		listaJulgamento.setMinistro(ministro);
+		listaJulgamento.setSessao(sessao);
+		listaJulgamento.setNome(nomeListaJulgamento);
+		listaJulgamento.setOrdemSessao(ordemSessao);
+		listaJulgamento.setOrdemSessaoMinistro(ordemSessaoMinistro);
+		listaJulgamento.setJulgado(Boolean.FALSE);
+		listaJulgamento.setTipoListaJulgamento(tipoListaJulgamento);
+		listaJulgamento.setListaProcessoListaJulgamento(new TreeSet<ProcessoListaJulgamento>());
+		listaJulgamento.setMinistroVistor(dadosAgendamento.getMinistroVistor());
+		listaJulgamento.setAdmiteSustentacaoOral(dadosAgendamento.getAdmiteSustentacaoOral());
+		listaJulgamento.setJulgamentoTese(dadosAgendamento.getJulgamentoTese());
+		listaJulgamento.setJulgamentoModulacao(dadosAgendamento.getJulgamentoModulacao());
+		listaJulgamento.setCabecalho(dadosAgendamento.getCabecalho());
+		listaJulgamento.setCabecalhoVistor(dadosAgendamento.getCabecalhoVistor());
+		
+		if (Ministro.COD_MINISTRO_PRESIDENTE.equals(ministro.getId()))
+			listaJulgamento.setMinistroPresidente(ministroService.retornaMinistroPresidenteAtual());
+		
+		if (dadosAgendamento.getPreListaJulgamento() != null) {
+			String cabecalho = dadosAgendamento.getPreListaJulgamento().getCabecalho();
+			String nomePreListaJulgamento = dadosAgendamento.getPreListaJulgamento().getNome();
+			TipoAgendamento tipoAgendamento = dadosAgendamento.getTipoAgendamento();
+			Andamento andamentoEscolhido = getAndamentoEscolhido(tipoAgendamento);
+			
+			//if (isPauta(dadosAgendamento.getTipoAgendamento())) {
+			//	verificaFechamentoDaPauta(ministro, codigoColegiado);
+			//}
+			
+			listaJulgamento.setCabecalho(cabecalho);
+			listaJulgamento.setNomePreLista(nomePreListaJulgamento);
+			listaJulgamento.setAndamentoLiberacao(andamentoEscolhido);
+		}
+		
+		// Por default, após a liberação da lista, o estado dela é EMAIL_NAO_ENVIADO
+		listaJulgamento.setSituacaoListaJulgamento(SituacaoListaJulgamento.EMAIL_NAO_ENVIADO);
+		
+		listaJulgamento = listaJulgamentoService.salvar(listaJulgamento);
+		
+		List<ObjetoIncidente> objetosIncidentes = new ArrayList<ObjetoIncidente>();
+		
+		if (dadosAgendamento.getListaIncidentesDto() == null && dadosAgendamento.getPreListaJulgamento() == null) {
+			objetosIncidentes.addAll(dadosAgendamento.getListaObjetoIncidente());
+		} else {
+			if (dadosAgendamento.getListaIncidentesDto() != null) {
+				Long idListaProcesso = dadosAgendamento.getListaIncidentesDto().getId();
+				ListaProcessos listaProcessos = listaProcessosService.recuperarPorId(idListaProcesso);
+				objetosIncidentes.addAll(listaProcessos.getElementos());
+			} else {
+				Long idPrelista = dadosAgendamento.getPreListaJulgamento().getId();
+				PreListaJulgamento preLista = preListaJulgamentoService.recuperarPorId(idPrelista);
+				boolean ordenacaoNumerica = configuracaoSistemaService.isOrdenacaoNumerica();
+				
+				List<PreListaJulgamentoObjetoIncidente> listPreListaJulgamentoObjetosIncidentes = preLista.getObjetosIncidentes(ordenacaoNumerica);
+				for (PreListaJulgamentoObjetoIncidente preListaObjetoIncidente : listPreListaJulgamentoObjetosIncidentes) {
+					if (preListaObjetoIncidente.getRevisado()) {
+						ObjetoIncidente oi = preListaObjetoIncidente.getObjetoIncidente();
+						objetosIncidentes.add(oi);	
+					}
+				}
+			}
+		}
+		
+		for (ObjetoIncidente<?> oi : objetosIncidentes) {
+			// Validações
+			try {
+				verificaProcessoEmListaJulgamentoPrevista(oi);
+				
+				if (dadosAgendamento.getTipoColegiadoAgendamento() != null)
+					codigoColegiado = dadosAgendamento.getTipoColegiadoAgendamento().getCodigoCapitulo();
+				
+				verificaColegiadoAgendamento(oi, TipoColegiadoConstante.valueOfCodigoCapitulo(codigoColegiado));
+				
+				if(!dadosAgendamento.isListaComPedidoDeVista())
+					verificaMateriaAgendamento(oi, defineTipoDeAgendamento(dadosAgendamento));
+				
+			} catch (Exception e) {
+				throw new ServiceException(e.getMessage(), e);
+			}
+			
+			// Agendar o processo caso ele não esteja agendado
+			gravaAgendamentoLista(dadosAgendamento, oi, codigoColegiado);
+			
+			//Recuperar os dados da pré-lista para jogar na lista
+			PreListaJulgamentoObjetoIncidente relacionamento = preListaJulgamentoService.recuperarPreListaJulgamentoObjetoIncidente(oi);
+			
+			// Adicionar processo à lista
+			ProcessoListaJulgamento processoListaJulgamento = new ProcessoListaJulgamento();
+			processoListaJulgamento.setListaJulgamento(listaJulgamento);
+			processoListaJulgamento.setObjetoIncidente(oi);
+					
+			if (relacionamento != null ) {
+				processoListaJulgamento.setUsuarioRevisor(relacionamento.getUsuarioRevisor());
+				processoListaJulgamento.setDataRevisao(relacionamento.getDataRevisao());
+				processoListaJulgamento.setMotivo(relacionamento.getMotivo());
+				processoListaJulgamento.setObservacao(relacionamento.getObservacao());
+			}
+			
+			processoListaJulgamento.setOrdemNaLista(objetosIncidentes.indexOf(oi)+1);
+			
+			//Salva lista
+			processoListaJulgamentoService.salvar(processoListaJulgamento);
+			
+			//Cria a associacao (ListaJulgamento -> ProcessoListaJulgamento)
+			listaJulgamento.getListaProcessoListaJulgamento().add(processoListaJulgamento);
+		}
+		
+		listaJulgamentoService.salvar(listaJulgamento);
+		listaJulgamentoService.flushSession();
+		
+		///Lista de Julgamento e seus processos relacionados.
+		listaJulgamento = listaJulgamentoService.recuperarPorId(listaJulgamento.getId());
+		
+		return listaJulgamento;
+
+	}
+	
+	@SuppressWarnings("rawtypes")
+	@Override
+	@Transactional(propagation=Propagation.REQUIRED)
+	public ListaJulgamento liberarListaParaJulgamento(DadosAgendamentoDto dadosAgendamento) throws ServiceException {		
+		return criarListaJulgamento(dadosAgendamento);
+	}
+	
+	@SuppressWarnings("rawtypes")
+	@Override
+	@Transactional(propagation=Propagation.REQUIRED, rollbackFor = DaoException.class)
+	public ListaJulgamento liberarListaParaJulgamentoComVistas(DadosAgendamentoDto dadosAgendamento) throws ServiceException, ValidacaoLiberacaoParaJulgamentoException {
+		ListaJulgamento listaJulgamento = criarListaJulgamento(dadosAgendamento);
+
+		//Aqui o cabeçalho da lista de devolução é sempre sobreposto mesmo sendo null;
+		//Esse valor é recuperado na classe LiberarPreListaParaJulgamentoActionFacesBean, método montarNomeDaLista
+		
+		listaJulgamento.setCabecalho(dadosAgendamento.getCabecalho());
+		
+		
+		for (ProcessoListaJulgamento processoListaJulgamento : listaJulgamento.getListaProcessoListaJulgamento()) {
+			
+			ObjetoIncidente<?> oi = processoListaJulgamento.getObjetoIncidente();
+			
+			if (!this.temVotoVistaRevisadoMinistro(oi, dadosAgendamento.getMinistroVistor()) && !dadosAgendamento.isAgendamentoAutomatico()){
+				throw new NestedRuntimeException(stringFormatMensagem(oi) + MSG_PROCESSO_SEM_VOTO_VISTA_REVISADO );
+			}
+			
+			//Se o processo estiver com vista, o julgamento anterior deve ser recuperado para que possa ser duplicado.
+			JulgamentoProcesso julgamentoProcessoOriundoVirtualComVistas = julgamentoProcessoService.pesquisaUltimoJulgamentoProcesso(oi);
+			
+			//Quando a lista for devolvida no tipo "Devolução de Vistas" para julgamento presencial, 
+			//não deve ser incluído o registro na JULGAMENTO.JULGAMENTO_PROCESSO
+			if (julgamentoProcessoOriundoVirtualComVistas!= null){
+				
+				//Se o ambiente destino escolhido for Físico não grava julgamento_processo
+				if ( dadosAgendamento.getIdTipoAmbienteColegiadoEscolhido().equals(TipoAmbienteConstante.VIRTUAL.getSigla()) ){
+											
+					try {
+						
+						//Clona a julgamento processo
+						JulgamentoProcesso julgamentoProcessoClonado = julgamentoProcessoService.clonarJulgamentoProcesso(julgamentoProcessoOriundoVirtualComVistas.getId(), listaJulgamento.getSessao().getId());
+						processoListaJulgamento.setJulgamentoProcesso(julgamentoProcessoClonado);
+						processoListaJulgamentoService.alterar(processoListaJulgamento);
+						
+						if (dadosAgendamento.getIdConclusao()!= null){
+							
+							TipoVotoConstante tipoVoto = TipoVotoConstante.getById(dadosAgendamento.getIdConclusao());
+							
+							VotoJulgamentoProcesso votoDivergente = null;
+							
+							// Se for voto do tipo ACOMPANHO_DIVERGENCIA, deve-se encontrar qual é o voto divergente conforme o COD_MINISTRO_DIVERGENTE da tabela de TEXTOS (se houver)
+							if (TipoVotoConstante.ACOMPANHO_DIVERGENCIA.equals(tipoVoto)) {
+								List<Texto> textosVista = textoService.pesquisar(julgamentoProcessoClonado.getObjetoIncidente(), TipoTexto.VOTO_VISTA, true);
+
+								if (textosVista.size() > 0 && julgamentoProcessoClonado.getVotosDivergencia().size() > 0)
+									for (Texto texto : textosVista)
+										if (texto.getTipoFaseTextoDocumento().getCodigoFase() >= FaseTexto.REVISADO.getCodigoFase() && texto.getTipoVoto().equals(TipoVotoConstante.ACOMPANHO_DIVERGENCIA)
+												&& texto.getDataCriacao().after(julgamentoProcessoOriundoVirtualComVistas.getSessao().getDataFim()))
+											for (VotoJulgamentoProcesso voto : julgamentoProcessoClonado.getVotosDivergencia())
+												if (TipoSituacaoVoto.VALIDO.getSigla().equals(voto.getTipoSituacaoVoto()) && texto.getMinistroDivergente().equals(voto.getMinistro())) {
+													votoDivergente = voto;
+													break;
+												}
+							}
+							
+							//Verifica se já existe o voto do ministro que está operando
+							VotoJulgamentoProcesso votoJulgamentoProcessoAux = null;
+							Set<VotoJulgamentoProcesso> listaVotoJulgamentoProcesso = julgamentoProcessoClonado.getListaVotoJulgamentoProcesso();
+							for (VotoJulgamentoProcesso votoJulgamentoProcesso : listaVotoJulgamentoProcesso)
+								if (votoJulgamentoProcesso.getMinistro().equals(dadosAgendamento.getMinistroDoGabinete()))
+										votoJulgamentoProcessoAux = votoJulgamentoProcesso;
+							
+							//Se existe voto atualiza a data e o tipo de voto
+							
+							if (votoJulgamentoProcessoAux != null){
+								votoJulgamentoProcessoAux.setDataVoto(new Date());
+								votoJulgamentoProcessoAux.setTipoVoto(tipoVotoService.recuperarPorId(tipoVoto.getId().toString()));
+								votoJulgamentoProcessoAux.setTipoSituacaoVoto(TipoSituacaoVoto.VALIDO.getSigla());
+								votoJulgamentoProcessoAux.setVotoAcompanhado(votoDivergente);
+								votoJulgamentoProcessoService.alterar(votoJulgamentoProcessoAux);
+							} else {
+								//Se não há voto, cria um;
+								VotoJulgamentoProcesso voto = new VotoJulgamentoProcesso();
+								voto.setJulgamentoProcesso(julgamentoProcessoClonado);
+								voto.setDataVoto(new Date());
+								voto.setMinistro(dadosAgendamento.getMinistroVistor());
+								voto.setVotoAcompanhado(votoDivergente);
+								voto.setTipoVoto(tipoVotoService.recuperarPorId(tipoVoto.getId().toString()));
+								voto.setNumeroOrdemVotoSessao(votoJulgamentoProcessoService.getProximaOrdemVoto(julgamentoProcessoClonado));
+								voto.setTipoSituacaoVoto(TipoSituacaoVoto.VALIDO.getSigla());
+								votoJulgamentoProcessoService.salvar(voto);
+							}
+						}
+						
+					} catch (DaoException e) {
+						throw new  NestedRuntimeException("MSG_ERRO_CLONAR_JULGAMENTO_VIRTUAL");
+					}
+				}
+			}
+		}
+		return listaJulgamento;
+		
+	}
+	
+	String stringFormatMensagem(ObjetoIncidente<?> oi) {		
+		String indentificao = oi.getIdentificacao();
+		String mensagemFinal = String.format("[%s]", indentificao)+ ": ";
+		return mensagemFinal;
+	}
+	
+	
+	
+	/**
+	 *  Retorno o número de ordem da lista na sessão POR ministro. Um mesmo ministro pode submeter
+	 *  várias listas de processos para julgamento em uma mesma sessão. Este número de ordem
+	 *  será incrementado pela aplicação para cada ministro e não coincide com o valor armazenado 
+	 *  em NUM_ORDEM_SESSAO, que é incrementado POR lista, independentemente do ministro que a submeteu.
+	 *  
+	 *  Para listas presenciais
+	 *  Se lista do PLENO o numero da lista só volta para 1 se todas as listas do ministro forem julgadas.
+	 *  Se lista do TURMA o numero da lista só volta para 1 em cada sessão	 *  
+	 *  
+	 *  Para listas virtuais, o numero da lista só volta para 1 em cada sessão
+	 *  
+	 * @param dadosAgendamento
+	 * @return
+	 * @throws ServiceException
+	 */
+	Integer contagemDasSessoesNaoFinalizadas(DadosAgendamentoDto dadosAgendamento) throws ServiceException{		
+		int maiorNumeroSessao = 0;
+		Sessao sessaoAgendamento = dadosAgendamento.getSessao();
+		String tipoAmbiente      = sessaoAgendamento.getTipoAmbiente();		
+		if(TipoAmbienteConstante.VIRTUAL.getSigla().equals(tipoAmbiente)){
+			maiorNumeroSessao = this.recuperarNumUltimaListaVirtual(dadosAgendamento,maiorNumeroSessao);			
+		}else{
+			maiorNumeroSessao = this.recuperarNumUltimaListaPresencial(dadosAgendamento,maiorNumeroSessao);			
+		}
+		return maiorNumeroSessao + 1;		
+	}
+	
+	/**
+	 * Retorna o número da maior lista das sessões VIRTUAIS
+	 */
+	int recuperarNumUltimaListaVirtual(DadosAgendamentoDto dadosAgendamento,int maiorNumeroSessao) throws ServiceException {		
+		Sessao sessaoAgendada = dadosAgendamento.getSessao();
+		maiorNumeroSessao = this.getMaiorNumeroSesso(dadosAgendamento,maiorNumeroSessao, sessaoAgendada);
+		return maiorNumeroSessao;
+	}
+
+	int recuperarNumUltimaListaPresencial(DadosAgendamentoDto dadosAgendamento,int maiorNumeroSessao) throws ServiceException {
+		List<Sessao> sessoesEmAberto = dadosAgendamento.getSessoesEmAberto();
+		Sessao sessaoAgendada = dadosAgendamento.getSessao();
+		Colegiado ColegiadoAgendamento = sessaoAgendada.getColegiado();
+		boolean isListaPlenario = Colegiado.TRIBUNAL_PLENO.equals(ColegiadoAgendamento.getId());		
+		
+		if (sessoesEmAberto != null && sessoesEmAberto.size() > 0){
+			if(isListaPlenario){
+				for (Sessao sessao : sessoesEmAberto){
+					maiorNumeroSessao = this.getMaiorNumeroSesso(dadosAgendamento,maiorNumeroSessao, sessao);
+				}
+			}else{
+				maiorNumeroSessao = this.getMaiorNumeroSesso(dadosAgendamento,maiorNumeroSessao, sessaoAgendada);
+			}
+		}
+		return maiorNumeroSessao;
+	}
+
+	Integer getMaiorNumeroSesso(DadosAgendamentoDto dadto, Integer maiorNumeroSessao, Sessao sessaoAgendada) throws ServiceException {
+		int maiorNumeroSessaoAtual = this.recuperarMaiorOrdemSessaoMinistroListaJulgamento(sessaoAgendada, dadto.getMinistro());
+		if (maiorNumeroSessaoAtual > maiorNumeroSessao){
+			maiorNumeroSessao = maiorNumeroSessaoAtual;
+		}
+		return maiorNumeroSessao;
+	}
+
+	private Integer recuperarMaiorOrdemSessaoListaJulgamento(Sessao sessao) throws ServiceException {
+		if(sessao == null){
+			throw new ServiceException(MSG_ERRO_SESSAO_NAO_CARREGADA);
+		}
+		Integer maiorOrdemSessao = listaJulgamentoService.recuperarMaiorOrdemSessao(sessao);
+		if (maiorOrdemSessao == null) {
+			maiorOrdemSessao = 0;
+		}
+		return maiorOrdemSessao;
+	}
+	
+	Integer recuperarMaiorOrdemSessaoMinistroListaJulgamento(Sessao sessao, Ministro ministro) throws ServiceException {
+		Integer maiorOrdemSessao = listaJulgamentoService.recuperarMaiorOrdemSessaoMinistro(sessao, ministro);
+		if (maiorOrdemSessao == null) {
+			maiorOrdemSessao = 0;
+		}
+		return maiorOrdemSessao;
+	}
+
+	@Override
+	public void verificaProcessoEmListaJulgamentoPrevista(ObjetoIncidente<?> objetoIncidente)
+			throws ServiceException, ValidacaoLiberacaoParaJulgamentoException {
+		List<ListaJulgamento> listasJulgamento = listaJulgamentoService.pesquisar(objetoIncidente, true);
+		if (listasJulgamento != null && listasJulgamento.size() > 0) {
+			throw new ValidacaoLiberacaoParaJulgamentoException(String.format("[%s]: %s", objetoIncidente.getIdentificacao(), MSG_LISTA_DE_JULGAMENTO_PREVISTA));
+		}
+	}
+
+	@Override
+	public void verificaAgendamentoProcesso(ObjetoIncidente<?> objetoIncidente
+			                               ,TipoColegiadoConstante colegiado
+			                               ,Integer codigoMateria) throws ServiceException
+			                                                             ,ValidacaoLiberacaoParaJulgamentoException {
+		this.verificaColegiadoAgendamento(objetoIncidente, colegiado);
+		this.verificaMateriaAgendamento(objetoIncidente, codigoMateria);
+	}
+
+	@Override
+	public void verificaColegiadoAgendamento(ObjetoIncidente<?> objetoIncidente, TipoColegiadoConstante colegiado) throws ValidacaoLiberacaoParaJulgamentoException
+	                                                                                                                     ,ServiceException {
+		Agendamento agendamento = this.getAgendamentoObjIncidente(objetoIncidente);
+		Integer codigoCapitulo = colegiado.getCodigoCapitulo();
+		if (agendamento != null && !agendamento.getId().getCodigoCapitulo().equals(codigoCapitulo)) {
+			throw new ValidacaoLiberacaoParaJulgamentoException(MSG_PROCESSO_LIBERADO_OUTRO_COLEGIADO);
+		}
+	}
+	
+	@Override
+	public void verificaMateriaAgendamento(ObjetoIncidente<?> objetoIncidente, Integer codigoMateria) throws ValidacaoLiberacaoParaJulgamentoException
+																										   , ServiceException {
+		Agendamento agendamento = this.getAgendamentoObjIncidente(objetoIncidente);
+		if (agendamento != null && !agendamento.getId().getCodigoMateria().equals(codigoMateria)) {
+			throw new ValidacaoLiberacaoParaJulgamentoException(MSG_PROCESSO_LIBERADO_OUTRA_MATERIA);
+		}
+	}
+
+	public Agendamento getAgendamentoObjIncidente(ObjetoIncidente<?> objetoIncidente) throws ServiceException {
+		List<Agendamento> agendamentos = agendamentoService.pesquisar(objetoIncidente);
+		Agendamento agendamento = agendamentos != null && agendamentos.size() > 0 ? agendamentos.get(0) : null;
+		return agendamento;
+	}
+
+	@Override
+	public void verificaProcessoEmSessaoPrevista(ObjetoIncidente<?> oi) throws ServiceException, ValidacaoLiberacaoParaJulgamentoException {
+		JulgamentoProcesso jp = julgamentoProcessoService.pesquisaSessaoNaoFinalizada(oi, TipoAmbienteConstante.PRESENCIAL);
+		if (jp != null) {
+			throw new ValidacaoLiberacaoParaJulgamentoException(MSG_PROCESSO_OUTRA_SESSAO_PREVISTA);
+		}
+	}
+	
+	@Override
+	@Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = {ErroAoDeslocarProcessoException.class})
+	public synchronized boolean deslocarProcesso(Processo processo, Setor setorDeDestino, Principal usuario)
+			throws ErroAoDeslocarProcessoException {
+		try {
+			Setor setorDeOrigem = recuperaSetorDeOrigemDoProcesso(processo);
+			
+			if (isProcessoEmSetorDiferenteDoUsuario(setorDeOrigem, usuario)) {
+				// Deslocar o processo para o gabinete do usuário
+				DeslocaProcesso ultimoDeslocamento = deslocaProcessoService.recuperarUltimoDeslocamentoProcesso(processo.getSiglaClasseProcessual(), processo.getNumeroProcessual());
+
+				Setor setorUsuarioMinistro = setorService.recuperarPorId(usuario.getMinistro().getSetor().getId());
+				if (!setorUsuarioMinistro.getAtivo()) {
+					throw new SetorInativoException("O setor " + setorUsuarioMinistro.getNome() + " está inativo.");
+				}
+
+				Long codigoOrgaoOrigem = ultimoDeslocamento.getCodigoOrgaoDestino();
+				Long codigoOrgaoDestino = setorUsuarioMinistro.getId();
+				Integer tipoOrgaoOrigem = ultimoDeslocamento.getGuia().getTipoOrgaoDestino();
+				deslocaProcessoService.deslocarProcesso(processo
+						                               ,codigoOrgaoOrigem  // a origem do deslocamento é o destino do último deslocamento 
+						                               ,codigoOrgaoDestino // o destino do deslocamento é o setor do ministro
+						                               ,tipoOrgaoOrigem    // o tipo do órgão de origem é o tipo do órgão de destino na guia do último deslocamento
+						                               ,DeslocaProcesso.TIPO_ORGAO_INTERNO); // o tipo do órgão de destino é o um órgão interno
+
+				
+				if  (codigoOrgaoOrigem == 23){
+					criarComunicacaoRequisaoProcesso(processo, setorDeDestino, usuario);
+				} else if (codigoOrgaoOrigem == 26)
+					criarComunicacaoRequisaoProcessoAGU(processo, setorDeDestino, usuario);
+				Thread.sleep(1000);
+				setorDeOrigem = recuperaSetorDoProcesso(processo);
+			}
+
+
+			if (!setorDeDestino.getAtivo()) {
+				throw new SetorInativoException("O setor " + setorDeDestino.getNome() + " está inativo.");
+			}
+
+			if (!setorDeDestino.equals(usuario.getMinistro().getSetor())) {
+				// Faz novo deslocamento para o setor desejado
+				Long codigoOrgaoOrigem = setorDeOrigem.getId();
+				Integer tipoOrgaoOrigem = DeslocaProcesso.TIPO_ORGAO_INTERNO;
+				Long codigoOrgaoDestino = setorDeDestino.getId();
+				Integer tipoOrgaoDestino = DeslocaProcesso.TIPO_ORGAO_INTERNO;
+				deslocaProcessoService.deslocarProcesso(processo
+													   ,codigoOrgaoOrigem
+													   ,codigoOrgaoDestino
+													   ,tipoOrgaoOrigem
+													   ,tipoOrgaoDestino);
+
+				Thread.sleep(1000);
+			}
+
+			return true;
+		} catch (Exception e) {
+			throw new ErroAoDeslocarProcessoException(e.getMessage(), e);
+		}
+	}
+	
+	/**
+	 * @param processo
+	 * @param setorDeDestino
+	 * @param usuario
+	 * @throws ServiceException
+	 */
+	public void criarComunicacaoRequisaoProcesso(Processo processo, Setor setorDeDestino, Principal usuario) throws ServiceException {
+		Long numeroDocumento = tipoComunicacaoLocalService.gerarProximoNumeroComunicacao(123L);
+		Collection<Long> objetoIncedentes = Arrays.asList(processo.getId());
+		comunicacaoService.criarComunicacaoIntimacao(new Date(), setorDeDestino, usuario.getUsuario().getId(), SEQ_PESSOA_PGR, ModeloComunicacaoEnum.NOTIFICACA_REQUISICAO_PROCESSO ,objetoIncedentes, TipoFaseComunicacao.ENVIADO , null, null , numeroDocumento, MSG_COMUNICAO_REQUISAO_PROCESSO, null, null);
+	}
+	
+	public void criarComunicacaoRequisaoProcessoAGU(Processo processo, Setor setorDeDestino, Principal usuario) throws ServiceException {
+		Long numeroDocumento = tipoComunicacaoLocalService.gerarProximoNumeroComunicacao(123L);
+		Collection<Long> objetoIncedentes = Arrays.asList(processo.getId());
+		comunicacaoService.criarComunicacaoIntimacao(new Date(), setorDeDestino, usuario.getUsuario().getId(), SEQ_PESSOA_AGU, ModeloComunicacaoEnum.NOTIFICACA_REQUISICAO_PROCESSO ,objetoIncedentes, TipoFaseComunicacao.ENVIADO , null, null , numeroDocumento, MSG_COMUNICAO_REQUISAO_PROCESSO, null, null);
+	}
+	
+	@Override
+	public boolean validarProcessoParaDeslocamento(Processo processo) throws ServiceException, ErroNoSetorDoProcessoException, DeslocamentoNaoEncontradoException, SetorInativoException, InterruptedException {
+		if (!isProcessoEletronico(processo)) {
+			return false;
+		}
+		DeslocaProcesso ultimoDeslocamento = deslocaProcessoService.recuperarUltimoDeslocamentoProcesso(processo.getSiglaClasseProcessual(), processo.getNumeroProcessual());
+		if(ultimoDeslocamento.getCodigoOrgaoDestino().equals(Setor.CODIGO_SETOR_AGU) || ultimoDeslocamento.getCodigoOrgaoDestino().equals(Setor.CODIGO_SETOR_PGR) ) {
+			return true;
+		}
+		if (isSetorDeOrigemOrgaoExterno(processo) && isPossuiAndamentoImpedeDeslocamentoAutomatico(processo)) {
+			return false;
+		}
+		
+		return true;
+	}
+	
+	private boolean isSetorDeOrigemOrgaoExterno(Processo processo) throws ErroNoSetorDoProcessoException, ServiceException, DeslocamentoNaoEncontradoException, SetorInativoException, InterruptedException {
+		Setor setorDeOrigem = recuperaSetorDeOrigemDoProcesso(processo);
+		return setorDeOrigem == null;
+	}
+
+	private boolean isPossuiAndamentoImpedeDeslocamentoAutomatico(Processo processo) throws ServiceException {
+		List<AndamentoProcesso> andamentos = andamentoProcessoService.pesquisarAndamentoProcesso(processo.getSiglaClasseProcessual(), processo.getNumeroProcessual());
+		
+		for (AndamentoProcesso andamento : andamentos) {
+			if (!andamento.getLancamentoIndevido() && andamentosQueImpedemDeslocamentoAutomatico.contains(Andamentos.valueOfCodigoAndamento(andamento.getCodigoAndamento()))){
+				return true;
+			}
+		}
+		
+		return false;
+	}
+
+	private Boolean isProcessoEletronico(Processo processo) {
+		if ( processo.getTipoMeioProcesso().equals( TipoMeioProcesso.ELETRONICO ) ) {
+			return Boolean.TRUE;
+		}
+		return Boolean.FALSE;
+	}
+
+	private Setor recuperaSetorDeOrigemDoProcesso(Processo processoDoTexto)
+			throws ErroNoSetorDoProcessoException, ServiceException, DeslocamentoNaoEncontradoException, SetorInativoException, InterruptedException {
+		return recuperaSetorDoProcesso(processoDoTexto);
+	}
+	
+	private boolean isProcessoEmSetorDiferenteDoUsuario(Setor setorDoProcesso, Principal principal) {
+		if (principal == null) {
+			throw new IllegalArgumentException(
+					"Os dados do usuário não foram informados para a Ação Liberar para Publicação!");
+		}
+		// Se o setor do processo estiver nulo, quer dizer que foi feito um
+		// deslocamento para um setor externo.
+		// Se o processo estiver deslocado para o NAAR (Núcleo de Análise de Agravos Regimentais), 
+		// deve ser considerado que o processo está na presidência.
+		return setorDoProcesso == null || principal.getMinistro() == null
+				|| (!setorDoProcesso.equals(principal.getMinistro().getSetor()) && !isProcessoNAAREUsuarioPresidencia(setorDoProcesso, principal));
+	}
+	
+	private boolean isProcessoNAAREUsuarioPresidencia(Setor setorDoProcesso, Principal principal) {
+		return setorDoProcesso.getId().equals(Setor.CODIGO_NUCLEO_ANALISE_AGRAVOS_REGIMENTAIS) && principal.getMinistro().getSetor().getId().equals(Setor.CODIGO_SETOR_PRESIDENCIA);
+	}
+	
+	private Setor recuperaSetorDoProcesso(Processo processoDoTexto) throws ErroNoSetorDoProcessoException
+	                                                                      ,ServiceException
+	                                                                      ,DeslocamentoNaoEncontradoException {
+		DeslocaProcesso deslocaProcesso = deslocaProcessoService.recuperarUltimoDeslocamentoProcesso(
+						processoDoTexto.getSiglaClasseProcessual(),
+						processoDoTexto.getNumeroProcessual());
+		if (deslocaProcesso == null) {
+			throw new DeslocamentoNaoEncontradoException(
+					"Não foi possível encontrar o último deslocamento do processo!");
+		}
+		if (deslocaProcesso.getCodigoOrgaoDestino() == null) {
+			throw new ErroNoSetorDoProcessoException(
+					montaMensagemDeProcessoEmSetorDiferente(processoDoTexto));
+		}
+		return setorService.recuperarPorId(deslocaProcesso.getCodigoOrgaoDestino());
+	}
+	
+	private String montaMensagemDeProcessoEmSetorDiferente(Processo processoDoTexto) {
+		return "O processo " + processoDoTexto.getSiglaClasseProcessual() + " " + processoDoTexto.getNumeroProcessual()
+				+ " não se encontra no setor do usuário!";
+	}
+
+	@Override
+	public Ministro recuperarMinistroRevisorIncidente(ObjetoIncidente<?> objetoIncidente) {
+		try {
+			return ministroService.recuperarMinistroRevisorIncidente(objetoIncidente.getId());
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+	
+	@Override
+	public boolean isProcessoApenso(Processo processo) throws ServiceException {
+		return processoDependenciaService.isApenso(processo);
+	}
+	
+	@Override
+	public Processo recuperarProcessoApensante(Processo processo) throws ServiceException {
+		ProcessoDependencia apensamento = processoDependenciaService.getProcessoVinculador(processo); 
+		return processoService.recuperarProcesso(apensamento.getClasseProcessoVinculador(), apensamento.getNumeroProcessoVinculador());
+	}
+
+	@Override
+	public void validarSituacaoDeJulgamento(ObjetoIncidente<?> oi) throws ProcessoPrecisaDeConfirmacaoException {
+		try {
+			if (objetoIncidenteService.recuperarSituacaoJulgamentoIncidente(oi.getId()).equals(SituacaoIncidenteJulgadoOuNao.JULGADO)) {
+				throw new ProcessoPrecisaDeConfirmacaoException("Esse processo já foi julgado.");
+			}
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+
+	@Override
+	public SituacaoIncidenteJulgadoOuNao recuperarSituacaoJulgamentoIncidente(Long id) throws ServiceException {
+		return objetoIncidenteService.recuperarSituacaoJulgamentoIncidente(id);
+	}
+
+	/**
+	 * Se o Objeto Indicente for diferente de Agravo Regimental e Embargo de Declaração, gera Exception
+	 * @param oi
+	 */
+	@Override
+	public void validarProcessosParaJulgamentoVirtual(ObjetoIncidente<?> oi, boolean devolucaoDeVista) throws ProcessoTipoRecursoPodePlanarioVirtualException {
+		
+		Long idAgravoRegimental   = 4L;
+		Long idEmbargoDeclaracao  = 15L;
+		Long idSegundoJulgamento  = 82L;
+		Long idTerceiroJulgamento = 210L;
+		Long idJulgamento = 83L;
+
+		TipoRecurso tipoRecurso = this.ObjetoIncidenteUtilGetTipoRecurso(oi);
+		
+		//Se é recurso
+		if(tipoRecurso != null){
+
+			//Se for recurso das classes abaixo, só permite AgR, Ed
+			Long idTipoRecurso = tipoRecurso.getId();
+			
+			//Recupera o processo
+			ObjetoIncidente<?> pai = oi.getPrincipal();
+			if(pai instanceof Processo){
+				Processo processo =(Processo)pai;
+				if ((processo.getClasseProcessual().getId().equals(Classe.SIGLA_ACAO_RESCISORIA))||
+						(processo.getClasseProcessual().getId().equals(Classe.SIGLA_ACAO_PENAL))||
+						(processo.getClasseProcessual().getId().equals(Classe.SIGLA_RECURSO_ORDINARIO_CRIMINAL))||
+						(processo.getClasseProcessual().getId().equals(Classe.SIGLA_RECURSO_CRIME))||
+						(processo.getClasseProcessual().getId().equals(Classe.SIGLA_REVISAO_CRIMINAL))){
+
+					//Para essas classes o tipo recurso só pode ser Ed, AgR e esses outros.
+					boolean tipoRecursoJulgamentoVirtual = (idAgravoRegimental.equals(idTipoRecurso) || idEmbargoDeclaracao.equals(idTipoRecurso) ||
+							idJulgamento.equals(idTipoRecurso) || idSegundoJulgamento.equals(idTipoRecurso) || idTerceiroJulgamento.equals(idTipoRecurso)); 
+					
+//					if(!tipoRecursoJulgamentoVirtual)
+//							throw new ProcessoTipoRecursoPodePlanarioVirtualException(MSG_TIPO_RECURSO_PLENARIO_VIRTUAL); // habilitar testes Classe: ObjetoIncidenteServiceImplTest, métodos: testValidarProcessosParaJulgamentoVirtual_TipoRecursoNaoListado, testValidarProcessosParaJulgamentoVirtual_TipoRecursoNaoListado02, testValidarProcessosParaJulgamentoVirtual_AgravoRegimental_classeOk
+					
+				}
+			}
+		//Se não é recurso é Processo
+		} else {
+			
+			//Se for Merito, não vai para plenario virtual para classes AR, AP, RCR, RC, RvC
+			if (oi instanceof Processo){
+				Processo processo =(Processo)oi;
+				if (processo.getPai() == null){
+					if ((processo.getClasseProcessual().getId().equals(Classe.SIGLA_ACAO_RESCISORIA))||
+							(processo.getClasseProcessual().getId().equals(Classe.SIGLA_ACAO_PENAL))||
+							(processo.getClasseProcessual().getId().equals(Classe.SIGLA_RECURSO_ORDINARIO_CRIMINAL))||
+							(processo.getClasseProcessual().getId().equals(Classe.SIGLA_RECURSO_CRIME))||
+							(processo.getClasseProcessual().getId().equals(Classe.SIGLA_REVISAO_CRIMINAL))){
+//						throw new ProcessoTipoRecursoPodePlanarioVirtualException(MSG_TIPO_PROCESSO_PLENARIO_VIRTUAL);
+					}
+				}
+				
+			}
+		}
+		
+		
+		if (!temEmentaRelatorioEVotoRevisados(oi) && !devolucaoDeVista)
+			throw new ProcessoTipoRecursoPodePlanarioVirtualException(MSG_PROCESSO_SEM_EMENTA_RELATORIO_OU_VOTO);
+		
+		
+	}
+
+	public boolean temEmentaRelatorioEVotoRevisados(ObjetoIncidente<?> oi) {
+		boolean temEmentaRelatorioEVotoRevisados = false;
+		List<FaseTexto> listaFasesProibidas = Arrays.asList(FaseTexto.EM_ELABORACAO, FaseTexto.EM_REVISAO, FaseTexto.CANCELADO, FaseTexto.NAO_ELABORADO);
+		try {
+			// Consulta se o processo tem algum relatório
+			List<Texto> lista = textoService.pesquisar(oi, TipoTexto.EMENTA, TipoTexto.RELATORIO, TipoTexto.VOTO);
+			
+			boolean temEmenta = false;
+			boolean temRelatorio = false;
+			boolean temVoto = false;
+			
+			for (Texto texto : lista) {
+				if (!temEmenta && TipoTexto.EMENTA.equals(texto.getTipoTexto()) && !listaFasesProibidas.contains(texto.getTipoFaseTextoDocumento()))
+					temEmenta = true;
+				
+				if (!temRelatorio && TipoTexto.RELATORIO.equals(texto.getTipoTexto()) && !listaFasesProibidas.contains(texto.getTipoFaseTextoDocumento()))
+					temRelatorio = true;
+				
+				if (!temVoto && TipoTexto.VOTO.equals(texto.getTipoTexto()) && !listaFasesProibidas.contains(texto.getTipoFaseTextoDocumento()))
+					temVoto = true;
+				
+				if (temEmenta && temRelatorio && temVoto) {
+					temEmentaRelatorioEVotoRevisados = true;
+					break;
+				}
+			}
+		} catch (ServiceException e) {
+			e.printStackTrace();
+		}
+		
+		return temEmentaRelatorioEVotoRevisados;
+	}
+	public boolean temVotoVistaRevisado(ObjetoIncidente<?> oi) {
+		// Consulta se o processo tem algum voto vista na fase REVISADO ou superior
+		List<Texto> lista;
+		try {
+			lista = textoService.pesquisar(oi, TipoTexto.VOTO_VISTA);
+			
+			for (Texto texto : lista)
+				return (texto.getTipoFaseTextoDocumento().getCodigoFase() >= FaseTexto.REVISADO.getCodigoFase());
+			
+		} catch (ServiceException e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+
+	
+	public boolean temVotoVistaRevisadoMinistro(ObjetoIncidente<?> oi, Ministro ministro) {
+		// Consulta se o processo tem algum voto vista na fase REVISADO ou superior
+		List<Texto> lista;
+		try {
+			lista = textoService.pesquisar(oi, TipoTexto.VOTO_VISTA, ministro);
+			
+			for (Texto texto : lista)
+				if(texto.getMinistro().getId().equals(ministro.getId()))
+					return (texto.getTipoFaseTextoDocumento().getCodigoFase() >= FaseTexto.REVISADO.getCodigoFase());
+			
+		} catch (ServiceException e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+	
+	/***
+	 * Metodo criado para facilitar o teste Unitario com o Mockito
+	 * @param oi
+	 * @return
+	 **/
+	public TipoRecurso ObjetoIncidenteUtilGetTipoRecurso(ObjetoIncidente<?> oi) {
+		TipoRecurso tipoRecurso = ObjetoIncidenteUtil.getTipoRecurso(oi);
+		return tipoRecurso;
+	}
+	
+	/***
+	 * Metodo criado para facilitar o teste Unitario com o Mockito
+	 * @param oi
+	 * @return
+	 **/	
+	public Processo objetoIncidenteUtilGetProcesso(ObjetoIncidente<?> oi) {
+		Processo processo = ObjetoIncidenteUtil.getProcesso(oi); 
+		return processo;
+	}
+	
+	@Override
+	public boolean temOABParaTodosOsRepresentantes(ObjetoIncidente<?> processo) {
+		ObjetoIncidente<?> oi = recuperarObjetoIncidentePorId(processo.getId());
+		
+		if (oi != null && oi.getPrincipal() != null && oi.getPrincipal() instanceof Processo) {
+			Hibernate.initialize(((Processo)oi.getPrincipal()).getClasseProcessual());
+			
+			//Habeas Corpus não precisa de representante
+			if (Classe.SIGLA_HABEAS_CORPUS.equals(((Processo)oi.getPrincipal()).getClasseProcessual().getDescricao()))
+				return true;			
+		}
+		if (oi != null && oi.getPrincipal() != null && oi.getPrincipal() instanceof Processo) {
+		for (Parte parte : oi.getPartesVinculadas())
+			if (Categoria.COD_CATEGORIA_ADVOGADO.equals(parte.getCategoria().getId()))
+				if (parte.getJurisdicionado() == null || parte.getJurisdicionado().getOab() == null || parte.getJurisdicionado().getOab().isEmpty())
+					return false;
+		}
+		return true;
+	}
+	
+	public boolean isDevolucaoDeVistaPresencial(ObjetoIncidente<?> processo) throws ServiceException{
+
+		//Se existe registro em julgamento_processo, busca a respectiva sessão. 
+		JulgamentoProcesso julgamentoProcesso = julgamentoProcessoService.pesquisaUltimoJulgamentoProcesso(processo);
+		if (julgamentoProcesso != null) {
+			if (julgamentoProcesso.getSessao().getTipoAmbiente().equals(TipoAmbienteConstante.PRESENCIAL.getSigla())){
+				return true;
+			} else {
+				return false;
+			}
+		//Se não há registro em julgamento processo, verifica a lista_julgamento
+		} else {
+			
+			
+			//Se há uma lista, verifica se a sessão é presencial
+			ListaJulgamento ultimaListaJulgamento = findUltimaListaJulgamento(processo);
+			if (ultimaListaJulgamento != null){
+				if (ultimaListaJulgamento.getSessao().getTipoAmbiente().equals(TipoAmbienteConstante.PRESENCIAL.getSigla())){
+					return true;
+				} else {
+					return false;
+				}
+			}
+			
+			return false;
+			//throw new ServiceException("Não foi possível definir o tipo de sessão para devolução de vista.");
+		}
+	}
+	
+	public ListaJulgamento findUltimaListaJulgamento(ObjetoIncidente<?> processo) throws ServiceException{
+		List<ListaJulgamento> listas = listaJulgamentoService.pesquisar(processo);
+		ListaJulgamento ultimaListaJulgamento = null;
+		for (ListaJulgamento listaJulgamento : listas) {
+			if (ultimaListaJulgamento == null)
+				ultimaListaJulgamento = listaJulgamento;
+			else
+				if (listaJulgamento.getId().compareTo(ultimaListaJulgamento.getId()) >0){
+					ultimaListaJulgamento = listaJulgamento;
+				}
+		}
+		return ultimaListaJulgamento;
+	}
+
+
+	/**
+	 * DECISAO-2916: Objetos Incidentes que permitem Sustentação Oral:
+	 * 
+	 * Quaisquer Méritos;
+	 * Incidente de Agravos regimentais(AgR), nas classes Ação Rescisória(AR), Mandado de Segurança(MS) e Reclamação(Rcl); e
+	 * Incidente de  Tutela Provisória (TP), Questão de Ordem(QO), Medida Cautelar(MC) e Referendo(Ref) em quaisquer classes.
+	 * @throws SustentacaoOralException 
+	 */
+	@Override
+	public void validarProcessoPermiteSustentacaoOral(ObjetoIncidente<?> oi, boolean permiteSustentacaoOral) throws SustentacaoOralException {
+		if (permiteSustentacaoOral) {
+			if (!permiteSustentacaoOral(oi))
+				throw new SustentacaoOralException("Não possui previsão para indicação de sustentação oral. Favor remover o processo da lista ou alterar a marcação.");
+		} else {
+			if (permiteSustentacaoOral(oi))
+				throw new SustentacaoOralException("Possui previsão para indicação de sustentação oral. Favor remover o processo da lista ou alterar a marcação.");
+		}
+	}
+	
+	public boolean permiteSustentacaoOral(ObjetoIncidente oi) {
+		if (oi instanceof RecursoProcesso) { // Se for um recurso
+			RecursoProcesso rp = (RecursoProcesso) oi;
+
+			if (TipoRecurso.SIGLA_AGRAVO.equals(rp.getTipoRecursoProcesso().getSigla())) // Se for agravo
+					if (Classe.SIGLA_RECURSO_EXTRAORDINARIO_COM_AGRAVO.equalsIgnoreCase(rp.getPrincipal().getClasseProcessual().getId())) // Se for ARE
+						return false; // Não permite Sustentação Oral
+			
+		}
+		
+		if (oi instanceof IncidenteJulgamento) { // Se for um recurso
+			List<String> classesPermitidas = Arrays.asList(Classe.SIGLA_ACAO_DIRETA_DE_INCONSTITUCIONALIDADE, Classe.SIGLA_ACAO_DECLARATORIA_DE_CONSTITUCIONALIDADE,
+					Classe.SIGLA_ACAO_DIRETA_DE_INCONSTITUCIONALIDADE_POR_EMISSAO, Classe.SIGLA_ARGUICAO_DE_DESCUMPRIMENTO_DE_PRECEITO_FUNDAMENTAL);
+			
+			IncidenteJulgamento ij = (IncidenteJulgamento) oi;
+			
+			if (TipoIncidenteJulgamento.SIGLA_MEDIDA_CAUTELAR.equals(ij.getTipoJulgamento().getSigla())) // Se for MC
+					if (!classesPermitidas.contains(ij.getSiglaClasseProcessual())) // Se não for das classes permitidas
+						return false; // Não permite Sustentação Oral
+			
+		}
+
+		return true;
+		
+//		List<String> listaClassesRecursos = Arrays.asList(Classe.SIGLA_ACAO_RESCISORIA, Classe.SIGLA_MANDADO_DE_SEGURANÇA, Classe.SIGLA_RECLAMACAO);
+//		
+//		List<String> listaTipoIncidente = Arrays.asList(TipoIncidenteJulgamento.SIGLA_TUTELA_PROVISORIA, TipoIncidenteJulgamento.SIGLA_QUESTAO_ORDEM, 
+//				TipoIncidenteJulgamento.SIGLA_MEDIDA_CAUTELAR, TipoIncidenteJulgamento.SIGLA_REFERENDO);
+//
+//		if (oi instanceof Processo) // Mérito
+//			return true;
+//
+//		if (oi instanceof RecursoProcesso) { // Se for um recurso
+//			RecursoProcesso rp = (RecursoProcesso) oi;
+//
+//			if (TipoRecurso.SIGLA_EMBARGOS_DE_DIVERGENCIA.equals(rp.getTipoRecursoProcesso().getSigla())) // permite sustentação oral para EDv
+//				return true;
+//			
+//			if (TipoRecurso.SIGLA_AGRAVO.equals(rp.getTipoRecursoProcesso().getSigla()) && listaClassesRecursos.contains(rp.getPrincipal().getClasseProcessual().getId())) // permite agravo nas classes da listaClasseRecursos
+//				return true;
+//		}
+//
+//		if (oi instanceof IncidenteJulgamento) {
+//			IncidenteJulgamento ij = (IncidenteJulgamento) oi;
+//
+//			if (listaTipoIncidente.contains(ij.getTipoJulgamento().getSigla()))
+//				return true;
+//		}
+//
+//		return false;
+	}
+	
+
+	@Override
+	public void validarMinistroRelatorOuVistor(ObjetoIncidente<?> oi, Ministro ministro) throws ValidacaoLiberacaoParaJulgamentoException {
+		try {
+			if (ministro != null) {
+				// Se ministro vistor
+				Agendamento agendamento = consultaAgendamentoCadastrado(oi);
+				if (agendamento != null && agendamento.getVista()) {
+					if (!ministro.equals(agendamento.getMinistro()))
+						throw new ValidacaoLiberacaoParaJulgamentoException(MSG_RELATOR_VISTOR);
+
+					return;
+				}
+			}
+		} catch (ServiceException e) {
+			e.printStackTrace();
+		} catch (AgendamentoNaoDefinidoException e) {
+		}
+		
+		// Se ministro relator
+		if (!ministro.getId().equals(oi.getRelatorIncidenteId()))
+			throw new ValidacaoLiberacaoParaJulgamentoException(MSG_RELATOR_VISTOR);
+	}
+	
+	@Override
+	@Transactional(propagation=Propagation.REQUIRED)
+	public void cancelarPedidoDeDestaque(List<ObjetoIncidente<?>> listaDestaques, ListaJulgamento listaJulgamento,  Usuario usuario, Ministro ministroDestaque) throws ServiceException {
+		
+		try {
+			// lançar o andamento "8570 - Pedido de destaque cancelado" (DECISAO-3115), para os processos envolvidos;
+			for (ObjetoIncidente<?> oi : listaDestaques) {
+				String observacao = "Julgamento Virtual: " + getSiglaCadeiaIncidente(oi);
+				AndamentoProcesso ap = andamentoProcessoService.gerarAndamentoBasico(Andamentos.PEDIDO_DE_DESTAQUE_CANCELADO.getId(), oi, usuario, observacao, null);
+				ap.setOrigemAndamentoDecisao(getOrigemAndamentoDecisao(ministroDestaque.getSetor()));
+				andamentoProcessoService.salvar(ap);
+				
+				// Muda a flag para tirar do menu de ações
+				JulgamentoProcesso jp = julgamentoProcessoService.pesquisaUltimoJulgamentoProcesso(oi, ministroDestaque, TipoSituacaoProcessoSessao.DESTAQUE, false);
+				if (jp != null) {
+					jp.setDestaqueCancelado(true);
+					julgamentoProcessoService.salvar(jp);
+				}
+				
+				// Na pre-lista do ministro relator do processo
+				inserirProcessoNaPreLista(oi, listaJulgamento.getMinistro().getSetor(), listaJulgamento);
+			}
+
+		} catch (Exception e) {
+			throw new ServiceException(e.getMessage(), e);
+		}
+	}
+
+	private void inserirProcessoNaPreLista(ObjetoIncidente oi, Setor setorDoUsuario, ListaJulgamento listaJulgamento) throws ServiceException {
+		PreListaJulgamento preLista = preListaJulgamentoService.recuperarPreListaDeCancelamentoDePedidoDeDestaque(setorDoUsuario);
+		
+		if (preLista != null)
+			preListaJulgamentoService.incluirObjetoIncidenteNaPreLista(preLista, oi, listaJulgamento);
+	}
+
+	@Override
+	@Transactional(propagation = Propagation.REQUIRED)
+	public ListaJulgamento liberarListaDestaquesCancelados(DadosAgendamentoDto agendamentoDto, ListaJulgamento listaJulgamento, Usuario usuario) throws ServiceException {
+		try {
+			
+			// Lança o andamento 7204 - Retirado de Pauta
+			for (ObjetoIncidente<?> oi : agendamentoDto.getListaObjetoIncidente()) {
+				List<Agendamento> pautas = consultaAgendamentosDoProcesso(oi, Agendamento.COD_MATERIA_AGENDAMENTO_PAUTA);
+				List<Agendamento> indices = consultaAgendamentosDoProcesso(oi, Agendamento.COD_MATERIA_AGENDAMENTO_JULGAMENTO);
+				TipoColegiadoConstante colegiadoConstante = TipoColegiadoConstante.valueOfSigla(listaJulgamento.getSessao().getColegiado().getId());
+
+				if (!pautas.isEmpty()) {
+					AndamentoProcesso ap = criarAndamentoParaProcessoLista(agendamentoDto, oi, colegiadoConstante.getCodigoCapitulo(), AndamentoProcesso.COD_ANDAMENTO_RETIRADO_PAUTA);
+					ap.setOrigemAndamentoDecisao(null);
+					andamentoProcessoService.salvar(ap);
+				}
+				
+				if (indices.isEmpty()) {
+					AgendamentoId agendamentoId = new AgendamentoId();
+					agendamentoId.setCodigoCapitulo(colegiadoConstante.getCodigoCapitulo());
+					agendamentoId.setCodigoMateria(defineTipoDeAgendamento(agendamentoDto));
+					agendamentoId.setObjetoIncidente(oi.getId());
+
+					Agendamento agendamento = new Agendamento();
+					agendamento.setId(agendamentoId);
+					agendamento.setObjetoIncidente(oi);
+					agendamento.setMinistro(agendamentoDto.getMinistro());
+					agendamento.setVista(isProcessoComVistas(oi, agendamentoDto.getMinistro()));
+					agendamento.setObservacaoProcesso(agendamentoDto.getObservacao());
+					agendamento.setJulgado(false);
+					agendamento.setDirigida(agendamentoDto.isPautaDirigida());
+					agendamentoService.incluir(agendamento);
+				}
+			}
+			
+			// lançar o andamento "8546 - Incluído na lista de julgamento", para os processos envolvidos;
+			ListaJulgamento novaListaJulgamento = liberarListaParaJulgamento(agendamentoDto);
+
+			novaListaJulgamento.setTipoListaJulgamento(TipoListaJulgamento.LISTAS_DE_DESTAQUES_CANCELADOS);
+			
+			// todos os votos proferidos na sessão virtual originária do pedido de destaque devem ser levados para a nova sessão de julgamento.
+			for (ObjetoIncidente oi : agendamentoDto.getListaObjetoIncidente()) {
+				oi = recuperarObjetoIncidentePorId(oi.getId());
+				for (ProcessoListaJulgamento plj : listaJulgamento.getProcessosListaJulgamento()) {
+					ObjetoIncidente<?> pljoi = recuperarObjetoIncidentePorId(plj.getObjetoIncidente().getId());
+					if (pljoi.equals(oi)) {
+						JulgamentoProcesso jp = julgamentoProcessoService.clonarJulgamentoProcesso(plj.getJulgamentoProcesso().getId(), novaListaJulgamento.getSessao().getId(), false);
+						associarJulgamentoProcesso(novaListaJulgamento, jp);
+					}
+				}
+			}
+
+			// todos os pedidos de sustentação oral enviados para o processo também devem estar disponíveis na nova sessão virtual.
+			processoListaJulgamentoService.clonarManifestacoes(novaListaJulgamento, listaJulgamento);
+
+			return listaJulgamentoService.salvar(novaListaJulgamento);
+
+		} catch (Exception e) {
+			throw new ServiceException(e.getMessage(), e);
+		}
+	}
+	
+	private void associarJulgamentoProcesso(ListaJulgamento novaListaJulgamento, JulgamentoProcesso jp) {
+		for (ProcessoListaJulgamento plj : novaListaJulgamento.getProcessosListaJulgamento())
+			if (plj.getObjetoIncidente().equals(jp.getObjetoIncidente()))
+				plj.setJulgamentoProcesso(jp);
+	}
+	
+	@Override
+	public ObjetoIncidente<?> deproxy(ObjetoIncidente<?> objetoIncidente) throws ClassCastException {
+		   if (objetoIncidente instanceof HibernateProxy) {
+		      return ObjetoIncidente.class.cast(((HibernateProxy) objetoIncidente).getHibernateLazyInitializer().getImplementation());
+		   }
+		   return ObjetoIncidente.class.cast(objetoIncidente);
+	}
+	
+	/**
+	 * Monta o nome da lista
+	 * @param dadosAgendamento
+	 * @return
+	 * @throws ServiceException
+	 */
+	public String montarNomeDaLista(DadosAgendamentoDto dadosAgendamento) throws ServiceException{
+		String nomeLista = "";
+		//Se for uma lista com processos com vista, o nome da lista deve ser o mesmo da lista em que o processo se encontrava anteriormente.
+		if (dadosAgendamento.isListaComPedidoDeVista()){
+			ObjetoIncidente<?> objetoIncidente = dadosAgendamento.getPreListaJulgamento().getObjetosIncidentes().get(0).getObjetoIncidente();
+			ListaJulgamento ultimaListaVirtualComVistas = findUltimaListaJulgamento(objetoIncidente);
+			
+			//Se existe ultima lista, o novo nome deve se igual ao antigo. Se os processos não tem lista, cria uma nova.
+			if(ultimaListaVirtualComVistas != null){
+				nomeLista = ultimaListaVirtualComVistas.getNome();
+				dadosAgendamento.setMinistro(ultimaListaVirtualComVistas.getMinistro());
+				dadosAgendamento.setCabecalho(ultimaListaVirtualComVistas.getCabecalho());
+			} else {
+				Ministro ministro = ministroService.recuperarPorId(objetoIncidente.getRelatorIncidenteId());
+				dadosAgendamento.setMinistro(ministro);
+				nomeLista = montarNovoNomeParaLista(dadosAgendamento);
+			}
+		} else {
+			nomeLista = montarNovoNomeParaLista(dadosAgendamento);
+		}
+		dadosAgendamento.setNomeLista(nomeLista);
+		return nomeLista;
+	}
+	
+	private String montarNovoNomeParaLista(DadosAgendamentoDto dadosAgendamento) throws ServiceException{
+		Date dataInicio = sessaoService.recuperarPorId(dadosAgendamento.getSessao().getId()).getDataPrevistaInicio();
+		
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy");
+		String ano = sdf.format(dataInicio);
+		
+		int anoCorrente = Integer.parseInt(ano);
+		Long sequencial = preListaJulgamentoService.recuperarProximoSequencialParaNomeLista(anoCorrente, dadosAgendamento.getMinistro().getId(), dadosAgendamento.isAvulso());
+		String nomeLista = sequencial.toString() + "-" + anoCorrente;
+		
+		if (dadosAgendamento.isAvulso())
+			nomeLista = "AVULSO."+nomeLista;
+		
+		return nomeLista;
+	}
+	
+	@Override
+	public boolean isProcessoLiberadoAutomaticamente(ObjetoIncidente<?> objetoIncidente) throws ServiceException {
+		List<Texto> textos = textoService.recuperarTextosReferendo(objetoIncidente.getId());
+		
+		if (textos != null && !textos.isEmpty())
+			for (Texto t : textos)
+				return Boolean.TRUE.equals(t.getInclusaoAutomatica());
+		
+		return false;
+	}
+
+	@Override
+	public void excluir(ObjetoIncidente<?> referendo) throws ServiceException {
+		objetoIncidenteService.excluir(referendo);
+	}
+}

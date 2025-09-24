@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml" xmlns:s="http://jboss.com/products/seam/taglib" xmlns:ui="http://java.sun.com/jsf/facelets" xmlns:f="http://java.sun.com/jsf/core"
+    xmlns:h="http://java.sun.com/jsf/html" xmlns:rich="http://richfaces.org/rich" xmlns:p="http://primefaces.prime.com.tr/ui" xmlns:a="http://richfaces.org/a4j" xmlns:c="http://java.sun.com/jstl/core">
+
+    <rich:dataTable id="resultTable" var="_texto" value="#{principalFacesBean.currentContext.result}" rows="1" style="border: none;">
+        <rich:column style="width: 100%;">
+            <c:set var="textoParaVisualizar" value="#{textoFacesBean.getTexto()}" />
+            <div class="layout-3col view-info" id="infoTexto1">
+                <h3>Informações Básicas</h3>
+                <div style="zoom: 1;">
+                    <s:decorate id="texto" template="/common/decorators/displayComIcone.xhtml">
+                        <ui:define name="label">Texto:</ui:define>
+                        <h:outputText value="#{_texto}" />
+                        <s:span rendered="#{_texto.origemDigital}">
+                            <img src="#{facesContext.externalContext.requestContextPath}/common/images/stfdigital.png" title="Texto criado no sistema STF-Digital" width="16"/>
+                        </s:span>
+                        <ui:define name="icone">
+                            <s:decorate template="/common/decorators/favorito.xhtml">
+                                <ui:param name="texto" value="#{_texto}" />
+                            </s:decorate>
+                        </ui:define>
+                    </s:decorate>
+                    <s:decorate id="fase" template="/common/decorators/display.xhtml">
+                        <ui:define name="label">Fase:</ui:define>
+                        <h:outputText value="#{textoParaVisualizar.tipoFaseTextoDocumento.descricao}" rendered="#{not _texto.isCancelado()}" />
+                        <h:outputText value="Cancelado" rendered="#{_texto.isCancelado()}" />
+                    </s:decorate>
+                    <s:decorate id="ministroRelator" template="/common/decorators/display.xhtml" rendered="#{not empty textoFacesBean.ministroRelator}">
+                        <ui:define name="label">Min. Relator:</ui:define>
+                        <h:outputText value="#{textoFacesBean.ministroRelator}" />
+                    </s:decorate>
+                    <s:decorate id="ministraRelatora" template="/common/decorators/display.xhtml" rendered="#{not empty textoFacesBean.ministraRelatora}">
+                        <ui:define name="label">Min. Relatora:</ui:define>
+                        <h:outputText value="#{textoFacesBean.ministraRelatora}" />
+                    </s:decorate>
+                    <s:decorate id="ministroRedatorAcordao" template="/common/decorators/display.xhtml" rendered="#{not empty textoFacesBean.ministroRedatorAcordao}">
+                        <ui:define name="label">Min. Redator do Acórdão:</ui:define>
+                        <h:outputText value="#{incidenteFacesBean.ministroRedatorAcordao}" />
+                    </s:decorate>
+                    <s:decorate id="ministraRedatoraAcordao" template="/common/decorators/display.xhtml" rendered="#{not empty textoFacesBean.ministraRedatoraAcordao}">
+                        <ui:define name="label">Min. Redatora do Acórdão:</ui:define>
+                        <h:outputText value="#{incidenteFacesBean.ministraRedatoraAcordao}" />
+                    </s:decorate>
+                    <s:decorate id="ministroRevisor" template="/common/decorators/display.xhtml" rendered="#{not empty textoFacesBean.ministroRevisor}">
+                        <ui:define name="label">Min. Revisor:</ui:define>
+                        <h:outputText value="#{textoFacesBean.ministroRevisor}" />
+                    </s:decorate>
+                    <s:decorate id="ministraRevisora" template="/common/decorators/display.xhtml" rendered="#{not empty textoFacesBean.ministraRevisora}">
+                        <ui:define name="label">Min. Revisora:</ui:define>
+                        <h:outputText value="#{textoFacesBean.ministraRevisora}" />
+                    </s:decorate>
+                    <s:div style="margin: 3px 0px; text-align: center; font-size: 1.2em;" styleClass="vermelho" rendered="#{principalFacesBean.temImpedimento}">Anotação de Impedimento ou Suspeição</s:div>
+                    <s:div style="margin: 3px 0px; text-align: center;" styleClass="vermelho" rendered="#{_texto.isRestrito() and not _texto.isFake()}">
+						Texto Restrito
+					</s:div>
+                    <s:div style="margin: 3px 0px; text-align: center;" styleClass="vermelho" rendered="#{textoFacesBean.controversiaIndicadaOrigem}">
+						Controvérsia Indicada pela Origem
+					</s:div>
+                    <s:decorate id="liberacaoAntecipada" template="/common/decorators/display.xhtml" rendered="#{textoFacesBean.exibeLiberacaoAnteciapda()}">
+                        <ui:define name="label">Liberação antecipada:</ui:define>
+                        <h:selectOneMenu value="#{_texto.liberacaoAntecipada}" disabled="#{!textoFacesBean.permiteAlterarLiberacaoAntecipada()}" valueChangeListener="#{textoFacesBean.changeLiberacaoAntecipada}">
+                            <f:selectItem itemLabel="Sim" itemValue="true" />
+                            <f:selectItem itemLabel="Não" itemValue="false" />
+                            <a:support event="onchange" ignoreDupResponses="true" />
+                        </h:selectOneMenu>
+                    </s:decorate>
+                    <s:decorate id="tipoVoto" template="/common/decorators/display.xhtml" rendered="#{textoFacesBean.exibeTipoVoto()}">
+                        <ui:define name="label">Voto:</ui:define>
+                        <h:selectOneMenu value="#{textoFacesBean.tipoVotoId}" disabled="#{!textoFacesBean.permiteAlterarTipoVoto()}" valueChangeListener="#{textoFacesBean.changeTipoVotoId}" style="width: 250px">
+                            <f:selectItems value="#{textoFacesBean.listaTipoVoto}"/>
+                            <a:support event="onchange" ignoreDupResponses="true" reRender="resultTable" />
+                        </h:selectOneMenu>
+                    </s:decorate>
+                    
+					<s:decorate id="divMinistrosDivergentes" template="/common/decorators/display.xhtml" rendered="#{textoFacesBean.mostrarMinistrosDivergentes}">
+						<ui:define name="label">Ministro divergente:</ui:define>
+						<h:selectOneMenu id="ministroDivergente" value="#{textoFacesBean.ministroDivergente}" required="true" style="width: 250px">
+							<f:selectItems value="#{textoFacesBean.listaMinistrosDivergentes}" />
+							<a:support event="onchange" ignoreDupResponses="true" reRender="resultTable" />
+						</h:selectOneMenu>
+					</s:decorate>
+                </div>
+            </div>
+            <div class="layout-3col view-info" id="infoTexto2">
+                <h3>Informações Complementares</h3>
+                <div style="zoom: 1;">
+                    <s:decorate id="usuarioCriacao" template="/common/decorators/display.xhtml">
+                        <ui:define name="label">Usuário Criação:</ui:define>
+                        <h:outputText value="#{textoFacesBean.usuarioCriacao}" rendered="#{_texto.idMinistro == userFacesBean.principal.ministro.id}" />
+                    </s:decorate>
+                    <s:decorate id="dataCriacao" template="/common/decorators/display.xhtml">
+                        <ui:define name="label">Data Criação:</ui:define>
+                        <h:outputText value="#{textoFacesBean.dataCriacao}" />
+                    </s:decorate>
+                    <s:decorate id="usuarioAlteracao" template="/common/decorators/display.xhtml">
+                        <ui:define name="label">Usuário Alteração:</ui:define>
+                        <h:outputText value="#{textoFacesBean.usuarioAlteracao}" rendered="#{_texto.idMinistro == userFacesBean.principal.ministro.id}" />
+                    </s:decorate>
+                    <s:decorate id="dataAlteracao" template="/common/decorators/display.xhtml">
+                        <ui:define name="label">Data Alteração:</ui:define>
+                        <h:outputText value="#{textoFacesBean.dataAlteracao}" />
+                    </s:decorate>
+                </div>
+            </div>
+
+            <div class="layout-3col view-info" id="infoTexto3" style="width: 32%">
+                <h3>Mais Informações...</h3>
+                <div style="margin: 3px 0px; display: inline-block; width: 48%; zoom: 1; *display: inline;">
+                    <a:commandLink id="btAbreUrlAcompanhamentoSTFDigital" value="Acompanhamento Processual (STF Digital)" onclick="abrirJanela('#{textoFacesBean.recuperarUrlAcompanhamentoSTFDigital(_texto)}')"
+                        eventsQueue="ajaxQueue" ignoreDupResponses="true" />
+                </div>
+                <div style="margin: 3px 0px; display: inline-block; width: 48%; zoom: 1; *display: inline;">
+                    <a:commandLink id="btAbreUrlPecasSTFDigital" value="Peças Eletrônicas (STF Digital)"
+                        onclick="ga('send', 'event', 'Visualizador de Peças (STF Digital)', '#{userFacesBean.principal.usuario.setor.sigla}', '#{userFacesBean.principal.usuario.nome}');abrirJanela('#{textoFacesBean.recuperarUrlPecasSTFDigital(_texto)}')"
+                        eventsQueue="ajaxQueue" ignoreDupResponses="true" />
+                </div>
+                <s:div rendered="#{textoParaVisualizar != null and not _texto.isRestritoAoUsuario() and not _texto.deOutroSetor and not _texto.cancelado}"
+                    style="margin: 3px 0px; display: inline-block; width: 48%; zoom: 1; *display: inline;">
+                    <a:commandLink value="Editar Informações do Texto" action="#{textoFacesBean.carregarInformacaoTexto(_texto)}" oncomplete="#{rich:component('informacaoTextoPanel')}.show()" ajaxSingle="true"
+                        immediate="true" eventsQueue="ajaxQueue" ignoreDupResponses="true" reRender="informacaoTextoPanel, messagesPanel" />
+                </s:div>
+                <s:div style="margin: 3px 0px; display: inline-block; width: 48%; zoom: 1; *display: inline;"
+                    rendered="#{(_texto.isVisivel() or _texto.isFake()) and not _texto.isCancelado() and not _texto.deOutroSetor}">
+                    <h:commandLink action="#{textoFacesBean.editar(_texto)}" value="Editar Texto" disabled="#{textoFacesBean.isTextoDoDigital(_texto)}"
+                        title="#{textoFacesBean.isTextoDoDigital(_texto)?'Não é permitido editar um texto do STF-Digital':''}" />
+                </s:div>
+                <s:div rendered="#{textoParaVisualizar != null and not _texto.isRestritoAoUsuario() and not _texto.deOutroSetor and not _texto.cancelado}"
+                    style="margin: 3px 0px; display: inline-block; width: 48%; zoom: 1; *display: inline;">
+                    <a:commandLink value="Histórico de Fases" action="#{textoFacesBean.carregarHistoricoFases(_texto)}" oncomplete="#{rich:component('historicoFasesPanel')}.show()" ajaxSingle="true"
+                        immediate="true" eventsQueue="ajaxQueue" ignoreDupResponses="true" reRender="historicoFasesPanel, messageshistoricoFasesPanel" />
+                </s:div>
+                <s:div style="margin: 3px 0px; display: inline-block; width: 48%; zoom: 1; *display: inline;" rendered="#{not empty textoParaVisualizar and not empty textoFacesBean.listasTexto}">
+                    <a:commandLink value="Listas de Textos" oncomplete="#{rich:component('panelListasDoTexto')}.show()" eventsQueue="ajaxQueue" ignoreDupResponses="true" reRender="panelListasDoTexto" />
+                </s:div>
+                <div style="margin: 3px 0px; display: inline-block; width: 48%; zoom: 1; *display: inline;">
+                    <a:commandLink value="Partes" action="#{textoFacesBean.carregarListaParte(_texto)}" oncomplete="#{rich:component('textoPartesPanel')}.show()" eventsQueue="ajaxQueue"
+                        ignoreDupResponses="true" reRender="messagesPartesPanel, textoPartesPanel" />
+                </div>
+             
+                    <div style="margin: 3px 0px; display: inline-block; width: 48%; zoom: 1; *display: inline;">
+                        <a:commandLink id="btAbreUrlAcompanhamentoPortal" value="Acompanhamento Processual (Portal)" onclick="abrirJanela('#{textoFacesBean.recuperarUrlAcompanhamento(_texto)}')"
+                            eventsQueue="ajaxQueue" ignoreDupResponses="true" />
+                    </div>
+                  
+
+                    <s:div style="margin: 3px 0px; display: inline-block; width: 48%; zoom: 1; *display: inline;" rendered="#{_texto.textosIguais}">
+                        <a:commandLink value="Textos Iguais" action="#{textoFacesBean.carregarTextosIguais(_texto)}" ajaxSingle="true" oncomplete="#{rich:component('panelTextosIguais')}.show()" immediate="true"
+                            eventsQueue="ajaxQueue" ignoreDupResponses="true" reRender="pnlTextosIguais" />
+                    </s:div>
+              
+            </div>
+            <s:div id="editorTexto" style="display: block; clear: both;" rendered="#{_texto.isVisivel()}">
+                <rich:editor value="#{textoFacesBean.conteudo}" readonly="true" width="800" height="400" />
+            </s:div>
+        </rich:column>
+    </rich:dataTable>
+
+    <ui:include src="/pesquisa/panelPartes.xhtml" />
+
+    <ui:include src="/pesquisa/panelListasDoTexto.xhtml" />
+
+</ui:composition>

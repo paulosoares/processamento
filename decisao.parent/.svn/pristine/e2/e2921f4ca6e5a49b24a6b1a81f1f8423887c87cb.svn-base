@@ -1,0 +1,692 @@
+package br.jus.stf.estf.decisao.objetoincidente.web;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import javax.faces.context.FacesContext;
+import javax.faces.event.ValueChangeEvent;
+import javax.faces.model.SelectItem;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.security.context.SecurityContextHolder;
+
+import br.gov.stf.estf.entidade.documento.ControleVista;
+import br.gov.stf.estf.entidade.documento.Texto;
+import br.gov.stf.estf.entidade.documento.TipoTexto;
+import br.gov.stf.estf.entidade.documento.tipofase.FaseTexto;
+import br.gov.stf.estf.entidade.julgamento.JulgamentoProcesso;
+import br.gov.stf.estf.entidade.julgamento.TipoVoto.TipoVotoConstante;
+import br.gov.stf.estf.entidade.julgamento.VotoJulgamentoProcesso;
+import br.gov.stf.estf.entidade.ministro.Ministro;
+import br.gov.stf.estf.entidade.ministro.Ocorrencia;
+import br.gov.stf.estf.entidade.processostf.IncidenteJulgamento;
+import br.gov.stf.estf.entidade.processostf.ObjetoIncidente;
+import br.gov.stf.estf.entidade.processostf.Processo;
+import br.gov.stf.estf.entidade.processostf.SituacaoMinistroProcesso;
+import br.gov.stf.estf.entidade.processostf.TipoIncidenteJulgamento;
+import br.gov.stf.estf.entidade.processostf.TipoJulgamento;
+import br.gov.stf.estf.entidade.usuario.Usuario;
+import br.gov.stf.estf.julgamento.model.service.JulgamentoProcessoService;
+import br.gov.stf.estf.ministro.model.service.MinistroService;
+import br.gov.stf.estf.processostf.model.service.SituacaoMinistroProcessoService;
+import br.gov.stf.estf.processostf.model.service.TipoIncidenteJulgamentoService;
+import br.gov.stf.estf.processostf.model.service.exception.DuplicacaoChaveAntigaException;
+import br.gov.stf.framework.model.service.ServiceException;
+import br.jus.stf.estf.decisao.objetoincidente.service.ObjetoIncidenteService;
+import br.jus.stf.estf.decisao.objetoincidente.web.support.ErroMontagemUriException;
+import br.jus.stf.estf.decisao.objetoincidente.web.support.STFOfficeUriBuilder;
+import br.jus.stf.estf.decisao.pesquisa.domain.ObjetoIncidenteDto;
+import br.jus.stf.estf.decisao.pesquisa.web.texto.TextoFacesBean;
+import br.jus.stf.estf.decisao.support.action.support.ActionIdentification;
+import br.jus.stf.estf.decisao.support.action.support.ActionSupport;
+import br.jus.stf.estf.decisao.support.security.PermissionChecker;
+import br.jus.stf.estf.decisao.support.security.Principal;
+import br.jus.stf.estf.decisao.support.util.NestedRuntimeException;
+import br.jus.stf.estf.decisao.texto.service.TextoService;
+/**
+ * Classe base para criação de novos textos. Toda a lógica da ação está nessa classe.
+ * 
+ * <p>As subclasses devem informar o objeto incidente ao qual o novo texto 
+ * será relacionado.
+ * 
+ * @author Rodrigo Barreiros
+ * @see 26.05.2010
+ *
+ * @param <T> o tipo de recurso que será utilizado pela ação
+ */
+public abstract class AbstractNovoTextoActionFacesBean<T> extends ActionSupport<T> {
+
+	@Qualifier("objetoIncidenteServiceLocal")
+	@Autowired
+	private ObjetoIncidenteService objetoIncidenteService;
+
+	@Qualifier("textoServiceLocal")
+	@Autowired
+	protected TextoService textoServiceLocal;
+	
+	@Qualifier("textoService")
+	@Autowired
+	protected br.gov.stf.estf.documento.model.service.TextoService textoService;
+	
+	@Qualifier("controleVistaService")
+	@Autowired
+	protected br.gov.stf.estf.documento.model.service.ControleVistaService controleVistaService;
+	
+	@Autowired
+	private JulgamentoProcessoService julgamentoProcessoService;
+
+	@Autowired
+	private PermissionChecker permissionChecker;
+	
+	@Autowired
+	protected TipoIncidenteJulgamentoService tipoIncidenteJulgamentoService;
+	
+	@Autowired
+	private SituacaoMinistroProcessoService situacaoMinistroProcessoService;
+	
+	@Autowired
+	private MinistroService ministroService;
+	
+	private Texto texto = new Texto();
+	private String idObjetoIncidente;
+	private Long idTipoTexto;
+	private Long tipoVotoId;
+	private Long idTipoIncidenteJulgamento;
+	private Boolean mostrarSequencia;
+	private Integer sequenciaCadeia;
+	private String uriNovoTexto;
+	private String responsavel;
+	private ObjetoIncidente<?> objetoIncidente;
+	private Boolean exigirTipoVoto = Boolean.FALSE;
+	private List<SelectItem> listaTipoVoto;
+	private List<SelectItem> listaMinistrosDivergentes;
+	private Long ministroDivergenteId;
+	private boolean mostrarMinistrosDivergentes = false;
+	
+	@Override
+	public void load() {
+		try {
+			notificarSetorNaoSelecionado();
+			if (getObjetoIncidente() != null) {
+				idObjetoIncidente = ObjetoIncidenteDto.valueOf(getObjetoIncidente()).getIdentificacao();
+				texto.setObjetoIncidente(getObjetoIncidente());
+			}
+			texto.setTipoFaseTextoDocumento(FaseTexto.EM_ELABORACAO);
+			texto.setResponsavel(getInstanciaUsuario());
+
+			if (texto.getResponsavel() == null)
+				texto.setResponsavel(getUsuario());
+
+			responsavel = texto.getResponsavel().getNome();
+
+			texto.setMinistro(getMinistro());
+
+			if (getMinistroDivergenteId() != null) {
+				Ministro ministro = ministroService.recuperarPorId(getMinistroDivergenteId());
+				texto.setMinistroDivergente(ministro);
+			}
+		} catch (Exception e) {
+			addError(e.getMessage());
+		}
+		if (hasErrors()) {
+			sendToErrors();
+		}
+	}
+	
+	/** Cria notificação sobre a necessidade de se selecionar um Setor. */
+	private void notificarSetorNaoSelecionado() throws ServiceException {
+		if ( getMinistro() == null ) {
+			throw new NestedRuntimeException("É necessário selecionar um Setor antes de criar um novo texto!");
+		}
+	}
+
+	/**
+	 * Disparado quando o usuário solicita a criação do texto.
+	 * 
+	 * <p>Realiza validação antes de delegar a criação
+	 * para a service de textos.
+	 */
+	public void execute() {
+		try {
+			ObjetoIncidente<?> oi = objetoIncidenteService.recuperarObjetoIncidentePorId(texto.getObjetoIncidente().getId());
+			validarNovoTexto(oi);
+			// Validação retirada conforme issue 1365
+//			validarPedidoVista(oi);
+			validarEmentaSobreRepercussaoGeral(oi);			
+			STFOfficeUriBuilder uriBuilder = new STFOfficeUriBuilder(texto, getUsuario(), getSetorMinistro(), FacesContext.getCurrentInstance());
+			uriNovoTexto = uriBuilder.getURI();
+		} catch (TextoException e) {
+			addInformation(e.getMessage());
+//		} catch (ControleVistaException cve){
+//			addInformation(cve.getMessage());		
+		} catch (EmentaSobreRepercussaoGeralException e) {
+			addInformation(e.getMessage());
+		} catch (NestedRuntimeException e) {
+			addError(e.getMessage());
+			logger.error(e);
+			uriNovoTexto = null;
+		} catch (ErroMontagemUriException e) {
+			addError(e.getMessage());
+			logger.error(e);
+			uriNovoTexto = null;
+		}
+	}
+	
+	/*
+	 * A ação de validação de Voto Vista foi solicitada via ISSUE 941.
+	 * A validação consiste em recuperar os dados relacionados ao Controle de Vista.
+	 * Caso haja algum controle de vista criado, validar a criação do novo texto.
+	 * Caso contrário, mostrar mensagem ao usuário. 
+	 * */
+	public void validarPedidoVista(ObjetoIncidente<?> oi) throws ControleVistaException {
+		if(texto.getTipoTexto().equals(TipoTexto.VOTO_VISTA)){
+			Principal principal = (Principal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+			try{
+				List<ControleVista> controlesPorMinistro = controleVistaService.recuperar(ObjetoIncidenteDto.valueOf(oi).getSiglaProcesso(), 
+						   																  ObjetoIncidenteDto.valueOf(oi).getNumeroProcesso(),
+						                                                                  principal.getMinistro().getId());
+				if (controlesPorMinistro == null || (controlesPorMinistro.size() <= 0)) {
+					throw new ControleVistaException("Não há pedido de vista cadastrado para o(a) " + principal.getMinistro().getNome() + " neste processo.");
+				}				
+			} catch (ServiceException e) {
+				logger.error(e.getMessage(), e);
+			}
+		}
+	}
+
+	public void validarEmentaSobreRepercussaoGeral(ObjetoIncidente<?> oi) throws EmentaSobreRepercussaoGeralException {
+		if (texto.getTipoTexto().getCodigo().equals(TipoTexto.DECISAO_SOBRE_REPERCURSAO_GERAL.getCodigo())) {
+			try {
+				Principal principal = (Principal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+				Texto textoEmentaSobreRepercussaoGeral = textoService.recuperarTextoEmentaSobreRepercussaoGeral(oi.getId(), principal.getMinistro().getId());
+				if (textoEmentaSobreRepercussaoGeral == null || (textoEmentaSobreRepercussaoGeral.getArquivoEletronico() == null)) {
+					throw new EmentaSobreRepercussaoGeralException("O texto de Ementa da Repercussão Geral ainda não foi elaborado!");
+				}
+			} catch (ServiceException e) {
+				logger.error(e.getMessage(), e);
+			}
+		}
+	}
+	
+	public void validarNovoTexto(ObjetoIncidente<?> oi) throws TextoException {
+		if (oi == null || idObjetoIncidente == null || !idObjetoIncidente.equals(ObjetoIncidenteDto.valueOf(oi).getIdentificacao())) {
+			throw new TextoException("O processo deve ser informado.");
+		}
+		if (oi.getPartesVinculadas() == null || oi.getPartesVinculadas().size() == 0) {
+			throw new TextoException("O texto não pode ser criado porque o processo não possui partes vinculadas ou possui apenas partes sigilosas.");
+		}
+		if (texto.getTipoTexto() == null) {
+			throw new TextoException("O tipo de texto deve ser informado.");
+		}
+		if (responsavel == null || !responsavel.equals(texto.getResponsavel().getNome())) {
+			throw new TextoException("O responsável deve ser informado.");
+		}
+		textoServiceLocal.validarNovoTexto(texto);
+	}
+
+	/**
+	 * Direciona o usuário para a página de criação de incidentes.
+	 */
+	public void novoIncidente() {
+		getDefinition().setFacet("incidente");
+		getDefinition().setHeight(230);
+		verificaSequenciaDoPrimeiroIncidente();
+	}
+
+	public void verificaSequenciaDoPrimeiroIncidente() {
+		List<TipoIncidenteJulgamento> tiposDeIncidente = getTiposDeIncidentes();
+		if (tiposDeIncidente != null && tiposDeIncidente.size() > 0){
+			TipoIncidenteJulgamento primeiroIncidente = tiposDeIncidente.get(0);
+			setIdTipoIncidenteJulgamento(primeiroIncidente.getId());
+			recuperarProximaSequencia();
+		}
+	}
+
+
+	public void voltarParaPrincipal() {
+		getDefinition().setFacet("principal");
+		getDefinition().setHeight(305);
+	}
+	
+	public void voltarParaNovoIncidente() {
+		getDefinition().setFacet("incidente");
+		getDefinition().setHeight(230);
+	}
+
+	/**
+	 * Chamado pelo suggestion box de incidentes quando o usuário seleciona
+	 * um determinado incidente.
+	 * 
+	 * @param id o identificador do incidente
+	 */
+	public void setObjetoIncidente(Long id) {
+		ObjetoIncidente<?> objetoIncidente = objetoIncidenteService.recuperarObjetoIncidentePorId(id);
+		carregaObjetoIncidente(objetoIncidente);
+	}
+
+	private void carregaObjetoIncidente(ObjetoIncidente<?> objetoIncidente) {
+		texto.setObjetoIncidente(objetoIncidente);
+		idObjetoIncidente = ObjetoIncidenteDto.valueOf(texto.getObjetoIncidente()).getIdentificacao();
+		this.objetoIncidente = objetoIncidente;
+	}
+
+	/**
+	 * Recupera o objeto incidente que será utilizado para criação do texto.
+	 * 
+	 * <p>Delega a definição de qual será o incidente para as subclasses
+	 * vai {@link #getObjetoIncidente(Object)}
+	 * 
+	 * @return o objeto incidente do texto
+	 */
+	public ObjetoIncidente<?> getObjetoIncidente() {
+		if (objetoIncidente != null) {
+			return objetoIncidente;
+		}
+		if (getResources() != null && !getResources().isEmpty()) {
+			if (getResources().size() == 1) {
+				return getObjetoIncidente(getResources().iterator().next());
+			}
+		} else if (texto.getObjetoIncidente() != null) {
+			return texto.getObjetoIncidente();
+		}
+		return null;
+	}
+
+	/**
+	 * Deve ser implementado pelas subclasses para definição do objeto incidente que 
+	 * deve ser utilizado para criação do texto.
+	 * 
+	 * <p>O objeito incidente deverá ser definido em função do recurso que foi 
+	 * selecionado na tela.
+	 * 
+	 * @param resource o recurso que foi selecionado na tela, se houver
+	 * @return o objeto incidente correspondente
+	 */
+	protected abstract ObjetoIncidente<?> getObjetoIncidente(T resource);
+
+	/**
+	 * Lista os possíveis tipo de texto.
+	 * 
+	 * @return tipo de texto
+	 */
+	public List<TipoTexto> getTiposTexto() {
+		return textoServiceLocal.recuperarTipoTextoPadrao(getObjetoIncidente(), getMinistro());
+	}
+
+	/**
+	 * Lista os tipos de incidentes de julgamento 
+	 * @return
+	 */
+	public List<TipoIncidenteJulgamento> getTiposDeIncidentes() {
+		return textoServiceLocal.recuperarTiposDeIncidentes(((Processo) getObjetoIncidente().getPrincipal()).getClasseProcessual());
+	}
+
+	/**
+	 * Set o id do objeto incidente selecionado no suggestion box.
+	 * 
+	 * @param idObjetoIncidente id do incidente.
+	 */
+	public void setIdObjetoIncidente(String idObjetoIncidente) {
+		this.idObjetoIncidente = idObjetoIncidente;
+	}
+
+	/**
+	 * Recupera o id do objeto incidente selecionado na tela.
+	 * 
+	 * @return o id do objeto incidente
+	 */
+	public String getIdObjetoIncidente() {
+		return idObjetoIncidente;
+	}
+
+	/**
+	 * O id do tipo de texto selecionado na tela.
+	 * 
+	 * @param idTipoTexto id do tipo de texto
+	 */
+	public void setIdTipoTexto(Long idTipoTexto) {
+		this.idTipoTexto = idTipoTexto;
+		texto.setTipoTexto(TipoTexto.valueOf(idTipoTexto));
+	}
+
+	/**
+	 * Recupera o id do tipo de texto selecionado na tela.
+	 * 
+	 * @return o id do tipo de texto
+	 */
+	public Long getIdTipoTexto() {
+		return idTipoTexto;
+	}
+	
+	/**
+	 * Seta o texto que será criado.
+	 * 
+	 * @param texto o novo texto
+	 */
+	public void setTexto(Texto texto) {
+		this.texto = texto;
+	}
+
+	/**
+	 * Recupera o texto que será criado.
+	 * 
+	 * @return o novo texto
+	 */
+	public Texto getTexto() {
+		return texto;
+	}
+
+	/**
+	 * Recupera o tipo de incidente de julgamento quando for criado um novo.
+	 * @return
+	 */
+	public Long getIdTipoIncidenteJulgamento() {
+		return idTipoIncidenteJulgamento;
+	}
+	
+	public void setIdTipoIncidenteJulgamento(Long idTipoIncidenteJulgamento) {
+		this.idTipoIncidenteJulgamento = idTipoIncidenteJulgamento;
+	}
+
+	/**
+	 * Indica se o controle de sequencia deve aparecer (para os casos que admitem sequencia, como QO) 
+	 * @return
+	 */
+	public Boolean getMostrarSequencia() {
+		return mostrarSequencia;
+	}
+
+	public void setMostrarSequencia(Boolean mostrarSequencia) {
+		this.mostrarSequencia = mostrarSequencia;
+	}
+
+	public Integer getSequenciaCadeia() {
+		return sequenciaCadeia;
+	}
+
+	public void setSequenciaCadeia(Integer sequenciaCadeia) {
+		this.sequenciaCadeia = sequenciaCadeia;
+	}
+
+	public String getUriNovoTexto() {
+		return uriNovoTexto;
+	}
+
+	public void setUriNovoTexto(String uriNovoTexto) {
+		this.uriNovoTexto = uriNovoTexto;
+	}
+
+	public String getResponsavel() {
+		return responsavel;
+	}
+
+	public void setResponsavel(String responsavel) {
+		this.responsavel = responsavel;
+	}
+
+	public void recuperarProximaSequencia() {
+		try {
+			if (getIdTipoIncidenteJulgamento() != null) {
+				sequenciaCadeia = textoServiceLocal.recuperarProximaSequenciaCadeia(getObjetoIncidente().getId(),
+						getIdTipoIncidenteJulgamento());
+				setMostrarSequencia(true);
+			} else {
+				setMostrarSequencia(false);
+			}
+		} catch (NestedRuntimeException e) {
+			addError(e.getMessage());
+			sendToErrors();
+		}
+	}
+
+	/**
+	 * método responsavel por criar um novo incidente julgamento
+	 */
+	public void criarNovoIncidente() {
+
+		try {
+			if (isNovoIncidenteValido()) {
+				TipoIncidenteJulgamento tipoIncidenteJulgamento = tipoIncidenteJulgamentoService.recuperarPorId(getIdTipoIncidenteJulgamento());
+				
+				if (!textoServiceLocal.isTipoIncidenteJulgamentoPermitidoParaClasse(tipoIncidenteJulgamento, ((Processo) getObjetoIncidente().getPrincipal()).getClasseProcessual())) {
+					throw new NestedRuntimeException("O tipo de incidente não é permitido para a classe processual atual.");
+				}
+				
+				TipoJulgamento tipoJulgamento = textoServiceLocal.recuperarTipoJulgamento(
+								getIdTipoIncidenteJulgamento(),
+								Long.valueOf(sequenciaCadeia));
+
+				if (tipoJulgamento != null) {
+
+					IncidenteJulgamento incidenteJulgamento = textoServiceLocal.inserirIncidenteJulgamento(
+							getObjetoIncidente().getId(), 
+							getIdTipoIncidenteJulgamento(),
+							sequenciaCadeia);
+					if (incidenteJulgamento != null) {
+						carregaObjetoIncidente(incidenteJulgamento);
+						// INSERE A NOVA SITUACAO DO MINISTRO NO PROCESSO
+						Ministro ministroRelator = situacaoMinistroProcessoService.recuperarMinistroRelatorAtual(incidenteJulgamento);
+						SituacaoMinistroProcesso smp = new SituacaoMinistroProcesso();
+						smp.setMinistroRelator( ministroRelator );
+						smp.setObjetoIncidente( incidenteJulgamento );		
+						smp.setOcorrencia( Ocorrencia.RELATOR );
+						smp.setDataOcorrencia( new Date() );
+						smp.setRelatorAtual(false);
+						smp.setRelatorIncidenteAtual(true);
+						situacaoMinistroProcessoService.incluir( smp );
+					}
+					voltarParaPrincipal();
+				} else {
+					addInformation("Não está prevista no sistema a criação do incidente "
+							+ textoServiceLocal.recuperarTipoIncidenteJulgamentoPorId(getIdTipoIncidenteJulgamento()).getDescricao()
+							+ " com número de sequência "
+							+ getSequenciaCadeia()
+							+ " por motivos de compatibilidade com o Módulo de Tratamento Textual.");
+					sendToInformations();
+				}
+			} else {
+				addInformation("tipoIncidente", "O tipo de incidente de julgamento deve ser informado.");
+				sendToInformations();
+			}
+		} catch (NestedRuntimeException e) {
+			addError(e.getMessage());
+			sendToErrors();
+		} catch (DuplicacaoChaveAntigaException e) {
+			addInformation("Não foi possível criar o Incidente de Julgamento "
+					+ textoServiceLocal.recuperarTipoIncidenteJulgamentoPorId(getIdTipoIncidenteJulgamento()).getDescricao()
+					+ " por motivo de compatibilidade com o Módulo de Tratamento Textual.");
+			sendToInformations();
+		} catch (ServiceException e) {
+			addError(e.getMessage());
+			sendToErrors();
+		}
+	}
+
+	/**
+	 * método responsavel por validar a inclusão do um novo incidente julgamento
+	 * @throws TextoException
+	 */
+	private boolean isNovoIncidenteValido() {
+		return getIdTipoIncidenteJulgamento() != null;
+	}
+	
+	public Boolean getMostraEdicaoTexto() {
+		return uriNovoTexto != null && uriNovoTexto.trim().length() > 0;
+	}
+	
+	/**
+	 * Redireciona a página para o servlet do STFOffice, permitindo a edição do texto.
+	 */
+	public void forward() {
+		javax.faces.context.FacesContext context = javax.faces.context.FacesContext.getCurrentInstance();
+		ServletResponse response = (ServletResponse) context.getExternalContext().getResponse();
+		ServletRequest request = (ServletRequest) context.getExternalContext().getRequest();
+		try {
+			request.getRequestDispatcher(uriNovoTexto).forward(request, response);
+			context.responseComplete();
+		} catch (Exception e) {
+			addError(e.getMessage());
+			sendToErrors();
+		}
+	}
+	
+	public Usuario getInstanciaUsuario() {
+		Usuario usuario = new Usuario();
+		usuario.setId(getUsuario().getId());
+		usuario.setNome(getUsuario().getNome());
+		usuario.setAtivo(getUsuario().getAtivo());
+		usuario.setMatricula(getUsuario().getMatricula());
+		usuario.setPerfis(getUsuario().getPerfis());
+		usuario.setSetor(getUsuario().getSetor());
+		return usuario;
+	}
+	
+	public boolean isUsuarioPodeCriarIncidente() {
+		return permissionChecker.hasPermission(getPrincipal(), ActionIdentification.CRIAR_INCIDENTE_DE_JULGAMENTO);
+	}
+
+	public Long getTipoVotoId() {
+		return tipoVotoId;
+	}
+
+	public void setTipoVotoId(Long tipoVotoId) {
+		this.tipoVotoId = tipoVotoId;
+		texto.setTipoVoto(TipoVotoConstante.getById(tipoVotoId));
+	}
+
+	public Boolean getExigirTipoVoto() {
+		return exigirTipoVoto;
+	}
+
+	public void setExigirTipoVoto(Boolean exigirTipoVoto) {
+		this.exigirTipoVoto = exigirTipoVoto;
+	}
+	
+	public void changeIdTipoTexto(ValueChangeEvent  e) {
+		try {
+			setTipoVotoId(null);
+			setListaMinistrosDivergentes(null);
+			setMinistroDivergenteId(null);
+			setMostrarMinistrosDivergentes(false);
+			
+			exigirTipoVoto = Boolean.FALSE;
+			
+			if (e.getNewValue() != null)
+				setIdTipoTexto((Long) e.getNewValue());
+			
+			Ministro relator = objetoIncidenteService.recuperarMinistroRelatorIncidente(texto.getObjetoIncidente());
+			
+			if (!getPrincipal().getMinistro().equals(relator) && TextoFacesBean.listaTipoTextoDisponiveis.contains(TipoTexto.valueOf(idTipoTexto))) {
+				exigirTipoVoto = Boolean.TRUE;
+				
+				listaTipoVoto = new ArrayList<SelectItem>();
+				
+				listaTipoVoto.add(new SelectItem(null, ""));
+				listaTipoVoto.add(new SelectItem(7, "Divirjo do relator"));
+				listaTipoVoto.add(new SelectItem(9, "Acompanho o relator"));
+				listaTipoVoto.add(new SelectItem(10, "Acompanho o relator com ressalvas"));
+
+				JulgamentoProcesso jp = julgamentoProcessoService.pesquisaUltimoJulgamentoProcesso(texto.getObjetoIncidente());
+				
+				if (jp.getQuantidadeDivergencias()>0)
+					getListaTipoVoto().add(new SelectItem(8, "Acompanho a divergência"));
+				
+			}
+				
+		} catch (ServiceException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+
+	}
+	
+	public void changeMinistroDivergenteId(ValueChangeEvent  e) {
+		if (e != null && e.getNewValue() != null) {
+			try {
+				setMinistroDivergenteId((Long) e.getNewValue());
+				Ministro ministro = ministroService.recuperarPorId((Long) e.getNewValue());
+				texto.setMinistroDivergente(ministro);
+			} catch (ServiceException e1) {
+				e1.printStackTrace();
+			}
+		}
+	}
+	
+	public void changeTipoVotoId(ValueChangeEvent  e) {
+		try {
+			setListaMinistrosDivergentes(null);
+			setMinistroDivergenteId(null);
+			setMostrarMinistrosDivergentes(false);
+			
+			if (e.getNewValue() != null)
+				setTipoVotoId((Long) e.getNewValue());
+			
+			if (getTipoVotoId().equals(8L)) {
+				JulgamentoProcesso jp = julgamentoProcessoService.pesquisaUltimoJulgamentoProcesso(getObjetoIncidente());
+				
+				List<Ministro> divergentes = new ArrayList<Ministro>();
+				
+				for (VotoJulgamentoProcesso divergencia : jp.getVotosDivergencia())
+					divergentes.add(divergencia.getMinistro());
+				
+				if (!divergentes.isEmpty()) {
+					setMinistroDivergenteId(divergentes.get(0).getId());
+					
+					if (getMinistroDivergenteId() != null)
+						texto.setMinistroDivergente(ministroService.recuperarPorId(getMinistroDivergenteId()));
+					
+					setMostrarMinistrosDivergentes(true);
+					listaMinistrosDivergentes = new ArrayList<SelectItem>();
+					for (Ministro ministro : divergentes)
+						listaMinistrosDivergentes.add(new SelectItem(ministro.getId(), ministro.getNome()));
+				}
+			}
+		} catch (ServiceException e1) {
+			e1.printStackTrace();
+		}
+	}
+
+	public List<SelectItem> getListaTipoVoto() {
+		return listaTipoVoto;
+	}
+
+	public void setListaTipoVoto(List<SelectItem> listaTipoVoto) {
+		this.listaTipoVoto = listaTipoVoto;
+	}
+
+	public List<SelectItem> getListaMinistrosDivergentes() {
+		return listaMinistrosDivergentes;
+	}
+
+	public void setListaMinistrosDivergentes(List<SelectItem> listaMinistrosDivergentes) {
+		this.listaMinistrosDivergentes = listaMinistrosDivergentes;
+	}
+
+	public Long getMinistroDivergenteId() {
+		return ministroDivergenteId;
+	}
+
+	public void setMinistroDivergenteId(Long ministroDivergenteId) {
+		this.ministroDivergenteId = ministroDivergenteId;
+	}
+
+	public boolean isMostrarMinistrosDivergentes() {
+		return mostrarMinistrosDivergentes;
+	}
+
+	public void setMostrarMinistrosDivergentes(boolean mostrarMinistrosDivergentes) {
+		this.mostrarMinistrosDivergentes = mostrarMinistrosDivergentes;
+	}
+
+	public JulgamentoProcessoService getJulgamentoProcessoService() {
+		return julgamentoProcessoService;
+	}
+
+	public void setJulgamentoProcessoService(JulgamentoProcessoService julgamentoProcessoService) {
+		this.julgamentoProcessoService = julgamentoProcessoService;
+	}
+}

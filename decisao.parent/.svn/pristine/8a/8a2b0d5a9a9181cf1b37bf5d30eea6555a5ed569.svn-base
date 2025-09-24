@@ -1,0 +1,50 @@
+/*
+Estilos customizados para o tema do dash do peticionamento
+Autor: tomas.godoi@stf.jus.br;
+Data: 29/04/2014;
+*/
+
+/*
+0. General Elements
+1. Header Elements
+
+100. Responsive Elements
+101. xs
+102. sm
+103. md
+104. lg
+*/
+
+/*0. General Elements*/
+
+#notificacoes-dash .notification-messages .message-wrapper .description {
+	text-overflow: clip;
+	white-space: normal;
+	word-break: normal;
+}
+
+#notificacoes-dash .notification-messages .message-wrapper {
+	height: 100%;
+}
+
+#notificacoes-dash .notification-messages {
+	cursor:inherit !important;
+}
+
+#notificacoes-dash .notification-messages:hover {
+	cursor:inherit  !important;
+}
+
+
+/*102. sm*/
+@media (min-width: 768px) and (max-width: 991px) {
+
+}
+/*103. md*/
+@media (min-width: 992px) and (max-width: 1199px) {
+
+}
+/*104. lg*/
+@media (min-width: 1200px) {
+
+}

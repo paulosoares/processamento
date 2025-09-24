@@ -1,0 +1,119 @@
+<div id="importacao-container" style="display: none; ">
+	<div class="content" id="certificado-native-cover">
+		<header id="certificado-cover" class="hidden-xs">
+			<section id="usuario-resumo" class="row">
+			</section>
+		</header>
+		<header id="certificado-cover-xs" class="visible-xs">
+			<section id="usuario-resumo-xs" class="row">
+			</section>
+		</header>
+	</div>
+	<div class="row" id="painel-mensagens-nativo" style="display: none;">
+		<div class="col-md-12">
+			<div class="grid simple horizontal red">
+				<div class="grid-body">
+					<div style="text-align: center;">
+						<div id="success-panel-native" class="alert alert-success"
+							style="display: none;">
+							<div id="msg-sucesso-native"></div>
+						</div>
+						<div id="error-panel-native" class="alert alert-error"
+							style="display: none;">
+							<div id="msg-errors-native"></div>
+						</div>
+						<div id="warning-panel-native" class="alert alert-warning"
+							style="display: none;">
+							<div class="msg-item-div">
+								Alguns processos não puderam ser assinados. <a
+									id="open-msg-warnings-native" href="#"></a>.
+							</div>
+							<div id="msg-warnings-native" style="display: none"></div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div id="painel-importar" style="display: none;">
+		<div class="col-md-12">
+			<div class="grid simple horizontal red">
+				<div class="grid-body">
+					<div style="text-align: center;">
+						<p style="text-align: center;" id="importando-certificado">
+							Importando certificado digital
+						</p>
+						<input id="senha-importacao" type="password" class="form-control "
+							style="width: 300px; display: inline; margin-bottom: 20px"
+							placeholder="Digite a senha do certificado"><br />
+						<button class="btn btn-default btn-demo-space" id="cancelar-importacao">Cancelar</button>
+						<button class="btn btn-success btn-demo-space" id="continuar-importacao">Continuar</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div id="painel-importar-com-confirmacao" style="display: none;">
+		
+		<div class="col-md-12">
+			<div class="grid simple horizontal red">
+				<div class="grid-body">
+					<div style="text-align: center;">
+						<p style="text-align: center;" id="importando-certificado-dados">
+							Importando certificado digital abaixo:
+						</p>
+						<div id="btn-acao-importacao">
+							<button class="btn btn-default btn-demo-space" id="cancelar-importacao-com-confirmacao">Cancelar</button>
+							<button class="btn btn-success btn-demo-space" id="continuar-importacao-com-confirmacao">Confirmar</button>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-sm-offset-2 col-sm-8"
+				style="background-color: white;">
+				<div class="grid simple horizontal red">
+					<div class="grid-body">
+						<div style="text-align: center;">
+							<div id="cert-cadeia" class="well"
+								style="margin-top: 22px; text-align: left; padding: 10px;">
+								<div style="padding-bottom: 5px;">
+									<strong>Informações do certificado</strong>
+								</div>
+								<div id="dados-importacao" style="background: white; padding: 15px;">
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div id="ultimo-passo-importacao" style="display: none;">
+		<div id="painel-importar-sucesso">
+			<div class="col-md-12">
+				<div class="grid simple horizontal red">
+					<div class="grid-body">
+						<div style="text-align: center;">
+							<p id="dados-importacao"></p>
+							<button class="btn" id="btn-importacao-fechar">Continuar</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div id="reset-importacao"  style="display: none;">
+		<div class="col-md-12">
+			<div class="grid simple horizontal red">
+				<div class="grid-body">
+					<div style="text-align: center;">
+						<button class="btn btn-default btn-demo-space"
+							 id="voltar-sem-importacao">Continuar sem certificado</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

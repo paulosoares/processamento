@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<components xmlns="http://jboss.com/products/seam/components"
+	xmlns:core="http://jboss.com/products/seam/core" xmlns:persistence="http://jboss.com/products/seam/persistence"
+	xmlns:security="http://jboss.com/products/seam/security" xmlns:web="http://jboss.com/products/seam/web"
+	xmlns:spring="http://jboss.com/products/seam/spring" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://jboss.com/products/seam/core http://jboss.com/products/seam/core-2.1.xsd
+                 http://jboss.com/products/seam/persistence http://jboss.com/products/seam/persistence-2.1.xsd
+                 http://jboss.com/products/seam/security http://jboss.com/products/seam/security-2.1.xsd
+                 http://jboss.com/products/seam/web http://jboss.com/products/seam/web-2.1.xsd
+                 http://jboss.com/products/seam/spring http://jboss.com/products/seam/spring-2.1.xsd
+                 http://jboss.com/products/seam/components http://jboss.com/products/seam/components-2.1.xsd">
+
+	<core:init debug="false" jndi-pattern="decisao/#{ejbName}/local" />
+
+	<core:manager uri-encoding="UTF-8" concurrent-request-timeout="500" conversation-timeout="120000" conversation-id-parameter="cid" parent-conversation-id-parameter="pid" default-flush-mode="MANUAL" />
+
+	<web:character-encoding-filter encoding="UTF-8" override-client="true" url-pattern="*.seam" />
+
+	<persistence:managed-hibernate-session name="sessionFactory" session-factory="#{sessionFactory}" auto-create="true"/>
+
+	<spring:spring-transaction platform-transaction-manager-name="transactionManager" />
+
+	<web:hot-deploy-filter url-pattern="*.seam" />
+	
+	<spring:context-loader />
+
+</components>

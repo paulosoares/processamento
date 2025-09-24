@@ -1,0 +1,111 @@
+<html xmlns="http://www.w3.org/1999/xhtml" lang="pt-br" xml:lang="pt-br">
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<head>
+<style type="text/css">
+body {
+	font-family: Arial, Helvetica, Tahoma, sans-serif;
+}
+
+.negrito {
+	font-weight: bold;
+}
+
+.tamanhoA4 {
+	width: 21.5cm;
+	padding-left: 0.5cm;
+	padding-right: 0.0cm;
+	padding-top: 0.0cm;
+	padding-bottom: 0.0cm;
+}
+
+h3 { font-size: 1.2em; font-weight: bold; margin: 0px 0px 10px 0px; border-bottom: 2px solid #007CC2; }
+
+</style>
+</head>
+<body>
+	<div class="tamanhoA4">
+		<table width="100%" cellspacing="0" style="padding: 0;">
+			<tr>
+				<td>
+					<h3 style="font-size: 1.2em; font-weight: bold; margin: 0px 0px 10px 0px; border-bottom: 2px solid #007CC2;">Espelho do Processo $espelhoReport.informacaoPautaProcesso.objetoIncidente.identificacao</h3>
+				</td>
+			</tr>
+			#set($numeroItem = 1)
+				<tr>
+					<td>
+						<div style="font-weight:bold; margin:0px 5px 0 30px; text-align:left; vertical-align:top; width:100%; font-size: 1em">
+							${numeroItem}. Partes
+						</div>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<div style="margin: 0px 0px 0px 50px;">
+							<table>
+								#foreach($parte in $espelhoReport.partes)
+								<tr>
+									<td>
+										${parte.categoria}:	
+									</td>
+									<td>
+										${parte.nome}
+									</td>
+								</tr>
+								#end
+								#if ($espelhoReport.nomeRelator)
+								<tr>
+									<td>
+										<b>${espelhoReport.sufixoRelator}:</b>	
+									</td>
+									<td>
+										<b>${espelhoReport.nomeRelator}</b>
+									</td>
+								</tr>
+								#end
+							</table>
+						</div>
+					</td>
+				</tr>
+				
+			#set($numeroItem = $numeroItem + 1)
+			#foreach($itemEspelho in $espelhoReport.itensEspelho)
+				<tr>
+					<td>
+						<div style="font-weight:bold; margin:0px 5px 0 30px; text-align:left; vertical-align:top; width:100%; font-size: 1em">
+							${numeroItem}. ${itemEspelho.nome}
+						</div>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<div style="margin-left:50px; margin-top:0px;">
+						$itemEspelho.conteudo
+						</div>
+					</td>
+				</tr>
+				#if($itemEspelho.nome == $itemEspelhoImpressaoDecisoes)
+					<tr>
+					<td>
+						<div style="margin: 0x 0 0px 50px;">
+						#foreach($decisao in $espelhoReport.decisoes)
+							<div style="text-align: left; margin-left: 77px;">$decisao</div>
+						#end
+						</div>
+					</td>
+					</tr>
+				#end
+				#set($numeroItem = $numeroItem + 1)
+			#end
+			<tr>
+				<td>
+					<div style="margin-bottom: 30px;">
+						&nbsp;
+					</div>
+				</td>
+			</tr>
+		</table>
+		<!-- FIM Área responsável pelas informações de Espelho -->
+	</div>
+	
+</body>
+</html>

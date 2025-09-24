@@ -1,0 +1,38 @@
+<div class="row" id="confirmar-cert-senha" style="display: none;">
+	<div class="col-md-12">
+		<div class="grid simple horizontal red">
+			<div class="grid-body">
+				<div style="text-align: center;">
+					<p style="text-align: center;" id="assinando-docs">
+						Assinando <span id="qtde-docs-assinar-senha"></span> documentos
+						com o certificado abaixo. <br />
+						<strong> Digite sua senha para continuar. </strong>
+					</p>
+					<input id="senha-assinatura" type="password" class="form-control "
+						style="width: 300px; display: inline; margin-bottom: 20px"
+						placeholder="Digite a senha de assinatura"> <Br />
+					<button class="btn btn-default btn-demo-space" id="desistir">Desistir</button>
+					<button class="progress-button" data-style="fill" data-horizontal
+						id="assinar-agora">Assinar Agora</button>
+				</div>
+			</div>
+		</div>
+		<div class="col-sm-offset-2 col-sm-8"
+			style="background-color: white;">
+			<div class="grid simple horizontal red">
+				<div class="grid-body">
+					<div style="text-align: center;">
+						<div id="cert-cadeia" class="well"
+							style="margin-top: 22px; text-align: left; padding: 10px;">
+							<div style="padding-bottom: 5px;">
+								<strong>Informações do certificado</strong>
+							</div>
+							<div id="cert-assinando-cadeia" style="background: white; padding: 15px;">
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

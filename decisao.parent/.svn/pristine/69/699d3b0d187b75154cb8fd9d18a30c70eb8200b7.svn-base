@@ -1,0 +1,1585 @@
+package br.jus.stf.estf.decisao.pesquisa.web.texto;
+
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URISyntaxException;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.StringTokenizer;
+
+import javax.faces.context.FacesContext;
+import javax.faces.event.ValueChangeEvent;
+import javax.faces.model.SelectItem;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+
+import org.hibernate.Hibernate;
+import org.jboss.seam.ScopeType;
+import org.jboss.seam.annotations.In;
+import org.jboss.seam.annotations.Logger;
+import org.jboss.seam.annotations.Name;
+import org.jboss.seam.annotations.Scope;
+import org.jboss.seam.faces.FacesMessages;
+import org.jboss.seam.log.Log;
+import org.springframework.security.context.SecurityContextHolder;
+
+import br.gov.stf.estf.cabecalho.model.CabecalhosObjetoIncidente.CabecalhoObjetoIncidente;
+import br.gov.stf.estf.cabecalho.model.OcorrenciasMinistro;
+import br.gov.stf.estf.cabecalho.service.CabecalhoObjetoIncidenteService;
+import br.gov.stf.estf.converter.DocumentTarget;
+import br.gov.stf.estf.converter.target.FileDocumentTarget;
+import br.gov.stf.estf.documento.model.service.ControleVistaService;
+import br.gov.stf.estf.documento.model.service.ControleVotoService;
+import br.gov.stf.estf.documento.model.service.DocumentoTextoService;
+import br.gov.stf.estf.documento.model.service.impl.TextoServiceImpl;
+import br.gov.stf.estf.entidade.documento.ArquivoEletronicoView;
+import br.gov.stf.estf.entidade.documento.ControleVoto;
+import br.gov.stf.estf.entidade.documento.DocumentoTexto;
+import br.gov.stf.estf.entidade.documento.ListaTextos;
+import br.gov.stf.estf.entidade.documento.Texto;
+import br.gov.stf.estf.entidade.documento.Texto.TipoRestricao;
+import br.gov.stf.estf.entidade.documento.TipoTexto;
+import br.gov.stf.estf.entidade.documento.tipofase.FaseTexto;
+import br.gov.stf.estf.entidade.julgamento.TipoVoto.TipoVotoConstante;
+import br.gov.stf.estf.entidade.ministro.Ministro;
+import br.gov.stf.estf.entidade.processostf.ObjetoIncidente;
+import br.gov.stf.estf.entidade.processostf.Parte;
+import br.gov.stf.estf.entidade.processostf.Processo;
+import br.gov.stf.estf.entidade.publicacao.FaseTextoProcesso;
+import br.gov.stf.estf.entidade.usuario.Responsavel;
+import br.gov.stf.estf.processostf.model.service.ParteService;
+import br.gov.stf.estf.processostf.model.service.ProcessoService;
+import br.gov.stf.estf.publicacao.model.service.FaseTextoProcessoService;
+import br.gov.stf.estf.usuario.model.service.UsuarioService;
+import br.gov.stf.framework.model.service.ServiceException;
+import br.gov.stf.framework.util.SearchData;
+import br.jus.stf.estf.decisao.DocAbrirDecisaoId;
+import br.jus.stf.estf.decisao.DocDecisaoId;
+import br.jus.stf.estf.decisao.DocNovaDecisaoId;
+import br.jus.stf.estf.decisao.StfOfficeDecisaoURI;
+import br.jus.stf.estf.decisao.objetoincidente.service.ObjetoIncidenteService;
+import br.jus.stf.estf.decisao.objetoincidente.web.EmentaSobreRepercussaoGeralException;
+import br.jus.stf.estf.decisao.pesquisa.domain.FaseTextoProcessoDto;
+import br.jus.stf.estf.decisao.pesquisa.domain.Pesquisa;
+import br.jus.stf.estf.decisao.pesquisa.domain.TextoDto;
+import br.jus.stf.estf.decisao.pesquisa.service.PesquisaService;
+import br.jus.stf.estf.decisao.support.action.support.ActionIdentification;
+import br.jus.stf.estf.decisao.support.controller.context.FacesBean;
+import br.jus.stf.estf.decisao.support.controller.faces.datamodel.PagedList;
+import br.jus.stf.estf.decisao.support.security.PermissionChecker;
+import br.jus.stf.estf.decisao.support.security.Principal;
+import br.jus.stf.estf.decisao.support.util.FormatoArquivo;
+import br.jus.stf.estf.decisao.support.util.GlobalFacesBean;
+import br.jus.stf.estf.decisao.support.util.NestedRuntimeException;
+import br.jus.stf.estf.decisao.support.util.ReportUtils;
+import br.jus.stf.estf.decisao.support.util.STFOfficeUtils;
+import br.jus.stf.estf.decisao.support.util.TextoUtils;
+import br.jus.stf.estf.decisao.texto.service.RelatorioTextoService;
+import br.jus.stf.estf.decisao.texto.support.DadosMontagemTextoBuilder;
+import br.jus.stf.estf.decisao.texto.support.TextoRelatorioEnum;
+import br.jus.stf.estf.decisao.texto.support.TextoReport;
+import br.jus.stf.estf.decisao.texto.support.TextoRestrictionChecker;
+import br.jus.stf.estf.montadortexto.DadosMontagemTexto;
+import br.jus.stf.estf.montadortexto.MontadorTextoServiceException;
+import br.jus.stf.estf.montadortexto.OpenOfficeMontadorTextoService;
+import br.jus.stf.estf.report.ReportException;
+import br.jus.stf.estf.report.ReportOutputStrategy;
+import br.jus.stf.estf.report.model.Report;
+import br.jus.stf.estf.report.model.Report.LineType;
+import br.jus.stf.estf.report.model.Report.Margin;
+import br.jus.stf.estf.report.model.Report.Orientation;
+import br.jus.stf.estf.report.model.Report.Page;
+import br.jus.stf.estf.report.model.Report.ReportType;
+import net.htmlparser.jericho.CharacterReference;
+import net.htmlparser.jericho.Segment;
+import net.htmlparser.jericho.Source;
+import net.htmlparser.jericho.Tag;
+
+/**
+ * Bean JSF (Seam Component) para controle e tratamento de eventos de tela associados a 
+ * Textos. Usado pelo mecanismo de pesquisa para recuperação e edição de informações.
+ * 
+ * <p>Implementação <code>FacesBean</code> para Texto.
+ * 
+ * @author Rodrigo Barreiros
+ * @since 28.04.2010
+ */
+@Name("textoFacesBean")
+@Scope(ScopeType.CONVERSATION)
+public class TextoFacesBean extends STFOfficeUtils implements FacesBean<TextoDto>, ReportOutputStrategy {
+
+	@SuppressWarnings("unused")
+	private static final long serialVersionUID = 291851144291141440L;
+
+	@In("#{processoService}")
+	private ProcessoService processoService;
+	
+	@In("#{pesquisaService}")
+	private PesquisaService pesquisaService;
+
+	@In("#{textoServiceLocal}")
+	private br.jus.stf.estf.decisao.texto.service.TextoService textoServiceLocal;
+
+	@In("pesquisaAvancada")
+	private Pesquisa pesquisaAvancada;
+	
+	@In("#{responsavelFacesBean}")
+	private ResponsavelFacesBean responsavelFacesBean;
+	
+	@In("#{faseTextoProcessoService}")
+	private FaseTextoProcessoService faseTextoProcessoService;
+
+	@In
+	private FacesMessages facesMessages;
+
+	@In("#{controleVotoService}")
+	private ControleVotoService controleVotoService;
+	
+	@In("#{controleVistaService}")
+	private ControleVistaService controleVistaService;
+	
+	@In("#{objetoIncidenteServiceLocal}")
+	private ObjetoIncidenteService objetoIncidenteService;
+
+	@In("#{usuarioService}")
+	private UsuarioService usuarioService;
+
+	@In("#{textoService}")
+	private br.gov.stf.estf.documento.model.service.TextoService textoService;
+
+	@In("#{cabecalhoObjetoIncidenteService}")
+	private CabecalhoObjetoIncidenteService cabecalhoObjetoIncidenteService;
+
+	@In("#{parteService}")
+	private ParteService parteService;
+
+	@In("#{openOfficeMontadorTextoService}")
+	private OpenOfficeMontadorTextoService openOfficeMontadorTextoService;
+
+	@In("#{dadosMontagemTextoBuilder}")
+	private DadosMontagemTextoBuilder dadosMontagemTextoBuilder;
+	
+	@In("#{documentoTextoService}")
+	private DocumentoTextoService documentoTextoService;
+	
+	@In(value = "globalFacesBean", create = true)
+	private GlobalFacesBean globalFacesBean;
+	
+	@In("#{relatorioTextoService}")
+	private RelatorioTextoService relatorioTextoService;
+	
+	@In("#{permissionChecker}")
+	private PermissionChecker permissionChecker;
+	
+
+	@Logger
+	private Log logger;
+
+	private Texto texto;
+	private Texto textoInfoEditar;
+	private TipoTexto tipoTextoSelecionado;
+	private String conteudo;
+	private CabecalhoObjetoIncidente cabecalhoObjetoIncidente;
+	private String ministroRelator;
+	private String ministraRelatora;
+	private String ministroRedatorAcordao;
+	private String ministraRedatoraAcordao;
+	private String ministroRevisor;
+	private String ministraRevisora;
+	private String observacaoTexto;
+	private String responsavelParaEdicao;
+	private Responsavel responsavelSugerido;
+	public Long idTipoTextoSelecionado;
+	private List<SelectItem> itensTipoTexto;
+	private List<TextoDto> listaTextosIguais;
+	private List<Parte> listaParte;
+	private List<FaseTextoProcesso> listaHistoricoFasesTextoProcesso;
+	
+	private String usuarioCriacao;
+	private Date dataCriacao;
+	private String usuarioAlteracao;
+	private Date dataAlteracao;
+	
+	private boolean permitidoEditarRestaurar;
+	private boolean refresh;
+	
+	private boolean controversiaIndicadaOrigem = false;
+
+	private File reportOutputFile;
+	private FileOutputStream reportOutputStream;
+	
+	public static List<TipoTexto> listaTipoTextoDisponiveis = Arrays.asList(TipoTexto.VOTO, TipoTexto.VOTO_VOGAL, TipoTexto.VOTO_VISTA);
+	
+	private Long tipoVotoId;
+	
+	List<FaseTexto> fasesProibidas = Arrays.asList(FaseTexto.EM_ELABORACAO, FaseTexto.EM_REVISAO, FaseTexto.NAO_ELABORADO, FaseTexto.CANCELADO);
+	
+	/**
+	 * @see br.jus.stf.estf.decisao.support.controller.context.FacesBean#search(br.jus.stf.estf.decisao.pesquisa.domain.Pesquisa, int, int)
+	 */
+	@Override
+	public PagedList<TextoDto> search(Pesquisa pesquisa, int first, int max) {
+		pesquisa.setFirstResult(first);
+		pesquisa.setMaxResults(max);
+		PagedList<TextoDto> textosEncontrados = null;
+		
+		try {
+			textosEncontrados = pesquisaService.pesquisarTextos(pesquisa);
+		} catch (Exception e) {
+			textosEncontrados = new PagedList<TextoDto>(new ArrayList<TextoDto>(), 0, 0);
+			logger.error(e);
+			throw new NestedRuntimeException(e);
+		}
+		
+		return textosEncontrados;
+	}
+
+	/**
+	 * Carrega informações de texto e do conteúdo do texto.
+	 * 
+	 * @see br.jus.stf.estf.decisao.support.controller.context.FacesBean#load(java.lang.Object)
+	 */
+	@Override
+	public TextoDto load(TextoDto dto) {
+		texto = null;
+		conteudo = null;
+		ministroRelator = null;
+		ministroRevisor = null;
+		ministraRelatora = null;
+		ministraRevisora = null;
+		usuarioCriacao = null;
+		dataCriacao = null;
+		usuarioAlteracao = null;
+		dataAlteracao = null;
+
+		if (dto != null && dto.getId() != null) {
+			texto = textoServiceLocal.recuperarTextoPorId(dto.getId());
+			objetoIncidenteService.deproxy(texto.getObjetoIncidente());
+			String rtf = null;
+			if (texto != null) {
+				try {
+					dto = TextoDto.valueOf(texto, true);
+					
+					if (texto.getTipoVoto() != null) {
+						tipoVotoId = dto.getTipoVoto().getId();}else {
+							tipoVotoId = null;
+						}
+					
+					carregarInformacoesRelator(dto);
+					
+					// Carregar os dados de criação/alteração do arquivo eletronico
+					ArquivoEletronicoView vwArquivoEletronico = textoServiceLocal.recuperarArquivoEletronicoViewPeloId(texto.getArquivoEletronico().getId());
+					if (vwArquivoEletronico != null) {
+						usuarioCriacao = vwArquivoEletronico.getUsuarioInclusao() == null ? "" : vwArquivoEletronico.getUsuarioInclusao().getNome();
+						dataCriacao = vwArquivoEletronico.getDataInclusao();
+						usuarioAlteracao = vwArquivoEletronico.getUsuarioAlteracaoArquivo() == null ? "" : vwArquivoEletronico.getUsuarioAlteracaoArquivo().getNome();
+						dataAlteracao = vwArquivoEletronico.getDataAlteracaoArquivo();
+						try {
+							if (texto.getArquivoEletronico().getConteudo() != null) {
+								rtf = new String(texto.getArquivoEletronico().getConteudo(), "ISO-8859-1");
+								conteudo = TextoUtils.convertRtfToHtml(rtf);
+							}
+						} catch (UnsupportedEncodingException e) {
+							throw new NestedRuntimeException(e);
+						}
+						
+						if (conteudo != null && pesquisaAvancada.isNotBlank("palavraChave")) {
+							conteudo = highlight(conteudo, pesquisaAvancada.get("palavraChave").toString());
+						}
+					}
+					
+					// Carrega as listas de textos associadas ao registro
+					Hibernate.initialize(texto.getListasTexto());
+					Hibernate.initialize(texto.getObjetoIncidente());
+					
+					controversiaIndicadaOrigem = false;
+					if ( texto.getObjetoIncidente() != null && texto.getObjetoIncidente().getId() != null ) {
+						if (texto.getObjetoIncidente() instanceof Processo) {
+							Processo processo = processoService.recuperarPorId(texto.getObjetoIncidente().getId());
+							if ( processo != null && processo.getRepresentativoControversiaIndicadoOrigem() != null)
+								controversiaIndicadaOrigem = processo.getRepresentativoControversiaIndicadoOrigem();
+						}
+					}
+					
+				} catch (ServiceException e) {
+					facesMessages.add(e.getMessage());
+				}
+
+			} else {	
+				dto = null;
+			}
+		}
+		
+		textoServiceLocal.validaAcessoTextosRestritos(getPrincipal(), Arrays.asList(dto));
+		return dto;
+	}
+
+	/**
+	 * @param dto
+	 * @throws ServiceException
+	 */
+	private void carregarInformacoesRelator(TextoDto dto) throws ServiceException {
+		cabecalhoObjetoIncidente = cabecalhoObjetoIncidenteService.recuperarCabecalho(dto
+				.getIdObjetoIncidente());
+		if (cabecalhoObjetoIncidente != null && cabecalhoObjetoIncidente.getOcorrenciasMinistro() != null
+				&& cabecalhoObjetoIncidente.getOcorrenciasMinistro().getOcorrenciaMinistro().size() > 0) {
+			for (OcorrenciasMinistro.OcorrenciaMinistro ministro : cabecalhoObjetoIncidente
+					.getOcorrenciasMinistro().getOcorrenciaMinistro()) {
+				if (ministro.getCategoriaMinistro().equals("RELATOR") || ministro.getCategoriaMinistro().equals("RELATOR DO INCIDENTE")) {
+					ministroRelator = ministro.getApresentacaoMinistro();
+				} else if (ministro.getCategoriaMinistro().equals("RELATORA") || ministro.getCategoriaMinistro().equals("RELATORA DO INCIDENTE")) {
+					ministraRelatora = ministro.getApresentacaoMinistro();
+				} else if (ministro.getCategoriaMinistro().equals("REDATOR DO ACÓRDÃO")) {
+					ministroRedatorAcordao = ministro.getApresentacaoMinistro();
+				} else if (ministro.getCategoriaMinistro().equals("REDATORA DO ACÓRDÃO")) {
+					ministraRedatoraAcordao = ministro.getApresentacaoMinistro();
+				} else if (ministro.getCategoriaMinistro().equals("REVISOR")) {
+					ministroRevisor = ministro.getApresentacaoMinistro();
+				} else if (ministro.getCategoriaMinistro().equals("REVISORA")) {
+					ministraRevisora = ministro.getApresentacaoMinistro();
+				}
+			}
+		}
+	}
+
+	/**
+	 * Gera o relatório e redireciona para download o texto selecionado na tela de 
+	 * listagem de resultados.
+	 * 
+	 * @param dto o texto selecionado
+	 */
+	public void print(TextoDto dto) {
+		try {	
+			Texto texto = textoService.recuperarPorId(dto.getId());
+			
+			logger.info("Imprimindo texto... " + dto.toString());
+			
+			if (FaseTexto.fasesComTextoAssinado.contains(texto.getTipoFaseTextoDocumento())) {
+				DocumentoTexto documentoTexto = documentoTextoService.recuperarNaoCancelado(texto, null);
+				
+				if (documentoTexto == null) {
+					List<DadosMontagemTexto<Long>> dadosMontagemTexto = new ArrayList<DadosMontagemTexto<Long>>();
+					
+					DadosMontagemTexto<Long> dadosMontagem = dadosMontagemTextoBuilder.montaDadosMontagemTexto(texto);
+					dadosMontagemTexto.add(dadosMontagem);
+					
+					File outputFile = File.createTempFile("relatorio", ".pdf");
+					
+					DocumentTarget target = new FileDocumentTarget(outputFile);
+					openOfficeMontadorTextoService.criarTextosPDFUnico(dadosMontagemTexto, target, true);
+					
+					ReportUtils.report(new ByteArrayInputStream(ReportUtils.getBytesFromFile(outputFile)), FormatoArquivo.PDF);
+				} else {
+					ReportUtils.report(new ByteArrayInputStream(documentoTexto.getDocumentoEletronico().getArquivo()), FormatoArquivo.PDF);
+				}
+			} else {
+				List<DadosMontagemTexto<Long>> dadosMontagemTexto = new ArrayList<DadosMontagemTexto<Long>>();
+				
+				DadosMontagemTexto<Long> dadosMontagem = dadosMontagemTextoBuilder.montaDadosMontagemTexto(texto);
+				dadosMontagemTexto.add(dadosMontagem);
+				
+				File outputFile = File.createTempFile("relatorio", ".pdf");
+				
+				DocumentTarget target = new FileDocumentTarget(outputFile);
+				openOfficeMontadorTextoService.criarTextosPDFUnico(dadosMontagemTexto, target, true);
+				
+				ReportUtils.report(new ByteArrayInputStream(ReportUtils.getBytesFromFile(outputFile)), FormatoArquivo.PDF);
+			}
+		} catch (ServiceException e) {
+			logger.error(e, dto.getId());
+			facesMessages.add(e.getMessage(), dto);
+		} catch (IOException e) {
+			logger.error(e, dto.getId());
+			facesMessages.add(e.getMessage(), dto);
+		} catch (MontadorTextoServiceException e) {
+			logger.error(e, dto.getId());
+			facesMessages.add(e.getMessage(), dto);
+		}
+	}
+	
+	/**
+	 * Caso a visualização tenha sido solicitada a partir da lista de textos resultado da pesquisa 
+	 * avançada e nessa pesquisa o usuário tenha informado parâmetros para pesquisa textual, 
+	 * devemos marcar (highlight), no texto que será exibido, a palavra chave utilizada.
+	 * 
+	 * @param conteudo o conteúdo do texto
+	 * @param palavraChave a palavra chave utilizada na pesquisa
+	 * @return o texto com as palavras marcadas
+	 */
+	private String highlight(String conteudo, String palavraChave) {
+		StringBuffer highlighted = new StringBuffer();
+		if (palavraChave != null) {
+			
+			palavraChave = palavraChave.toLowerCase();
+			
+			// Retira caracteres especiais e conectivos da pesquisa textual
+			palavraChave = palavraChave.replaceAll(" e ", " ");
+			palavraChave = palavraChave.replaceAll(" ou ", " ");
+			palavraChave = palavraChave.replaceAll("\\$", "");
+			palavraChave = palavraChave.replaceAll(" não ", " ");
+			if (palavraChave.contains(" adj")) {
+				palavraChave = palavraChave.replaceAll(" adj ", " ");
+				int i = 0;
+				while (palavraChave.contains(" adj")) {
+					palavraChave = palavraChave.replaceAll(" adj" + ++i + " ", " ");
+				}
+			}
+			if (palavraChave.contains(" prox")) {
+				palavraChave = palavraChave.replaceAll(" prox ", " ");
+				int i = 0;
+				while (palavraChave.contains(" prox")) {
+					palavraChave = palavraChave.replaceAll(" prox" + ++i + " ", " ");
+				}
+			}
+			palavraChave = palavraChave.replaceAll(" mesmo ", " ");
+			
+			palavraChave = palavraChave.replaceAll("\"", "");
+			
+			palavraChave = palavraChave.replaceAll("\\(", "");
+			palavraChave = palavraChave.replaceAll("\\)", "");
+			
+			palavraChave = palavraChave.replaceAll(" de ", " ");
+			
+			palavraChave = palavraChave.replaceAll(" a ", " ");
+			
+			palavraChave = palavraChave.replaceAll(" o ", " ");
+			
+			palavraChave = palavraChave.replaceAll(" i ", " ");
+			
+			palavraChave = palavraChave.replaceAll(" b ", " ");
+			
+			palavraChave = palavraChave.replaceAll(" p ", " ");
+						
+			palavraChave = palavraChave.replaceAll(" n. ", " n ");
+			
+			int lastSegmentEnd=0;
+						
+			for (Segment segment : new Source(conteudo)) {
+				if (segment.getEnd()<=lastSegmentEnd) continue; // if this tag is inside the previous tag (e.g. a server tag) then ignore it as it was already output along with the previous tag.
+				lastSegmentEnd=segment.getEnd();
+				if (segment instanceof Tag || segment instanceof CharacterReference) {
+					highlighted.append(segment.toString());					
+				} else {
+					if (!segment.isWhiteSpace()){
+						
+						StringTokenizer tokenizer = new StringTokenizer(palavraChave, " ");
+						String substituta = segment.toString();
+						while (tokenizer.hasMoreTokens()) {
+							String token = tokenizer.nextToken();
+							if (token.length() > 1) {
+								String replacement = String.format("<span style=\"background: yellow;\">%s</span>", token);
+								substituta = substituta.replaceAll("(?i)" + token, replacement);
+							}
+						}
+						highlighted.append(substituta);
+							
+					}
+					else {
+						highlighted.append(segment.toString());
+					}
+					
+				}
+			}			
+		}
+		return highlighted.toString();
+	}
+
+	/**
+	 * Recupera a lista de possíveis fases do texto. Utilizada principalmente nas 
+	 * combos da pesquisa avançada.
+	 * 
+	 * @return a lista de fases.
+	 */
+	public List<SelectItem> getFasesTexto() {
+		List<SelectItem> itens = new ArrayList<SelectItem>();
+		for (FaseTexto fase : FaseTexto.values()) {
+			if (!fase.equals(FaseTexto.NAO_ELABORADO) && !fase.equals(FaseTexto.CANCELADO))
+				itens.add(new SelectItem(fase.getCodigoFase(), fase.getDescricao()));
+		}
+		return itens;
+	}
+
+	public String getUriEditar(TextoDto dto) {
+		return montarURLContextoESTFOFFICE() + toURIEditar(dto);
+	}
+
+	public String getUriEditar(Texto texto) {
+		return montarURLContextoESTFOFFICE() + toURIEditar(texto);
+	}
+
+	public String getUriVisualizar(Long idFaseTextoProcesso) {
+		return montarURLContextoESTFOFFICE() + toURIVisualizar(idFaseTextoProcesso);
+	}
+
+	/**
+	 * Monta o link para abrir o texto no stfOffice e editar
+	 * 
+	 * @param TextoDto
+	 */
+	public String toURIEditar(Texto texto) {
+		logger.info("toURI: dumping methods");
+
+		Principal principal = (Principal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+		HttpServletRequest request = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext()
+				.getRequest();
+
+		try {
+			if (texto == null || texto.getId() == null) {
+				ObjetoIncidente<?> oi = objetoIncidenteService.recuperarObjetoIncidentePorId(texto.getObjetoIncidente()
+						.getId());
+				ControleVoto cv = controleVotoService.recuperar(oi, texto.getTipoTexto(), principal.getMinistro());
+				texto = new Texto();
+				texto.setTipoTexto(texto.getTipoTexto());
+				texto.setTipoVoto(texto.getTipoVoto());
+				texto.setControleVoto(cv);
+				texto.setObjetoIncidente(oi);
+			}
+
+			if (texto != null && texto.getArquivoEletronico() != null
+					&& texto.getArquivoEletronico().getTamanhoArquivo() != null
+					&& texto.getArquivoEletronico().getTamanhoArquivo() > 0) {
+
+				DocAbrirDecisaoId id = new DocAbrirDecisaoId();
+				id.setRodape(true);
+				carregarDadosGeraisDoDoc(request, texto, id, principal);
+				id.setSomenteLeitura(TextoServiceImpl.isTextoSomenteLeitura(texto));
+				id.setSeqTexto(texto.getId());
+				id.setTipoTexto(texto.getTipoTexto().getCodigo());
+				
+				if(texto.getTipoVoto() != null)
+					id.setTipoVotoId(String.valueOf(texto.getTipoVoto().getId()));
+
+				{
+					Collection<Texto> textos = new ArrayList<Texto>();
+					textos.add(texto);
+					if (principal == null
+							|| !textoService.verificarRestricaoTextos(textos, principal.getUsuario().getId(), principal
+									.getMinistro().getSetor().getId())) {
+						return null;
+					}
+				}
+
+				if (FaseTexto.fasesComTextoAssinado.contains(texto.getTipoFaseTextoDocumento())) {
+					FaseTextoProcesso faseTextoProcesso = faseTextoProcessoService.recuperarUltimaFaseDoTexto(texto);
+					if (faseTextoProcesso == null) {
+						logger.error(String.format("Nao foi possivel recuparar nenhuma fase para o texto [%s]."
+								+ "O cabecalho sera gerado dinamicamente.", texto.getId()));
+					} else {
+						id.setSeqFaseTextoProcesso(faseTextoProcesso.getId());
+					}
+				}
+				return URLEncoder.encode(
+						StfOfficeDecisaoURI.criarURI("decisao", DocDecisaoId.ACAO_ABRIR_DOCUMENTO, id), "utf-8");
+
+			} else {
+				DocNovaDecisaoId id = new DocNovaDecisaoId();
+				carregarDadosGeraisDoDoc(request, texto, id, principal);
+				id.setObjetoIncidente(texto.getObjetoIncidente().getId());
+				id.setTipoTexto(texto.getTipoTexto().getCodigo());
+				
+				if(texto.getTipoVoto() != null)
+					id.setTipoVotoId(String.valueOf(texto.getTipoVoto().getId()));
+				
+				return URLEncoder.encode(StfOfficeDecisaoURI.criarURI("decisao", DocDecisaoId.ACAO_NOVO_DOCUMENTO, id),
+						"utf-8");
+			}
+		} catch (ServiceException e) {
+			logger.error(e.getMessage(), e);
+		} catch (URISyntaxException e) {
+			logger.error(e.getMessage(), e);
+		} catch (UnsupportedEncodingException e) {
+			logger.error(e.getMessage(), e);
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+		}
+
+		return null;
+	}
+
+	public String toURIEditar(TextoDto dto) {
+		logger.info("toURI: dumping methods");
+
+		Principal principal = (Principal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+		HttpServletRequest request = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext()
+				.getRequest();
+
+		try {
+			if (dto != null && dto.getId() != null && dto.getIdArquivoEletronico() != null) {
+
+				DocAbrirDecisaoId id = new DocAbrirDecisaoId();
+				id.setRodape(true);
+				carregarDadosGeraisDoDoc(request, dto, id, principal);
+				id.setSomenteLeitura(dto.isSomenteLeitura());
+				id.setSeqTexto(dto.getId());
+				id.setTipoTexto(dto.getTipoTexto().getCodigo());
+
+				if (principal == null || (isTextoRestritoAoUsuario(dto) && !TipoRestricao.N.name().equals(dto.getTipoRestricao()))) {
+					return null;
+				}
+
+				return URLEncoder.encode(
+						StfOfficeDecisaoURI.criarURI("decisao", DocDecisaoId.ACAO_ABRIR_DOCUMENTO, id), "utf-8");
+
+			} else {
+				DocNovaDecisaoId id = new DocNovaDecisaoId();
+				carregarDadosGeraisDoDoc(request, dto, id, principal);
+				return URLEncoder.encode(StfOfficeDecisaoURI.criarURI("decisao", DocDecisaoId.ACAO_NOVO_DOCUMENTO, id),
+						"utf-8");
+			}
+		} catch (URISyntaxException e) {
+			logger.error(e.getMessage(), e);
+		} catch (UnsupportedEncodingException e) {
+			logger.error(e.getMessage(), e);
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+		}
+
+		return null;
+	}
+
+	private void carregarDadosGeraisDoDoc(HttpServletRequest request, TextoDto dto, DocDecisaoId id, Principal principal) {
+		id.setNome(dto.toString());
+		id.setUserId(principal.getUsuario().getId().toUpperCase());
+		id.setCodigoSetor(principal.getMinistro() == null ? null : principal.getMinistro().getSetor().getId());
+//		id.setSessionId(recuperarSessionId(request));
+		id.setObjetoIncidente(dto.getIdObjetoIncidente());
+		id.setTipoTexto(dto.getTipoTexto().getCodigo());
+		id.setRodape(dto.getTipoTexto() == TipoTexto.EMENTA
+				|| dto.getTipoTexto() == TipoTexto.DESPACHO
+				|| dto.getTipoTexto() == TipoTexto.DECISAO_MONOCRATICA ? false : true);
+	}
+
+	/**
+	 * Monta o link para abrir como leitura o texto no stfOffice
+	 * 
+	 * @param TextoDto
+	 */
+	public String toURIVisualizar(Long idFaseTextoProcesso) {
+		if (idFaseTextoProcesso != null && idFaseTextoProcesso.longValue() > 0) {
+			HttpServletRequest request = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext()
+					.getRequest();
+
+			Principal principal = (Principal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+			try {
+
+				FaseTextoProcesso faseTextoProcesso = faseTextoProcessoService.recuperarPorId(idFaseTextoProcesso);
+
+				DocAbrirDecisaoId id = new DocAbrirDecisaoId();
+				id.setSomenteLeitura(true);
+				id.setRodape(true);
+				id.setSeqTexto(texto.getId());
+				carregarDadosGeraisDoDoc(request, texto, id, principal);
+				id.setSeqFaseTextoProcesso(faseTextoProcesso.getId());
+
+				return URLEncoder.encode(
+						StfOfficeDecisaoURI.criarURI("decisao", DocDecisaoId.ACAO_ABRIR_DOCUMENTO, id), "utf-8");
+			} catch (URISyntaxException e) {
+				logger.error(e.getMessage(), e);
+			} catch (UnsupportedEncodingException e) {
+				logger.error(e.getMessage(), e);
+			} catch (ServiceException e) {
+				logger.error(e.getMessage(), e);
+			}
+		} else {
+			return "#";
+		}
+		return null;
+	}
+
+	/**
+	 * Recupera a lista de possíveis tipos de texto. Utilizada principalmente nas 
+	 * combos da pesquisa avançada.
+	 * 
+	 * @return a lista de tipos de texto.
+	 */
+	public List<SelectItem> getTiposTexto() {
+		List<SelectItem> itens = new ArrayList<SelectItem>();
+		for (TipoTexto tipoTexto : TipoTexto.values()) {
+			itens.add(new SelectItem(tipoTexto.getCodigo(), tipoTexto.getDescricao()));
+		}
+
+		// --------------------------------------------------------------------------------------------
+		// Comparator para ordenacao dos itens...
+		Comparator<SelectItem> selectItemComparator = new Comparator<SelectItem>() {
+			public int compare(SelectItem o1, SelectItem o2) {
+				return o1.getLabel().compareTo(o2.getLabel());
+			}
+		};
+
+		Collections.sort(itens, selectItemComparator);
+		return itens;
+	}
+
+	public List<Responsavel> sugerirResponsavel(Object suggest) {
+		return responsavelFacesBean.search(suggest);
+	}
+
+	public List<SelectItem> carregarComboTipoTextoPadrao() {
+		List<SelectItem> itens = new ArrayList<SelectItem>();
+
+		try {
+			if (texto.getObjetoIncidente() != null) {
+				Principal principal = (Principal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+				List<TipoTexto> lista = textoServiceLocal.recuperarTipoTextoPadrao(texto.getObjetoIncidente(),
+						principal.getMinistro());
+
+				if (lista != null && lista.size() > 0) {
+
+					for (TipoTexto tipoTexto : lista) {
+						itens.add(new SelectItem(tipoTexto.getCodigo(), tipoTexto.getDescricao()));
+					}
+
+					// --------------------------------------------------------------------------------------------
+					// Comparator para ordenacao dos itens...
+					Comparator<SelectItem> selectItemComparator = new Comparator<SelectItem>() {
+						public int compare(SelectItem o1, SelectItem o2) {
+							return o1.getLabel().compareTo(o2.getLabel());
+						}
+					};
+
+					Collections.sort(itens, selectItemComparator);
+					setItensTipoTexto(itens);
+				} else {
+					setItensTipoTexto(new ArrayList<SelectItem>());
+				}
+			}
+
+			if (getTipoTextoSelecionado() != null && getTipoTextoSelecionado().getCodigo() != null
+					&& getTipoTextoSelecionado().getCodigo() > 0) {
+				setIdTipoTextoSelecionado(getTipoTextoSelecionado().getCodigo());
+			} else {
+				setIdTipoTextoSelecionado(null);
+			}
+
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+		}
+		return itensTipoTexto;
+	}
+	
+	public boolean isPermitidoEditarRestaurar() {
+		return permitidoEditarRestaurar;
+	}
+	
+	public boolean isRefresh() {
+		return refresh;
+	}
+
+	public void restaurarVersaoHistFase(FaseTextoProcessoDto fase) {
+		try {
+			if (!verificaPermissaoEditarRestaurar(TextoDto.valueOf(texto))) {
+				throw new NestedRuntimeException("O usuário não tem permissão para restaurar texto na fase " + texto.getTipoFaseTextoDocumento().getDescricao() + ".");
+			}
+			if (fase != null && fase.getId() != null && fase.getId().longValue() > 0) {
+				textoService.restaurarVersaoTexto(faseTextoProcessoService
+						.recuperarPorId(fase.getId()));
+			}
+
+			facesMessages.add("Operação realizada com sucesso.");
+			limparHistFaseAlterado();
+			refresh = true;
+		} catch (ServiceException e) {
+			facesMessages.add(e.getMessage(), texto);
+		} catch (Exception e) {
+			facesMessages.add(e.getMessage(), texto);
+		}
+	}
+
+	public void limparHistFaseAlterado() {
+		setListaHistoricoFasesTextoProcesso(null);
+	}
+
+	/**
+	 * Salva alterações realizadas nas informações do texto
+	 */
+	public void salvarAlteracoesInformacaoTexto() {
+		if (getTextoInfoEditar() != null) {
+			Texto textoAnterior = null;
+			TipoTexto tipoTextoAnterior = null;
+			Responsavel responsavelAnterior = null;
+			String observacaoAnterior = null;
+			Boolean isPedidoVotoVista = new Boolean(true);
+
+			try {
+				textoAnterior = getTextoInfoEditar();
+				tipoTextoAnterior = textoAnterior.getTipoTexto();
+				responsavelAnterior = textoAnterior.getResponsavel();
+				observacaoAnterior = textoAnterior.getObservacao();
+
+				if (getResponsavelSugerido() != null
+						&& SearchData.stringNotEmpty(getResponsavelSugerido().getId().toString())) {
+					if (getTextoInfoEditar().getResponsavel() == null
+							|| (getTextoInfoEditar().getResponsavel() != null
+									&& SearchData.stringNotEmpty(getTextoInfoEditar().getResponsavel().getId().toString()) && !getResponsavelSugerido()
+									.getId().equals(getTextoInfoEditar().getResponsavel().getId()))) {
+						textoInfoEditar.setResponsavel(getResponsavelSugerido());
+					}
+				}
+
+				if (getTipoTextoSelecionado() != null && getTipoTextoSelecionado().getCodigo() != null
+						&& !tipoTextoAnterior.getCodigo().equals(getTipoTextoSelecionado().getCodigo())) {
+					textoInfoEditar.setTipoTexto(getTipoTextoSelecionado());
+					textoInfoEditar.setLiberacaoAntecipada(textoAnterior.getLiberacaoAntecipada());
+					textoInfoEditar.setTipoVoto(textoAnterior.getTipoVoto());
+					textoServiceLocal.validarNovoTexto(textoInfoEditar);
+					ControleVoto controleVoto = recuperarControleVotoSemTexto(textoInfoEditar.getObjetoIncidente(),
+							textoInfoEditar.getTipoTexto(), texto.getMinistro());				
+					if (controleVoto != null) {
+						textoInfoEditar.setControleVoto(controleVoto);
+						textoInfoEditar.setDataSessao(controleVoto.getDataSessao());
+						textoInfoEditar.setSequenciaVoto(controleVoto.getSequenciaVoto());
+						controleVoto.setTexto(textoInfoEditar);
+						controleVotoService.salvar(controleVoto);
+					}
+					/*
+					 * Verifica se o tipo de texto destino é um Voto Vista,
+					 * pois nesse caso será necessário validar se há um pedido
+					 * de vista feito pelo Ministro. ISSUE 941.
+					 * */
+					if(getTipoTextoSelecionado().equals(TipoTexto.VOTO_VISTA)){
+						Processo processoDoTexto = (Processo) texto.getObjetoIncidente().getPrincipal();
+						isPedidoVotoVista = controleVistaService.validarPedidoVista(processoDoTexto.getSiglaClasseProcessual(),
+																                            processoDoTexto.getNumeroProcessual(), 
+																                            texto.getMinistro().getId());					
+					}
+				}
+
+				if (!getObservacaoTexto().equals(getTextoInfoEditar().getObservacao())) {
+					textoInfoEditar.setObservacao(getObservacaoTexto());
+				}
+				/*
+				 * Adicionado pela ISSUE 941.
+				 * */
+				if (!isPedidoVotoVista) {
+					facesMessages.add("Não há pedido de vista cadastrado para o(a) " + texto.getMinistro().getNome() + " neste processo.");
+				} else {
+					textoService.alterar(textoInfoEditar);
+					facesMessages.add("Operação realizada com sucesso.");
+				}				
+				
+				limparInfoTextoAlterado();
+				refresh = true;		
+			} catch (ServiceException e) {
+				if (tipoTextoAnterior != null) {
+					textoInfoEditar.setTipoTexto(tipoTextoAnterior);
+				}
+				textoInfoEditar.setResponsavel(responsavelAnterior);
+				textoInfoEditar.setObservacao(observacaoAnterior);
+			} catch (Exception e) {
+				if (tipoTextoAnterior != null) {
+					textoInfoEditar.setTipoTexto(tipoTextoAnterior);
+				}
+				textoInfoEditar.setResponsavel(responsavelAnterior);
+				textoInfoEditar.setObservacao(observacaoAnterior);
+
+				facesMessages.add(e.getMessage(), textoInfoEditar);
+			}
+		} else {
+			facesMessages.add("Erro ao salvar alterações no texto!");
+		}
+	}
+
+	public void limparInfoTextoAlterado() {
+		setTextoInfoEditar(null);
+		setIdTipoTextoSelecionado(null);
+		setObservacaoTexto(null);
+		setResponsavelSugerido(null);
+		setResponsavelParaEdicao(null);
+	}
+
+	private ControleVoto recuperarControleVotoSemTexto(ObjetoIncidente<?> objetoIncidente, TipoTexto tipoTexto,
+			Ministro ministro) throws ServiceException {
+		ControleVoto cv = controleVotoService.recuperar(objetoIncidente, tipoTexto, ministro);
+		return cv;
+	}
+
+	/**
+	 * Retorna a lista de transições de fase do texto, ou seja,
+	 * o histórico de fases.
+	 * @return
+	 */
+	public List<FaseTextoProcessoDto> getListaFasesTextoProcesso() {
+		List<FaseTextoProcessoDto> listaFasesTextoProcesso = new ArrayList<FaseTextoProcessoDto>();
+
+		if (this.getListaHistoricoFasesTextoProcesso() != null && this.getListaHistoricoFasesTextoProcesso().size() > 0) {
+			for (FaseTextoProcesso faseTextoProcesso : this.getListaHistoricoFasesTextoProcesso()) {
+				FaseTextoProcessoDto faseTextoProcessoDto = FaseTextoProcessoDto.valueOf(faseTextoProcesso);
+				listaFasesTextoProcesso.add(faseTextoProcessoDto);
+			}
+		}
+		return listaFasesTextoProcesso;
+	}
+
+	public void carregarTextosIguais(TextoDto textoDto) {
+		try {
+			load(textoDto);
+			List<TextoDto> textosIguais = textoServiceLocal.pesquisarTextosIguais(textoDto, true);
+			textosIguais.add(textoDto);
+			// Ordena pelo processo
+			Collections.sort(textosIguais, new Comparator<TextoDto>() {
+
+				@Override
+				public int compare(TextoDto o1, TextoDto o2) {
+					return o1.getProcesso().compareTo(o2.getProcesso());
+				}
+			});
+			setListaTextosIguais(textosIguais);
+		} catch (ServiceException e) {
+			// Ocorreu um erro na pesquisa. Retorna lista
+			setListaTextosIguais(new ArrayList<TextoDto>());
+		}
+	}
+
+	public void carregarListaParte(TextoDto dto) {
+		List<Parte> listaParte = null;
+
+		try {
+			listaParte = parteService.pesquisarPartes(dto.getIdObjetoIncidente());
+			for(Parte parte : listaParte) {
+				Hibernate.initialize(parte.getCategoria());
+				Hibernate.initialize(parte.getJurisdicionado());
+				
+				if (parte.getJurisdicionado() != null) {
+					Hibernate.initialize(parte.getJurisdicionado().getOab());
+					Hibernate.initialize(parte.getJurisdicionado().getIdentificadoresJurisdicionado());
+				}
+			}
+			setListaParte(listaParte);
+
+			if (getListaParte() == null || getListaParte().size() == 0) {
+				facesMessages.add("Nenhuma parte encontrada.");
+			}
+		} catch (ServiceException e) {
+			setListaParte(new ArrayList<Parte>());
+			facesMessages.add(e.getMessage(), dto);
+			logger.error(e.getMessage(), e);
+		}
+	}
+
+	public void carregarInformacaoTexto(TextoDto dto) {
+		try {
+			permitidoEditarRestaurar = !dto.isSomenteLeitura() && verificaPermissaoEditarRestaurar(dto);
+			
+			Texto textoTemp = textoServiceLocal.recuperarTextoPorId(dto.getId());
+			Hibernate.initialize(textoTemp.getResponsavel());
+			Hibernate.initialize(textoTemp.getObjetoIncidente());
+			Hibernate.initialize(textoTemp.getObjetoIncidente().getPrincipal());
+			Hibernate.initialize(((Processo)textoTemp.getObjetoIncidente().getPrincipal()).getMinistroRelatorAtual());
+			Hibernate.initialize(textoTemp.getFasesTextoProcesso());
+			
+			setTextoInfoEditar(textoTemp);
+			setIdTipoTextoSelecionado(getTextoInfoEditar().getTipoTexto().getCodigo());
+			
+			refresh = false;
+		} catch (Exception e) {
+			facesMessages.add(e.getMessage(), dto);
+			logger.error(e.getMessage(), e);
+		}
+
+	}
+	
+	public void carregarHistoricoFases(TextoDto dto) {
+		// É necessário carregar o texto, pois o histórico pode ser carregado 
+		// tanto na tabela de textos quanto na visualização do texto
+		load(dto);
+		
+		// Somente é permitido restaurar o texto quando ele não está marcado como somente leitura
+		permitidoEditarRestaurar = !dto.isSomenteLeitura() && verificaPermissaoEditarRestaurar(dto);
+		Hibernate.initialize(texto.getFasesTextoProcesso());
+		List<FaseTextoProcesso> historicoFases = texto.getFasesTextoProcesso();
+		setListaHistoricoFasesTextoProcesso(historicoFases);
+		for (FaseTextoProcesso fase : getListaHistoricoFasesTextoProcesso()) {
+			Hibernate.initialize(fase.getUsuarioTransicao());
+		}
+		if (getListaHistoricoFasesTextoProcesso() == null || getListaHistoricoFasesTextoProcesso().size() == 0)
+			facesMessages.add("Não existe histórico de fases para o texto.");
+		
+		refresh = false;
+	}
+	
+	private boolean verificaPermissaoEditarRestaurar(TextoDto dto) {
+		FaseTexto fase = dto.getFase();
+		if (FaseTexto.fasesComTextoAssinado.contains(fase)) {
+			return false;
+		} else {
+			switch (fase.getCodigoFase().intValue()) {
+				case 1: // Em Elaboração
+					return permissionChecker.hasPermission(getPrincipal(), ActionIdentification.EDITAR_TEXTO_EM_ELABORACAO);
+				case 2: // Em Revisão
+					return permissionChecker.hasPermission(getPrincipal(), ActionIdentification.EDITAR_TEXTO_EM_REVISAO);
+				case 3: // Revisado
+					return permissionChecker.hasPermission(getPrincipal(), ActionIdentification.EDITAR_TEXTO_REVISADO);
+				case 4: // Liberado Para Assinatura
+					return permissionChecker.hasPermission(getPrincipal(), ActionIdentification.EDITAR_TEXTO_LIBERADO_PARA_ASSINATURA);
+				default:
+					return false;
+			}
+		}
+	}
+
+	public boolean isEditavel(Texto texto) {
+		boolean editavel = false;
+		if (texto != null) {
+			try {
+				Texto textotemp = textoService.recarregar(texto);
+				
+				if (textotemp.getGrupoResponsavel() != null)
+					Hibernate.initialize(textotemp.getGrupoResponsavel().getUsuarios());
+				
+				editavel = verificaPermissaoEditarRestaurar(TextoDto.valueOf(textotemp));
+			} catch (ServiceException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		return editavel;
+	}
+
+	// TODO validar com o paulo a regra de negocio, por enquanto deixei esta
+	// para testar
+	public boolean isEditarTipoTexto(Texto texto) {
+		boolean editarTipoTexto = false;
+
+		if (texto != null) {
+			List<SelectItem> listaItensTipoTextoTemp = getItensTipoTexto();
+
+			if (isEditavel(texto)) {
+				editarTipoTexto = false;
+				if (texto.getSequenciaVoto() == null || texto.getSequenciaVoto() == 0L) {
+					for (SelectItem item : listaItensTipoTextoTemp) {
+						if (item.getLabel().equals(texto.getTipoTexto().getDescricao())) {
+							editarTipoTexto = true;
+						}
+					}
+				}
+			} else {
+				editarTipoTexto = false;
+			}
+		}
+		return editarTipoTexto;
+	}
+
+	public void setConteudo(String conteudo) {
+		this.conteudo = conteudo;
+	}
+
+	public String getConteudo() {
+		return conteudo;
+	}
+
+	public void setTexto(Texto texto) {
+		this.texto = texto;
+	}
+
+	public Texto getTexto() {
+		return texto;
+	}
+
+	public String getResponsavelParaEdicao() {
+		if (getTextoInfoEditar() != null && getTextoInfoEditar().getResponsavel() != null
+				&& SearchData.stringNotEmpty(getTextoInfoEditar().getResponsavel().getNome())) {
+			responsavelParaEdicao = getTextoInfoEditar().getResponsavel().getNome();
+		} else {
+			responsavelParaEdicao = null;
+		}
+
+		return responsavelParaEdicao;
+	}
+
+	public void setResponsavelParaEdicao(String responsavelParaEdicao) {
+		this.responsavelParaEdicao = responsavelParaEdicao;
+	}
+
+	public String getObservacaoTexto() {
+		if (observacaoTexto == null && (getTextoInfoEditar() != null && getTextoInfoEditar().getObservacao() != null))
+			observacaoTexto = getTextoInfoEditar().getObservacao();
+		return observacaoTexto;
+	}
+
+	public void setObservacaoTexto(String observacaoTexto) {
+		this.observacaoTexto = observacaoTexto;
+	}
+
+	public TipoTexto getTipoTextoSelecionado() {
+		if (getIdTipoTextoSelecionado() != null && getIdTipoTextoSelecionado() > 0) {
+			tipoTextoSelecionado = (TipoTexto) TipoTexto.pesquisarTipoTexto(idTipoTextoSelecionado).get(0);
+		}
+		return tipoTextoSelecionado;
+	}
+
+	public CabecalhoObjetoIncidente getCabecalhoObjetoIncidente() {
+		return cabecalhoObjetoIncidente;
+	}
+
+	public void setCabecalhoObjetoIncidente(CabecalhoObjetoIncidente cabecalhoObjetoIncidente) {
+		this.cabecalhoObjetoIncidente = cabecalhoObjetoIncidente;
+	}
+
+	public String getMinistroRelator() {
+		return ministroRelator;
+	}
+
+	public String getMinistroRevisor() {
+		return ministroRevisor;
+	}
+
+	public String getMinistraRelatora() {
+		return ministraRelatora;
+	}
+
+	public String getMinistraRevisora() {
+		return ministraRevisora;
+	}
+
+	public String getMinistroRedatorAcordao() {
+		return ministroRedatorAcordao;
+	}
+
+	public String getMinistraRedatoraAcordao() {
+		return ministraRedatoraAcordao;
+	}
+
+	public List<Parte> getListaParte() {
+		return listaParte;
+	}
+
+	public void setListaParte(List<Parte> listaParte) {
+		this.listaParte = listaParte;
+	}
+
+	public Texto getTextoInfoEditar() {
+		if (textoInfoEditar != null) {
+			Hibernate.initialize(textoInfoEditar.getMinistro());
+		}
+		return textoInfoEditar;
+	}
+
+	public void setTextoInfoEditar(Texto textoInfoEditar) {
+		this.textoInfoEditar = textoInfoEditar;
+	}
+
+	public Responsavel getResponsavelSugerido() {
+		if (responsavelSugerido == null
+				&& (getTextoInfoEditar() != null && getTextoInfoEditar().getResponsavel() != null)) {
+			responsavelSugerido = getTextoInfoEditar().getResponsavel();
+		}
+
+		return responsavelSugerido;
+	}
+
+	public void setResponsavelSugerido(Responsavel responsavelSugerido) {
+		this.responsavelSugerido = responsavelSugerido;
+	}
+
+	public List<TextoDto> getListaTextosIguais() {
+		return listaTextosIguais;
+	}
+
+	public void setListaTextosIguais(List<TextoDto> listaTextosIguais) {
+		this.listaTextosIguais = listaTextosIguais;
+	}
+
+	public Long getIdTipoTextoSelecionado() {
+		return idTipoTextoSelecionado;
+	}
+
+	public void setIdTipoTextoSelecionado(Long idTipoTextoSelecionado) {
+		this.idTipoTextoSelecionado = idTipoTextoSelecionado;
+	}
+
+	public List<SelectItem> getItensTipoTexto() {
+		if (itensTipoTexto == null) {
+			carregarComboTipoTextoPadrao();
+		}
+		return itensTipoTexto;
+	}
+
+	public void setItensTipoTexto(List<SelectItem> itensTipoTexto) {
+		this.itensTipoTexto = itensTipoTexto;
+	}
+
+	public List<FaseTextoProcesso> getListaHistoricoFasesTextoProcesso() {
+		return listaHistoricoFasesTextoProcesso;
+	}
+
+	public void setListaHistoricoFasesTextoProcesso(List<FaseTextoProcesso> listaHistoricoFasesTextoProcesso) {
+		this.listaHistoricoFasesTextoProcesso = listaHistoricoFasesTextoProcesso;
+	}
+
+	public Boolean isTextoRestritoAoUsuario(TextoDto textoDto) {
+		return TextoRestrictionChecker.isRestrictedToUser(textoDto, getPrincipal());
+	}
+	
+	public Boolean isTextoRestritoAoUsuario(Texto texto) {
+		return TextoRestrictionChecker.isRestrictedToUser(TextoDto.valueOf(texto), getPrincipal());
+	}
+	
+	public String getUsuarioCriacao() {
+		return usuarioCriacao;
+	}
+
+	public void setUsuarioCriacao(String usuarioCriacao) {
+		this.usuarioCriacao = usuarioCriacao;
+	}
+
+	public Date getDataCriacao() {
+		return dataCriacao;
+	}
+
+	public void setDataCriacao(Date dataCriacao) {
+		this.dataCriacao = dataCriacao;
+	}
+
+	public String getUsuarioAlteracao() {
+		return usuarioAlteracao;
+	}
+
+	public void setUsuarioAlteracao(String usuarioAlteracao) {
+		this.usuarioAlteracao = usuarioAlteracao;
+	}
+
+	public Date getDataAlteracao() {
+		return dataAlteracao;
+	}
+
+	public void setDataAlteracao(Date dataAlteracao) {
+		this.dataAlteracao = dataAlteracao;
+	}
+	
+	public List<ListaTextos> getListasTexto() {
+		if (texto == null) {
+			return null;
+		}
+		return texto.getListasTexto();
+	}
+
+	/**
+	 * Monta a URI para chamada ao StfOffice.
+	 * 
+	 * @param texto o dto
+	 */
+	public void editar(TextoDto texto) {
+		javax.faces.context.FacesContext context = javax.faces.context.FacesContext.getCurrentInstance();
+		ServletResponse response = (ServletResponse) context.getExternalContext().getResponse();
+		ServletRequest request = (ServletRequest) context.getExternalContext().getRequest();
+		texto = load(texto);
+
+		try {
+			validarEmentaSobreRepercussaoGeral(texto);
+		} catch (Exception e1) {
+			facesMessages.add(e1.getMessage());
+			return;
+		}
+		
+		try {
+			request.getRequestDispatcher(getUriEditar(texto)).forward(request, response);
+			context.responseComplete();
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
+	public void validarEmentaSobreRepercussaoGeral(TextoDto texto) throws EmentaSobreRepercussaoGeralException, ServiceException {
+		
+		if (texto != null && TipoTexto.DECISAO_SOBRE_REPERCURSAO_GERAL.equals(texto.getTipoTexto())) {
+			try {
+				Principal principal = (Principal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+				Texto textoEmentaSobreRepercussaoGeral = textoService.recuperarTextoEmentaSobreRepercussaoGeral(texto.getIdObjetoIncidente(), principal.getMinistro().getId());
+				if (textoEmentaSobreRepercussaoGeral == null || (textoEmentaSobreRepercussaoGeral.getArquivoEletronico() == null))
+					throw new EmentaSobreRepercussaoGeralException("O texto de Ementa da Repercussão Geral ainda não foi elaborado!");
+				
+			} catch (ServiceException e) {
+				logger.error(e.getMessage(), e);
+			}
+		}
+	}
+	/**
+	 * Monta a URI para chamada ao StfOffice.
+	 * 
+	 * @param texto o dto
+	 */
+	public void editar(Texto texto) {
+		editar(TextoDto.valueOf(texto, true));
+	}
+	
+	public void visualizarVersaoFase(FaseTextoProcessoDto fase) {
+		javax.faces.context.FacesContext context = javax.faces.context.FacesContext.getCurrentInstance();
+		ServletResponse response = (ServletResponse) context.getExternalContext().getResponse();
+		ServletRequest request = (ServletRequest) context.getExternalContext().getRequest();
+		try {
+			request.getRequestDispatcher(getUriVisualizar(fase.getId())).forward(request, response);
+			context.responseComplete();
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	/**
+	 * Recupera o usuário autenticado. Esse usuário é encapsulado em um objeto
+	 * Principal que contém as credenciais do usuário.
+	 * 
+	 * @return o principal
+	 */
+	private Principal getPrincipal() {
+		return (Principal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+	}
+	
+	public String recuperarUrlPecas(TextoDto texto) {
+		return globalFacesBean.getTipoAmbiente().getUrlPecas() + objetoIncidenteService.recuperarObjetoIncidentePorId(texto.getIdObjetoIncidente()).getPrincipal().getId();
+	}
+	
+	public String recuperarUrlPecasSupremo(TextoDto texto) {
+		return globalFacesBean.getTipoAmbiente().getUrlPecasSupremo() + objetoIncidenteService.recuperarObjetoIncidentePorId(texto.getIdObjetoIncidente()).getPrincipal().getId();
+	}
+	
+	public String recuperarUrlAcompanhamento(TextoDto texto) {
+		return globalFacesBean.getTipoAmbiente().getUrlInternet() + objetoIncidenteService.recuperarObjetoIncidentePorId(texto.getIdObjetoIncidente()).getPrincipal().getId();
+	}
+	
+	public String recuperarUrlAcompanhamentoSTFDigital(TextoDto texto) {
+		return globalFacesBean.getTipoAmbiente().getUrlAcompanhamentoSTFDigital() + objetoIncidenteService.recuperarObjetoIncidentePorId(texto.getIdObjetoIncidente()).getPrincipal().getIdentificacao().replace(" ", "");
+	}
+	
+	public String recuperarUrlPecasSTFDigital(TextoDto texto) {
+		return recuperarUrlAcompanhamentoSTFDigital(texto) + "/pecas";
+	}	
+	
+	public void imprimirListaTextosIguais() {
+		try {	
+			List<TextoRelatorioEnum> parametros = new LinkedList<TextoRelatorioEnum>();
+			parametros.add(TextoRelatorioEnum.PROCESSO);
+			
+			Map<Margin, Integer> marginMap = new HashMap<Margin, Integer>();
+			marginMap.put(Margin.LEFT, 20);
+			marginMap.put(Margin.RIGHT, 20);
+			marginMap.put(Margin.TOP, 20);
+			marginMap.put(Margin.BOTTOM, 20);
+			
+			String reportName = "Relatório da Lista de Textos Iguais do Texto " + TextoDto.valueOf(texto);
+			Report report = new Report(reportName, Page.A4, Orientation.PORTRAIT, marginMap, LineType.ALL, 5,
+					ReportType.PDF, this);
+
+			report.addFields(TextoReport.getFields(parametros));
+
+			Collection<TextoReport> listaTextosRelatorio = relatorioTextoService.recuperaTextoReport(getListaTextosIguais());
+
+			report.generateReport(listaTextosRelatorio);
+			
+			ReportUtils.report(new FileInputStream(reportOutputFile));
+			
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		} catch (IOException e) {
+			throw new NestedRuntimeException(e);
+		} catch (ReportException e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+
+	@Override
+	public OutputStream getOutputStreamFor(String reportName)
+			throws IOException {
+		reportOutputFile = File.createTempFile("report", ".tmp");
+		reportOutputStream = new FileOutputStream(reportOutputFile);
+		return reportOutputStream;
+	}
+	
+	public boolean isControversiaIndicadaOrigem() {
+		return controversiaIndicadaOrigem;
+	}
+
+	public void setControversiaIndicadaOrigem(boolean controversiaIndicadaOrigem) {
+		this.controversiaIndicadaOrigem = controversiaIndicadaOrigem;
+	}
+	
+	public boolean hasPerfilDisponibilizarVotoAntecipadamente() {
+		if (permissionChecker.hasPermission(getPrincipal(), ActionIdentification.DISPONIBILIZAR_VOTO))
+			return true;
+			
+		return false;
+	}
+	
+	public boolean hasPerfilVisualizarVotoAntecipadamente() {
+		if (permissionChecker.hasPermission(getPrincipal(), ActionIdentification.VISUALIZAR_VOTO_DISPONIBILIZADO))
+			return true;
+			
+		return false;
+	}
+	
+	public boolean podeVisualizarTextoAntecipadamente(TextoDto texto) {
+		if (texto != null) {
+			// O texto deve permitir liberação antecipada
+			if ((texto.getLiberacaoAntecipada() == null) || (!texto.getLiberacaoAntecipada() ))
+				return false;
+			
+			// O usuário deve ter o perfil VISUALIZAR_VOTO_DISPONIBILIZADO
+			if (!hasPerfilVisualizarVotoAntecipadamente())
+				return false;
+			
+			// O texto deve estar na fase REVISADO para cima
+			if (fasesProibidas.contains(texto.getFase()))
+				return false;
+			
+			return true;
+		}
+		
+		return false;
+	}
+	
+	public boolean permiteVisualizarTipoVoto() {
+		if (texto != null) {
+			if (!listaTipoTextoDisponiveis.contains(texto.getTipoTexto()))
+				return false;
+			
+			return true;
+		}
+		
+		return false;
+	}
+	
+	public boolean permiteAlterarLiberacaoAntecipada() {
+		if (texto != null && getPrincipal() != null && getPrincipal().getMinistro() != null) {
+			// O ministro do setor do usuário deve ser o ministro do texto
+			if (!getPrincipal().getMinistro().equals(texto.getMinistro()))
+				return false;
+			
+			// O usuário deve possuir o perfil DISPONIBILIZAR_VOTO
+			if (!hasPerfilDisponibilizarVotoAntecipadamente())
+				return false;
+			
+			// O texto deve estar na fase REVISADO para cima
+			if (fasesProibidas.contains(texto.getTipoFaseTextoDocumento()))
+				return false;
+			
+			return true;
+		}
+		
+		return false;
+	}
+	
+	public void changeLiberacaoAntecipada(ValueChangeEvent  e) {
+		try {
+			if (texto != null) {
+				if (e.getNewValue() != null)
+					texto.setLiberacaoAntecipada((Boolean) e.getNewValue());
+				
+				textoService.salvar(texto);
+			}
+		} catch (ServiceException e1) {
+			e1.printStackTrace();
+		}
+	}
+	
+	public boolean permiteAlterarTipoVoto() {
+		try {
+			if (texto != null && getPrincipal() != null && getPrincipal().getMinistro() != null) {
+				// O ministro do setor do usuário deve ser o ministro do texto
+				if (!getPrincipal().getMinistro().equals(texto.getMinistro()))
+					return false;
+				
+				// O processo deve possuir os textos de julgamento (ementa, relatório e voto)
+//				if (!objetoIncidenteService.temEmentaRelatorioEVotoRevisados(texto.getObjetoIncidente()))
+//					return false;
+				
+				// O ministro do setor do usuário não deve ser o relator do incidente
+				if (getPrincipal().getMinistro().equals(objetoIncidenteService.recuperarMinistroRelatorIncidente(texto.getObjetoIncidente())))
+					return false;
+				
+				return true;
+			}
+			
+		} catch (ServiceException e) {
+			e.printStackTrace();
+		}
+		
+		return false;
+	}
+	
+	public Long getTipoVotoId() {
+		return tipoVotoId;
+	}
+
+	public void setTipoVotoId(Long tipoVotoId) {
+		this.tipoVotoId = tipoVotoId;
+		
+		try {
+			if (texto != null) {
+				if (tipoVotoId != null)
+					texto.setTipoVoto(TipoVotoConstante.getById(tipoVotoId));
+				else
+					texto.setTipoVoto(null);
+				
+				textoService.salvar(texto);
+			}
+		} catch (ServiceException e1) {
+			e1.printStackTrace();
+		}
+	}
+	
+	public boolean exibeTipoVoto() {
+		try {
+			if (texto != null && getPrincipal() != null && getPrincipal().getMinistro() != null) {
+
+				// Apenas para Textos: Voto, Voto Vista e Voto Vogal
+				if (!(texto.getTipoTexto().equals(TipoTexto.VOTO) || 
+						texto.getTipoTexto().equals(TipoTexto.VOTO_VISTA) || 
+						texto.getTipoTexto().equals(TipoTexto.VOTO_VOGAL)))
+					return false;
+				
+				// Se o ministro for o relator, não exibe o campo Voto.
+				if ((getPrincipal().getMinistro().equals(objetoIncidenteService.recuperarMinistroRelatorIncidente(texto.getObjetoIncidente()))))
+					return false;
+
+				return true;
+			}
+			
+		} catch (ServiceException e) {
+			e.printStackTrace();
+		}
+		
+		return true;
+	}
+	
+	public boolean exibeLiberacaoAnteciapda() throws ServiceException {
+		if (texto != null) {
+			
+			if (texto.getTipoFaseTextoDocumento() != null && texto.getTipoFaseTextoDocumento().getCodigoFase() < FaseTexto.REVISADO.getCodigoFase())
+				return false;
+
+			// Exibe apenas para os tipos de votos abaixo:
+			if (!(texto.getTipoTexto().equals(TipoTexto.VOTO) ||
+					texto.getTipoTexto().equals(TipoTexto.VOTO_VISTA) || 
+					texto.getTipoTexto().equals(TipoTexto.VOTO_VOGAL) || 
+					texto.getTipoTexto().equals(TipoTexto.EMENTA) || 
+					texto.getTipoTexto().equals(TipoTexto.RELATORIO)))
+				return false;
+			
+			return true;
+		}
+		
+		return true;
+	}
+	
+	public boolean isTextoDoDigital(TextoDto textoDto) {
+		return false;
+//		return (textoDto.getOrigemDigital() && getPrincipal().hasRole(TipoPerfil.EDITAR_TEXTO_DIGITAL));
+	}
+}

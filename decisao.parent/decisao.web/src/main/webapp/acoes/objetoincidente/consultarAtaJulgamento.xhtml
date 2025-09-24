@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:s="http://jboss.com/products/seam/taglib"
+    xmlns:ui="http://java.sun.com/jsf/facelets"
+    xmlns:f="http://java.sun.com/jsf/core"
+    xmlns:h="http://java.sun.com/jsf/html"
+    xmlns:rich="http://richfaces.org/rich"
+    xmlns:a="http://richfaces.org/a4j"
+    xmlns:c="http://java.sun.com/jstl/core"
+    xmlns:stf="http://www.stf.jus.br/custom-components">
+	
+	<s:decorate template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="principal"/>
+		<ui:define name="descricao">Escolha as opções abaixo antes de consultar a ata de julgamento.</ui:define>
+		<ui:define name="conteudo">
+			<s:decorate template="/common/decorators/edit.xhtml" style="margin-top: 5px">
+				<ui:define name="label">Data da Sessão:</ui:define>	
+				<stf:calendar value="#{actionFacesBean.dataSessao}" id="dataSessao"/>
+			</s:decorate>	
+			<s:decorate template="/common/decorators/edit.xhtml">
+   	 			<ui:define name="label">Colegiado:</ui:define>	
+				<h:selectOneMenu id="colegiado" value="#{actionFacesBean.colegiado}" style="width: 120px;" >
+					<f:selectItems value="#{actionFacesBean.colegiados}"/>
+				</h:selectOneMenu>
+			</s:decorate>	
+			<s:decorate template="/common/decorators/edit.xhtml">
+  	 			<ui:define name="label">Tipo de Ata:</ui:define>	
+				<h:selectOneMenu id="categoriaAta" value="#{actionFacesBean.categoriaAta}" style="width: 120px;">
+					<f:selectItems value="#{actionFacesBean.categoriasAta}"/>
+				</h:selectOneMenu>
+			</s:decorate>
+			<s:decorate template="/common/decorators/edit.xhtml">
+  	 			<ui:define name="label">Formato de Arquivo:</ui:define>	
+				<h:selectOneMenu id="formatoArquivo" value="#{actionFacesBean.formatoArquivo}" style="width: 120px;">
+					<f:selectItems value="#{actionFacesBean.formatosArquivo}"/>
+				</h:selectOneMenu>
+			</s:decorate>	
+		</ui:define>
+		<ui:define name="botoes">
+           	<h:commandButton value="Consultar" action="#{actionFacesBean.execute}" onclick="Richfaces.hideModalPanel('panelItem')"/>
+		</ui:define>
+	</s:decorate>
+			
+</ui:composition>

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:s="http://jboss.com/products/seam/taglib"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:rich="http://richfaces.org/rich"
+	xmlns:p="http://primefaces.prime.com.tr/ui"
+	xmlns:a="http://richfaces.org/a4j"
+	xmlns:c="http://java.sun.com/jstl/core"
+	xmlns:stf="http://www.stf.jus.br/custom-components">
+
+	<rich:modalPanel id="panelPrescricao" width="600" height="300">
+		<f:facet name="header">
+			<h:outputText value="Prescrição" />
+		</f:facet>
+		
+		<div style="height: 200px; overflow: auto;">
+			<div style="border: 1px solid #006699; border-top: none;">
+				<rich:dataTable 
+					id="tbPrescricao" var="_prescricao" value="#{incidenteFacesBean.prescricaoReu}"
+					rowClasses="dr-table-row-odd, dr-table-row-even"
+					styleClass="data-table" >
+					<rich:column styleClass="dr-table-firstcol" style="width: 70%;">
+						<f:facet name="header">
+							<h:outputText value="Parte" />
+						</f:facet>
+						<h:outputText value="#{_prescricao.jurisdicionado.nome}" />
+					</rich:column>
+					<rich:column styleClass="dr-table-col-center">
+						<f:facet name="header">
+							<h:outputText value="Data de Prescrição"/>
+						</f:facet>
+						<a:outputPanel rendered="#{not empty _prescricao.dataPrescricao}">
+							<h:outputText value="#{_prescricao.dataPrescricao}"/>
+						</a:outputPanel>
+						<a:outputPanel rendered="#{empty _prescricao.dataPrescricao}">
+							<h:outputText value="#{_prescricao.dataPrescricaoPenaMinima}" />
+							<span> | </span>
+							<h:outputText value="#{_prescricao.dataPrescricaoPenaMaxima}" />
+						</a:outputPanel>
+					</rich:column>
+				</rich:dataTable>
+			</div>
+		</div>
+		
+		
+		<div style="padding-top: 5px; text-align: right">
+			<a:commandButton value="Fechar" style="margin-right: 0px !important;"
+			onclick="#{rich:component('panelPrescricao')}.hide()"
+			eventsQueue="ajaxQueue" ignoreDupResponses="true"/>
+		</div>
+
+	</rich:modalPanel>
+</ui:composition>

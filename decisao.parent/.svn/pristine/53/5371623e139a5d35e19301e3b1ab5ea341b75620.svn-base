@@ -1,0 +1,156 @@
+package br.jus.stf.estf.decisao.support.security;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.Authentication;
+import org.springframework.security.AuthenticationException;
+import org.springframework.security.GrantedAuthority;
+import org.springframework.security.providers.cas.CasAuthenticationProvider;
+import org.springframework.security.providers.cas.CasAuthenticationToken;
+
+import br.gov.stf.estf.entidade.localizacao.Setor;
+import br.gov.stf.estf.entidade.ministro.Ministro;
+import br.gov.stf.estf.entidade.usuario.PerfilUsuarioSetor;
+import br.gov.stf.estf.localizacao.model.service.SetorService;
+import br.gov.stf.estf.ministro.model.service.MinistroService;
+import br.gov.stf.estf.usuario.model.service.PerfilUsuarioSetorService;
+import br.gov.stf.estf.usuario.model.service.UsuarioService;
+import br.gov.stf.framework.model.service.ServiceException;
+import br.jus.stf.estf.decisao.support.security.Principal.TipoPerfil;
+import br.jus.stf.estf.decisao.support.service.ConfiguracaoSistemaService;
+import br.jus.stf.estf.decisao.support.util.NestedRuntimeException;
+
+/**
+ * Implementação customizada para recuperação de informações específicas para o usuário
+ * do eSTF-Decisão
+ * 
+ * @author Rodrigo Barreiros
+ * @see 28.05.2010
+ */
+public class AuthenticationProvider extends CasAuthenticationProvider {
+	
+	@Autowired
+	private PerfilUsuarioSetorService perfilUsuarioSetorService;
+	
+	@Autowired
+	private MinistroService ministroService;
+	
+	@Autowired
+	private UsuarioService usuarioService;
+	
+	@Autowired
+	private SetorService setorService;
+	
+	private List<Principal> users = new ArrayList<Principal>();
+
+	private static final String SIGLA_SISTEMA_ESTF_DECISAO = "ESTFDECISAO";
+
+	/**
+	 * @see org.springframework.security.providers.preauth.PreAuthenticatedAuthenticationProvider#authenticate(org.springframework.security.Authentication)
+	 */
+	@Override
+	public Authentication authenticate(Authentication authentication)throws AuthenticationException {
+		CasAuthenticationToken a = (CasAuthenticationToken) super.authenticate(authentication);
+		
+		Principal principal;
+		try {
+			principal = (Principal) getPrincipal(a);
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+		CasAuthenticationToken auth = new CasAuthenticationToken(getKey(), principal, a.getCredentials(), a.getAuthorities(), a.getUserDetails(), a.getAssertion());
+    	auth.setDetails(a.getDetails());
+    	
+    	int index = users.indexOf(principal);
+    	if (index != -1) {
+    		users.get(index).addSessao();
+    	} else {
+    		users.add(principal);
+    	}
+        
+    	return auth;
+	}
+	
+	/**
+	 * Recupera e monta o Principal representando o usuário logado.
+	 * 
+	 * @param authentication informações de autenticação
+	 * @return o principal
+	 * @throws ServiceException caso ocorra algum problema inesperado
+	 */
+	private Object getPrincipal(Authentication authentication) throws ServiceException {
+		Principal principal = new Principal();
+				
+		principal.setUsuario(usuarioService.recuperarUsuario(authentication.getName().toUpperCase()));
+		principal.setGruposEgabDoUsuario(usuarioService.recuperarGrupoUsuario(principal.getUsuario()));
+		principal.setAuthentication(authentication);
+		
+		List<PerfilUsuarioSetor> setoresUsuario = perfilUsuarioSetorService.pesquisarSetoresUsuario(principal.getUsuario(), SIGLA_SISTEMA_ESTF_DECISAO);
+		List<Setor> gabinetesDeMinistros = setorService.pesquisarGabinetesComPresidenciaEVice();
+
+		Set<Setor> setores = new HashSet<Setor>();
+		
+		if (gabinetesDeMinistros.contains(principal.getUsuario().getSetor())) {
+			setores.add(principal.getUsuario().getSetor());
+		}
+		
+		for (PerfilUsuarioSetor perfilUsuarioSetor : setoresUsuario) {
+			Ministro ministroSetor = ministroService.recuperarMinistro(perfilUsuarioSetor.getSetor());
+			if (ministroSetor != null) {
+				setores.add(perfilUsuarioSetor.getSetor());
+			}
+		}
+		principal.setSetores(setores);
+		principal.setIdSetor(principal.getUsuario().getSetor().getId());
+		
+		// Se existe apenas um setor (gabinete) carregado para o usuário, o sistema
+		// assume que o usuário acessará como usuário do setor.
+		if (principal.getSetores() != null && principal.getSetores().size() == 1) {
+			principal.setIdSetor(((Setor) principal.getSetores().toArray()[0]).getId());
+			principal.getUsuario().setSetor((Setor) principal.getSetores().toArray()[0]);
+		}
+		
+		Ministro ministro = ministroService.recuperarMinistro(setorService.recuperarPorId(principal.getIdSetor()));
+		if (ministro != null) {
+			principal.setMinistro(ministro);
+		}
+		
+		// Carrega apenas um perfil exclusivo (ou principal), sem restrições para perfis adicionais
+		boolean jaPossuiPerfilExclusivo = false;
+		List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
+		for (TipoPerfil perfil : TipoPerfil.values()) {
+			for (GrantedAuthority authority : authentication.getAuthorities()) {
+				if (authority.getAuthority().endsWith(perfil.name())) {
+					if (perfil.isExclusivo()) {
+						if (!jaPossuiPerfilExclusivo) {
+							jaPossuiPerfilExclusivo = true;
+							authorities.add(authority);
+						}
+					} else {
+						authorities.add(authority);
+					}
+				} else {
+					authorities.add(authority);
+				}
+			}
+		}
+		principal.setAuthorities(authorities);
+		
+		return principal;
+	}
+
+
+	/**
+	 * Retorna a lista de usuário online
+	 * 
+	 * @return usuários online
+	 */
+	public List<Principal> getUsers() {
+		return users;
+	}
+
+}

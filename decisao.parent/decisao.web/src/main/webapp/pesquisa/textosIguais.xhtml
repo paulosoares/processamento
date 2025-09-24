@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:s="http://jboss.com/products/seam/taglib"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:rich="http://richfaces.org/rich"
+	xmlns:p="http://primefaces.prime.com.tr/ui"
+	xmlns:a="http://richfaces.org/a4j"
+	xmlns:c="http://java.sun.com/jstl/core"
+	xmlns:stf="http://www.stf.jus.br/custom-components">
+
+	<rich:modalPanel id="panelTextosIguais" width="300" height="300">
+		<f:facet name="header">
+			<h:outputText value="Textos Iguais" />
+		</f:facet>
+		
+		<div style="height: 200px; overflow: auto;">
+			<rich:dataTable 
+				id="tbTextosIguais" var="_textoIgual" value="#{textoFacesBean.listaTextosIguais}"
+				rowClasses="dr-table-row-odd, dr-table-row-even"
+				styleClass="simple-data-table" >
+				<rich:column>
+					<f:facet name="header">
+						<h:outputText value="Processo" />
+					</f:facet>
+					<h:outputText value="#{_textoIgual.processo}" />
+				</rich:column>
+			</rich:dataTable>
+		</div>
+		
+		<div>Total de registros: #{textoFacesBean.listaTextosIguais.size()}</div>
+		
+		<h:form id="panelTextosIguaisForm">
+			<div style="padding-top: 5px; text-align: right">
+				<h:commandButton value="Imprimir" 
+					action="#{textoFacesBean.imprimirListaTextosIguais}" 
+					style="margin-right: 15px !important;"/>
+				<a:commandButton value="Fechar" style="margin-right: 0px !important;"
+					onclick="#{rich:component('panelTextosIguais')}.hide()"
+					eventsQueue="ajaxQueue" ignoreDupResponses="true"/>
+			</div>
+		</h:form>
+	</rich:modalPanel>
+</ui:composition>

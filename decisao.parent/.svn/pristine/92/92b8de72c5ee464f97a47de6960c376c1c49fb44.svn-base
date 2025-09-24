@@ -1,0 +1,183 @@
+/**
+ * 
+ */
+package br.jus.stf.estf.decisao.texto.web;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.faces.model.SelectItem;
+
+import org.jboss.seam.Component;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import br.gov.stf.estf.usuario.model.enuns.EnumTipoResposavelTexto;
+import br.gov.stf.framework.model.service.ServiceException;
+import br.jus.stf.estf.decisao.pesquisa.domain.AllResourcesDto;
+import br.jus.stf.estf.decisao.support.action.handlers.Restrict;
+import br.jus.stf.estf.decisao.support.action.support.Action;
+import br.jus.stf.estf.decisao.support.action.support.ActionIdentification;
+import br.jus.stf.estf.decisao.support.action.support.ActionSupport;
+import br.jus.stf.estf.decisao.support.service.ConfiguracaoSistemaService;
+import br.jus.stf.estf.decisao.support.util.GlobalFacesBean;
+
+/**
+ * @author Paulo.Estevao
+ * @since 28.10.2011
+ */
+@Action(id = "configurarOpcoesGabineteActionFacesBean", name = "Configurar Opções do Gabinete", view = "/acoes/texto/configurarOpcoesGabinete.xhtml")
+@Restrict({ActionIdentification.CONFIGURAR_SISTEMA})
+public class ConfigurarOpcoesGabineteActionFacesBean extends ActionSupport<AllResourcesDto> {
+	
+	private GlobalFacesBean globalFacesBean;
+	
+	@Autowired
+	ConfiguracaoSistemaService configuracaoSistemaService;
+	
+	private boolean textoRestritoResponsavel = false;
+	private boolean permitirGrupoComoResposavel = false;
+	private boolean ordenacaoNumerica = false;
+	private boolean gerarTimbreAssinatura = false;
+	private boolean proibirAgendamentoVirtual = false;
+	
+	private String opcaoResponsaveis = EnumTipoResposavelTexto.USUARIO.getCodigo();
+	
+	@Override
+	public void load() {
+		try {
+			textoRestritoResponsavel = configuracaoSistemaService.isTextoRestritoResponsavel();
+			
+			setOrdenacaoNumerica(configuracaoSistemaService.isOrdenacaoNumerica());
+
+			opcaoResponsaveis = configuracaoSistemaService.retornaOpcaoTiposResponsaveis().getCodigo();
+			EnumTipoResposavelTexto opcaoTiposResponsaveis = configuracaoSistemaService.retornaOpcaoTiposResponsaveis();
+			if (opcaoTiposResponsaveis != null) {
+				opcaoResponsaveis = opcaoTiposResponsaveis.getCodigo();
+				permitirGrupoComoResposavel = EnumTipoResposavelTexto.AMBOS.getCodigo().equals(opcaoResponsaveis);
+				
+			}
+			
+			gerarTimbreAssinatura = configuracaoSistemaService.isGerarTimbreAssinatura();
+			
+			proibirAgendamentoVirtual = configuracaoSistemaService.isProibirAgendamentoVirtual();
+
+		} catch (Exception e) {
+			addError("Erro ao buscar configuração do gabinete.");
+			logger.error("Erro ao buscar configuração do gabinete.", e);
+		}
+		
+		if (hasMessages())
+			sendToErrors();
+			
+	}
+	
+	public void execute() {
+		try {
+			if (textoRestritoResponsavel) {
+				configuracaoSistemaService.gravarConfiguracaoTextoRestritoResponsavel("S");
+				getPrincipal().setSetorRestringeTextoAoResponsavel(configuracaoSistemaService.isTextoRestritoResponsavel());
+			} else {
+				configuracaoSistemaService.gravarConfiguracaoTextoRestritoResponsavel("N");
+			}
+			
+			if ( permitirGrupoComoResposavel )
+				configuracaoSistemaService.gravarConfiguracaoTipoResponsavel(EnumTipoResposavelTexto.AMBOS);
+			else
+				configuracaoSistemaService.gravarConfiguracaoTipoResponsavel(EnumTipoResposavelTexto.USUARIO);
+
+			if ( gerarTimbreAssinatura )
+				configuracaoSistemaService.gravarConfiguracaoGerarTimbreAssinatura("S");
+			else
+				configuracaoSistemaService.gravarConfiguracaoGerarTimbreAssinatura("N");
+			
+			configuracaoSistemaService.setOrdenacaoNumerica(isOrdenacaoNumerica());
+			configuracaoSistemaService.setProibirAgendamentoVirtual(isProibirAgendamentoVirtual());
+
+			
+		} catch (Exception e) {
+			addError("Erro ao gravar configuração do gabinete.");
+			logger.error("Erro ao gravar configuração do gabinete.", e);
+		}
+		
+		try {
+			getPrincipal().setSetorRestringeTextoAoResponsavel(configuracaoSistemaService.isTextoRestritoResponsavel());
+		} catch (ServiceException e) {
+			e.printStackTrace();
+		}
+		
+		if (hasMessages()) {
+			sendToErrors();
+		} else {
+			sendToConfirmation();
+		}
+	}
+	
+	
+	public List<SelectItem> getTiposResponsaveis() {
+		List<SelectItem> itens =  new ArrayList<SelectItem>();
+		for (EnumTipoResposavelTexto tipoResponsavel : EnumTipoResposavelTexto.values()) {
+			itens.add(new SelectItem(tipoResponsavel.getCodigo(), tipoResponsavel.getDescricao()));
+		}
+		return itens;
+	}
+	
+	public GlobalFacesBean getGlobalFacesBean() {
+		if (globalFacesBean == null) {
+			globalFacesBean = (GlobalFacesBean) Component.getInstance(GlobalFacesBean.class);
+		}
+		return globalFacesBean;
+	}
+	
+	
+	
+	public boolean getTextoRestritoResponsavel() {
+		return textoRestritoResponsavel;
+	}
+
+	public void setTextoRestritoResponsavel(boolean textoRestritoResponsavel) {
+		this.textoRestritoResponsavel = textoRestritoResponsavel;
+	}
+
+	public String getOpcaoResposanveis() {
+		return opcaoResponsaveis;
+	}
+
+	public void setOpcaoResposanveis(String opcaoResposanveis) {
+		this.opcaoResponsaveis = opcaoResposanveis;
+	}
+
+	public boolean isPermitirGrupoComoResposavel() {
+		return permitirGrupoComoResposavel;
+	}
+
+	public void setPermitirGrupoComoResposavel(boolean permitirGrupoComoResposavel) {
+		this.permitirGrupoComoResposavel = permitirGrupoComoResposavel;
+	}
+
+	public boolean isGerarTimbreAssinatura() {
+		return gerarTimbreAssinatura;
+	}
+
+	public void setGerarTimbreAssinatura(boolean gerarTimbreAssinatura) {
+		this.gerarTimbreAssinatura = gerarTimbreAssinatura;
+	}
+
+	
+	public boolean isOrdenacaoNumerica() {
+		return ordenacaoNumerica;
+	}
+
+	public void setOrdenacaoNumerica(boolean ordenacaoNumerica) {
+		this.ordenacaoNumerica = ordenacaoNumerica;
+	}
+
+	public boolean isProibirAgendamentoVirtual() {
+		return proibirAgendamentoVirtual;
+	}
+
+	public void setProibirAgendamentoVirtual(boolean proibirAgendamentoVirtual) {
+		this.proibirAgendamentoVirtual = proibirAgendamentoVirtual;
+	}
+
+
+}

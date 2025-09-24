@@ -1,0 +1,94 @@
+package br.jus.stf.estf.decisao.support.util;
+
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.List;
+
+import org.jboss.resource.adapter.jdbc.WrapperDataSource;
+import org.jboss.seam.ScopeType;
+import org.jboss.seam.annotations.In;
+import org.jboss.seam.annotations.Logger;
+import org.jboss.seam.annotations.Name;
+import org.jboss.seam.annotations.Out;
+import org.jboss.seam.annotations.Scope;
+import org.jboss.seam.log.Log;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.jdbc.support.JdbcUtils;
+
+import br.gov.stf.estf.util.TipoAmbiente;
+import br.jus.stf.estf.decisao.support.security.datasource.LocalDataSource;
+
+@Name("globalFacesBean")
+@Scope(ScopeType.APPLICATION)
+public class GlobalFacesBean {
+
+	@Out("tipoAmbiente")
+	private TipoAmbiente tipoAmbiente;
+
+	@In("#{dataSource}")
+	private LocalDataSource dataSource;
+	
+	@Autowired
+	@Qualifier("#{converterServers}")
+	private String converterServersString;
+	
+	private List<String> converterServers;
+	
+	@Logger
+	private Log logger;
+
+	public TipoAmbiente getTipoAmbiente() {
+		if (tipoAmbiente == null) {
+			Connection connection = null;
+			try {
+				connection = ((WrapperDataSource) dataSource.getWrapped()).getConnection();
+				DatabaseMetaData dbmd = connection.getMetaData();
+				String url = dbmd.getURL();
+				
+				if (url != null) {
+					if (url.toUpperCase().contains("STFD")) {
+						tipoAmbiente = TipoAmbiente.DESENVOLVIMENTO;
+					} else if (url.toUpperCase().contains("STFH")) {
+						tipoAmbiente = TipoAmbiente.HOMOLOGACAO;
+					} else if (url.toUpperCase().contains("STFP")) {
+						tipoAmbiente = TipoAmbiente.PRODUCAO;
+					} else if (url.toUpperCase().contains("PNOVO")) {
+						tipoAmbiente = TipoAmbiente.PNOVO;
+					} else if (url.toUpperCase().contains("STFQ")) {
+						tipoAmbiente = TipoAmbiente.TESTE;
+					}
+				}
+				
+				if (url == null || tipoAmbiente == null) {
+					tipoAmbiente = TipoAmbiente.INDETERMINADO;
+				}
+			} catch (SQLException e) {
+				logger.error("Erro ao tentar determinar base de dados alvo.", e);
+			} finally {
+				JdbcUtils.closeConnection(connection);
+			}
+		}
+		if (converterServers == null) {
+			if (converterServersString != null) {
+				setConverterServers(Arrays.asList(converterServersString.split(",")));
+			}
+		}
+		return tipoAmbiente;
+
+	}
+	
+	public List<String> getConverterServers() {
+		if (converterServers == null) {
+			setConverterServers(Arrays.asList(converterServersString.split(",")));
+		}
+		return converterServers;
+	}
+	
+	public void setConverterServers(List<String> converterServers) {
+		this.converterServers = converterServers;
+	}
+
+}

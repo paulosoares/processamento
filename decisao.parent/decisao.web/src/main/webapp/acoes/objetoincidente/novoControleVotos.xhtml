@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:s="http://jboss.com/products/seam/taglib"
+    xmlns:ui="http://java.sun.com/jsf/facelets"
+    xmlns:f="http://java.sun.com/jsf/core"
+    xmlns:h="http://java.sun.com/jsf/html"
+    xmlns:rich="http://richfaces.org/rich"
+    xmlns:a="http://richfaces.org/a4j"
+    xmlns:c="http://java.sun.com/jstl/core"
+	xmlns:stf="http://www.stf.jus.br/custom-components">
+
+   	<s:decorate id="novoControleVotos" template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="principal"/>
+		<ui:define name="descricao">
+			<s:decorate template="/common/decorators/edit.xhtml">
+				<ui:define name="label">Processo:</ui:define>
+				<h:outputText value="#{actionFacesBean.objetoIncidente}" />
+			</s:decorate>
+		</ui:define>
+		<ui:define name="conteudo">
+			<s:decorate template="/common/decorators/edit.xhtml">
+	            <ui:define name="label">Data Sessão:</ui:define>
+	            <stf:calendar value="#{actionFacesBean.dataSessao}" required="true" id="dataSessao"/>
+	        </s:decorate>
+			<s:decorate template="/common/decorators/edit.xhtml">
+	            <ui:define name="label">Tipo de Sessão:</ui:define>
+				<h:selectOneMenu id="tipoSessao" value="#{actionFacesBean.idTipoSessao}" required="true" style="width: 200px;">
+					<s:selectItems var="tipoSessao"
+						value="#{actionFacesBean.itensTipoSessao}"
+						itemValue="#{tipoSessao.codigo}" 
+						label="#{tipoSessao.descricao}" 
+						noSelectionLabel="Selecione..." />
+				</h:selectOneMenu>
+			</s:decorate>
+			<s:decorate template="/common/decorators/edit.xhtml">
+	            <ui:define name="label">Tipo de Texto:</ui:define>
+				<h:selectOneMenu id="tipoTexto" value="#{actionFacesBean.idTipoTexto}" required="true" style="width: 200px;">
+					<s:selectItems var="tipoTexto"
+						value="#{actionFacesBean.itensTipoTexto}"
+						itemValue="#{tipoTexto.codigo}" 
+						label="#{tipoTexto.descricao}" 
+						noSelectionLabel="Selecione..." />
+					<f:convertNumber />
+				</h:selectOneMenu>
+			</s:decorate>
+			<s:decorate template="/common/decorators/edit.xhtml">
+	            <ui:define name="label">Oral/Escrito:</ui:define>
+				<h:selectOneMenu id="oralEscrito" value="#{actionFacesBean.oralEscrito}" required="true" style="width: 200px;">
+					<s:selectItems var="oralEscrito"
+						value="#{actionFacesBean.itensOralEscrito}"
+						itemValue="#{oralEscrito.codigo}" 
+						label="#{oralEscrito.descricao}"
+						noSelectionLabel="Selecione..."  />
+				</h:selectOneMenu>
+			</s:decorate>
+			<s:decorate template="/common/decorators/edit.xhtml">
+	            <ui:define name="label">Anotações:</ui:define>
+	            <h:inputTextarea value="#{actionFacesBean.anotacoes}"/>
+	        </s:decorate>
+		</ui:define>
+		<ui:define name="botoes">
+           	<a:commandButton value="Criar" action="#{actionFacesBean.execute}" reRender="actionModalPanel" oncomplete="showActionPanel('panelItem', #{actionFacesBean.definition.width}, #{actionFacesBean.definition.height})" eventsQueue="ajaxQueue"
+							ignoreDupResponses="true"/>
+		</ui:define>
+	</s:decorate>
+		
+</ui:composition>

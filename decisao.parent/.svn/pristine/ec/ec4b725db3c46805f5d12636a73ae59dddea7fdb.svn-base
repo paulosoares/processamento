@@ -1,0 +1,12 @@
+package br.jus.stf.estf.decisao.objetoincidente.service;
+
+import java.util.List;
+
+import br.gov.stf.framework.model.service.ServiceException;
+import br.jus.stf.estf.decisao.api.ReferendarDecisaoDto;
+import br.jus.stf.estf.decisao.api.ReferendarDecisaoResultadoDto;
+import br.jus.stf.estf.decisao.support.security.Principal;
+
+public interface DevolverVistaService {
+		public List<ReferendarDecisaoResultadoDto> devolverVista(List<ReferendarDecisaoDto> objetoIncidenteIds, Principal principal) throws ServiceException;
+}

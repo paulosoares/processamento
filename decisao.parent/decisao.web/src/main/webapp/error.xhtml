@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:s="http://jboss.com/products/seam/taglib"
+    xmlns:ui="http://java.sun.com/jsf/facelets"
+    xmlns:f="http://java.sun.com/jsf/core"
+    xmlns:h="http://java.sun.com/jsf/html"
+    xmlns:rich="http://richfaces.org/rich"
+    template="/common/decorators/template.xhtml">
+
+    <ui:param name="showGlobalMessages" value="false"/>
+    <ui:define name="body">
+		<s:link value="« Voltar à página principal" action="#{principalFacesBean.limparAcaoAtual()}" view="/principal.xhtml" includePageParams="false" propagation="none"/>
+		<rich:panel styleClass="panel-outset" style="padding: 7px;padding-bottom: 10px;">
+			<div id="mainMessagePanel">
+				<h:messages id="errorMessage" styleClass="result-error" style="text-align: left;"/>
+				<a href="#" id="mais" onclick="$('detailMessagePanel').show(); $(this).hide(); $('menos').show(); return false;"><b>Mais Detalhes</b></a>
+				<a href="#" id="menos" onclick="$('detailMessagePanel').hide(); $(this).hide(); $('mais').show(); return false;" style="display: none"><b>Menos Detalhes</b></a>
+			    <div id="detailMessagePanel" class="panel-inset" style="display: none;color: #999;">
+					<pre><h:outputText value="#{errorMessageBean.details}"/></pre>
+				</div>
+			</div>
+		</rich:panel>
+    </ui:define>
+</ui:composition>

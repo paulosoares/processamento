@@ -1,0 +1,554 @@
+package br.jus.stf.estf.decisao.objetoincidente.web;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.hibernate.Hibernate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+
+import br.gov.stf.estf.entidade.julgamento.JulgamentoProcesso;
+import br.gov.stf.estf.entidade.julgamento.ListaJulgamento;
+import br.gov.stf.estf.entidade.julgamento.Sessao;
+import br.gov.stf.estf.entidade.ministro.Ministro;
+import br.gov.stf.estf.entidade.processostf.Agendamento;
+import br.gov.stf.estf.entidade.processostf.Andamento.Andamentos;
+import br.gov.stf.estf.entidade.processostf.AndamentoProcesso;
+import br.gov.stf.estf.entidade.processostf.ObjetoIncidente;
+import br.gov.stf.estf.entidade.processostf.Processo;
+import br.gov.stf.estf.entidade.publicacao.EstruturaPublicacao;
+import br.gov.stf.estf.julgamento.model.service.InformacaoPautaProcessoService;
+import br.gov.stf.estf.julgamento.model.service.JulgamentoProcessoService;
+import br.gov.stf.estf.julgamento.model.service.ListaJulgamentoService;
+import br.gov.stf.estf.julgamento.model.service.SessaoService;
+import br.gov.stf.estf.ministro.model.service.MinistroService;
+import br.gov.stf.estf.processostf.model.service.AndamentoProcessoService;
+import br.gov.stf.framework.model.service.ServiceException;
+import br.jus.stf.estf.decisao.objetoincidente.service.ObjetoIncidenteService;
+import br.jus.stf.estf.decisao.objetoincidente.service.impl.ObjetoIncidenteServiceImpl;
+import br.jus.stf.estf.decisao.objetoincidente.support.AgendamentoNaoPodeSerCanceladoException;
+import br.jus.stf.estf.decisao.objetoincidente.support.ProcessoPrecisaDeConfirmacaoException;
+import br.jus.stf.estf.decisao.pesquisa.domain.ObjetoIncidenteDto;
+import br.jus.stf.estf.decisao.support.action.handlers.CheckRelatorId;
+import br.jus.stf.estf.decisao.support.action.handlers.RequiresResources;
+import br.jus.stf.estf.decisao.support.action.handlers.RequiresResources.Mode;
+import br.jus.stf.estf.decisao.support.action.handlers.Restrict;
+import br.jus.stf.estf.decisao.support.action.support.Action;
+import br.jus.stf.estf.decisao.support.action.support.ActionCallback;
+import br.jus.stf.estf.decisao.support.action.support.ActionIdentification;
+import br.jus.stf.estf.decisao.support.action.support.ActionSupport;
+import br.jus.stf.estf.decisao.support.security.Principal;
+import br.jus.stf.estf.decisao.support.util.ListaJulgamentoUI;
+import br.jus.stf.estf.decisao.support.util.NestedRuntimeException;
+
+@Action(id = "cancelarLiberacaoParaJulgamentoActionFacesBean", name = "Cancelar Liberação para Julgamento", view = "/acoes/objetoincidente/cancelarLiberacaoParaJulgamento.xhtml", height = 300, width = 500)
+@Restrict({ActionIdentification.LIBERAR_PARA_JULGAMENTO})
+@RequiresResources(Mode.Many)
+@CheckRelatorId
+public class CancelarLiberacaoParaJulgamentoActionFacesBean extends ActionSupport<ObjetoIncidenteDto> {
+
+	public static final String MSG_RETIRADO_PAUTA = "RETIRADO DE PAUTA";
+	public static final String MSG_RETIRADO_MESA = "RETIRADO DE MESA";
+
+	/**
+	 * Órgãos onde a mensagem de cancelamento deve aparecer
+	 */
+	private Set<Integer> orgaosJulgadores = new HashSet<Integer>(Arrays.asList(
+			EstruturaPublicacao.COD_CAPITULO_PLENARIO, EstruturaPublicacao.COD_CAPITULO_PRIMEIRA_TURMA,
+			EstruturaPublicacao.COD_CAPITULO_SEGUNDA_TURMA));
+	
+	public static final String REMOVER_SOMENTE_JULGAMENTO_CONJUNTO_DO_PROCESSO = "SOMENTE";
+	public static final String REMOVER_TODOS_PROCESSOS_EM_JULGAMENTO_CONJUNTO = "TODOS";
+	
+	public static final String REMOVER_SOMENTE_O_PROCESSO_LISTA_JULGAMENTO = "SOMENTE";
+	public static final String REMOVER_TODOS_PROCESSOS_DA_LISTA_DE_JULGAMENTO = "TODOS";
+	
+	public static final String PROCESSO_PENDENTE = "Só é possível cancelar agendamento de Processos em status Pendente! Solicite o cancelamento à SES ou à Presidência.";
+	public static final String PROCESSO_EM_SESSAO_DISPONIBILIZADA_NA_INTERNET = "Não é possível cancelar o agendamento de Processos em Sessão encerrada ou já Disponibilizada na Internet.";
+	public static final String PROCESSO_COM_PEDIDO_DE_VISTA = "Há pedido de vista no processo ou vistas devolvidas. Não é possível cancelar a liberação para julgamento.";
+	public static final String PROCESSO_LIBERADO_AUTOMATICAMENTE = "Processo incluído para julgamento de forma automática, conforme Emenda Regimental 58, de 19 de dezembro de 2022. Não é possível cancelar a liberação para julgamento.";
+	private static final String PROCESSO_AGENDADO_PELO_STF_DIGITAL = "Não é possível cancelar a liberação para julgamento de um processo agendado pelo STF Digital";
+	
+	private static List<Andamentos> andamentosDevolucaoVistas = Arrays.asList(
+			Andamentos.VISTA_AOS_MINISTROS_DEVOLUCAO);
+	
+	private static List<Andamentos> andamentosPedidoVistas = Arrays.asList(
+			Andamentos.VISTA_AA_MINISTRA,
+			Andamentos.VISTA_AO_MINISTRO,
+			Andamentos.VISTA_AOS_MINISTROS);
+	
+	@Autowired
+	private AndamentoProcessoService andamentoProcessoService;
+	
+	@Qualifier("objetoIncidenteServiceLocal")
+	@Autowired
+	private ObjetoIncidenteService objetoIncidenteService;
+	
+	@Autowired
+	JulgamentoProcessoService julgamentoProcessoService;
+	
+	@Autowired
+	private MinistroService ministroService;
+	
+	@Autowired
+	private ListaJulgamentoService listaJulgamentoService;
+	
+	@Autowired
+	private SessaoService sessaoService;
+	
+	@Autowired
+	private InformacaoPautaProcessoService informacaoPautaProcessoService;
+
+	private Set<ObjetoIncidenteDto> processosPendentesDeConfirmacao = new HashSet<ObjetoIncidenteDto>();
+
+	private Set<ObjetoIncidenteDto> processosInvalidos = new HashSet<ObjetoIncidenteDto>();
+
+	private List<Agendamento> agendamentosSelecionados = new ArrayList<Agendamento>();
+
+	private Boolean confirmarAgendamentosPendentes = false;
+	
+	private String removerProcessosJulgamentoConjunto;
+	
+	private String removerProcessosListaJulgamento;
+
+	private Boolean haJulgamentoConjunto;
+	
+	private Boolean haListaJulgamento;
+
+	public Boolean getConfirmarAgendamentosPendentes() {
+		return confirmarAgendamentosPendentes;
+	}
+
+	public void setConfirmarAgendamentosPendentes(Boolean confirmarAgendamentosPendentes) {
+		this.confirmarAgendamentosPendentes = confirmarAgendamentosPendentes;
+	}
+
+	public Set<ObjetoIncidenteDto> getProcessosPendentesDeConfirmacao() {
+		return processosPendentesDeConfirmacao;
+	}
+
+	public void setProcessosPendentesDeConfirmacao(Set<ObjetoIncidenteDto> agendamentosPendentesDeConfirmacao) {
+		this.processosPendentesDeConfirmacao = agendamentosPendentesDeConfirmacao;
+	}
+
+	public Set<ObjetoIncidenteDto> getProcessosInvalidos() {
+		return processosInvalidos;
+	}
+
+	public void setProcessosInvalidos(Set<ObjetoIncidenteDto> agendamentosNaoProcessados) {
+		this.processosInvalidos = agendamentosNaoProcessados;
+	}
+
+	public List<Agendamento> getAgendamentosSelecionados() {
+		return agendamentosSelecionados;
+	}
+
+	public void setAgendamentosSelecionados(List<Agendamento> agendamentosSelecionados) {
+		this.agendamentosSelecionados = agendamentosSelecionados;
+	}
+
+	@Override
+	public void load() {
+		
+		for (ObjetoIncidenteDto dto : getResources()) {
+			if (isProcessoExclusivoDigital(dto.getId())) {
+				addError(String.format(MENSAGEM_ERRO_EXECUCAO_ACAO + ": %s ", dto.getIdentificacao(), PROCESSO_AGENDADO_PELO_STF_DIGITAL));
+			}
+		}
+			
+		carregaAgendamentosSelecionados();
+		try{
+			if ( agendamentosSelecionados == null || agendamentosSelecionados.size() == 0 ){
+				if(isProcessoEmListaParaJulgamento()){
+					notificarPautaNaoConfirmada();
+				}
+				else{
+					notificarAusenciaDeAgendamento();
+				}
+			}
+		} catch (Exception e) {
+			addError( e.getMessage() );
+			logger.error( e.getMessage(), e );
+		}
+		if ( hasErrors() ) {
+			sendToErrors();
+		}
+	}
+	
+	boolean isProcessoEmListaParaJulgamento() throws ServiceException{
+		List<ListaJulgamento> listas = null;
+		for(ObjetoIncidenteDto oidto: jUnitGetResources()){
+			ObjetoIncidente<?> recuperarObjetoIncidentePorId = objetoIncidenteService.recuperarObjetoIncidentePorId(oidto.getId());
+			listas = listaJulgamentoService.pesquisar(recuperarObjetoIncidentePorId, true);
+			if (listas != null && listas.size()>0) return true;
+		}
+		return false;
+	}
+
+	public Set<ObjetoIncidenteDto> jUnitGetResources() {
+		return getResources();
+	}
+	
+	/**
+	 * @throws ServiceException */
+	private void notificarPautaNaoConfirmada(){
+		throw new NestedRuntimeException(ObjetoIncidenteServiceImpl.MSG_ERRO_PAUTA_NAO_CONFIRMADA);
+	}
+	
+	/**
+	 * @throws ServiceException */
+	private void notificarAusenciaDeAgendamento() throws ServiceException {
+		String processo = new String();
+		for ( ObjetoIncidenteDto oidto: getResources() ){
+			processo += oidto.getIdentificacao().toString() + ", ";
+		}
+		if ( processo.length() > 0 ){
+			processo = processo.substring( 0, ( processo.length() - 2 ) );
+			processo += "."; 
+		} else {
+			processo = new String();
+		}
+		throw new NestedRuntimeException("O(s) Processo(s) não se encontra(m) Liberado(s) para Julgamento: " + processo);
+	}
+
+	private void carregaAgendamentosSelecionados() {
+		List<Agendamento> agendamentos = objetoIncidenteService.consultarAgendamentos(getResources());
+		if (agendamentos != null) {
+			for (Agendamento agendamento : agendamentos) {
+				Hibernate.initialize( agendamento.getObjetoIncidente() );
+				Hibernate.initialize( agendamento.getObjetoIncidente().getPrincipal() );
+				Hibernate.initialize( agendamento.getMinistro() );
+			}
+			agendamentosSelecionados.addAll(agendamentos);
+		}
+	}
+
+	public void validateAndExecute() {
+		for (Agendamento agendamento : getAgendamentosSelecionados()) {
+			try {
+				if (isProcessoExclusivoDigital(agendamento.getObjetoIncidente().getId())) {
+					insereProcessoInvalidoParaAgendamento(agendamento, PROCESSO_AGENDADO_PELO_STF_DIGITAL);	
+				}else if ( isProcessoEmSessaoDisponibilizadaNaInternet( agendamento ) ) {
+					insereProcessoInvalidoParaAgendamento(agendamento, PROCESSO_EM_SESSAO_DISPONIBILIZADA_NA_INTERNET );	
+				}else if (isProcessoComVista(agendamento)) {
+					insereProcessoInvalidoParaAgendamento(agendamento, PROCESSO_COM_PEDIDO_DE_VISTA);
+				}else if (isProcessoComPedidoVista(agendamento)) {
+					insereProcessoInvalidoParaAgendamento(agendamento, PROCESSO_COM_PEDIDO_DE_VISTA);
+				}else if (isProcessoLiberadoAutomaticamente(agendamento)) {
+					insereProcessoInvalidoParaAgendamento(agendamento, PROCESSO_LIBERADO_AUTOMATICAMENTE);
+				}else {
+					if ( objetoIncidenteService.isCancelamentoPrecisaDeConfirmacao( agendamento, getSetorMinistro() ) ) {
+						insereProcessoPendenteDeValidacao( agendamento );
+					}
+				}
+			} catch (AgendamentoNaoPodeSerCanceladoException e) {
+				insereProcessoInvalidoParaAgendamento(agendamento, e.getMessage());
+			} catch (Exception e) {
+				logger.error("Não foi possível validar o cancelamento do agendamento do processo [%s]", e);
+				insereProcessoInvalidoParaAgendamento(agendamento, MENSAGEM_ERRO_NAO_ESPECIFICADO);
+			}
+		}
+		if (hasMessages()) {
+			sendToInformations();
+		} else {
+			execute();
+		}
+	}
+
+	private boolean isProcessoExclusivoDigital(Long objetoIncidenteId) {
+		try {
+			ObjetoIncidente oi = objetoIncidenteService.recuperarObjetoIncidentePorId(objetoIncidenteId);
+			return sessaoService.isExclusivoDigital(oi);
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+
+	/** Verifica se o processo encontra-se em Sessão Disponibilizada no Internet. **/
+	private boolean isProcessoEmSessaoDisponibilizadaNaInternet(Agendamento agendamento){
+		try {
+			Sessao sessoes = sessaoService.recuperar( agendamento.getObjetoIncidente() );
+			if ( sessoes != null ){
+				/* Uma Sessão disponibilizada no Internet, possui a FLG_DISPONIVEL_INTERNET = S */ 
+				if ( sessoes.getDisponibilizadoInternet() != null ){
+					return sessoes.getDisponibilizadoInternet();
+				}
+			}
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+		return Boolean.FALSE;
+	}
+	
+	private boolean isProcessoComVista(Agendamento agendamento){
+		try{
+			Sessao sessao = sessaoService.recuperar( agendamento.getObjetoIncidente() );
+			if(sessao == null || sessao.getListaJulgamentoProcesso() == null || sessao.getListaJulgamentoProcesso().isEmpty())
+				return false;
+			for (JulgamentoProcesso julgamentoProcesso : sessao.getListaJulgamentoProcesso()){
+				if (!julgamentoProcesso.getObjetoIncidente().getId().equals(agendamento.getObjetoIncidente().getId()))
+					continue;
+				if (julgamentoProcesso.isVista())
+					return true;
+			}
+			return false;
+		}catch(ServiceException e){
+			throw new NestedRuntimeException(e);
+		}
+	}
+
+	private boolean isProcessoComPedidoVista(Agendamento agendamento){
+		try{
+			Processo processo = (Processo) agendamento.getObjetoIncidente().getPrincipal();
+			List<AndamentoProcesso> andamentos = andamentoProcessoService.pesquisarAndamentoProcesso(processo.getSiglaClasseProcessual(), processo.getNumeroProcessual());
+			Boolean retorno = false;
+			for (AndamentoProcesso andamento : andamentos) {
+				if (!andamento.getLancamentoIndevido() && andamentosPedidoVistas.contains(Andamentos.valueOfCodigoAndamento(andamento.getCodigoAndamento())) && andamento.getObjetoIncidente().equals(agendamento.getObjetoIncidente())){
+					retorno = true;
+				}
+			}
+			return retorno;
+		}catch(ServiceException e){
+			throw new NestedRuntimeException(e);
+		}
+	}
+	
+	
+	
+	/** Carrega os Processos que estão em Julgamento Conjunto **/
+	private List<ObjetoIncidente<?>> carregaProcessoJulgamentoConjuntoPorMinistro(ObjetoIncidente<?> objetoIncidente, Ministro ministro, Boolean incluirMinistro){
+		List<ObjetoIncidente<?>> retorno = new ArrayList<ObjetoIncidente<?>>();
+		ObjetoIncidenteDto objetoIncidenteDto = new ObjetoIncidenteDto();
+		objetoIncidenteDto.setId( objetoIncidente.getId() );
+		try {
+			List<ObjetoIncidenteDto> processosJulgamentoConjunto = objetoIncidenteService.recuperarProcessosJulgamentoConjunto( objetoIncidenteDto );		
+			for ( ObjetoIncidenteDto oi: processosJulgamentoConjunto ){
+				ObjetoIncidente<?> oiRelator = objetoIncidenteService.recuperarObjetoIncidentePorId( oi.getId() );
+				Ministro minRelator = objetoIncidenteService.recuperarMinistroRelatorIncidente( oiRelator );
+				if ( incluirMinistro != null && incluirMinistro ) {
+					if ( ministro != null ){
+						if ( minRelator.equals( ministro ) ){
+							retorno.add( oiRelator );
+						}
+					} else {
+						retorno.add( oiRelator );
+					}
+				} else {
+					if ( ministro != null ){
+						if ( !minRelator.equals( ministro ) ){
+							retorno.add( oiRelator );
+						}
+					} else {
+						retorno.add( oiRelator );
+					}
+				}
+			}	
+		} catch (ServiceException e) {
+			e.printStackTrace();
+		}
+		return retorno;
+	}
+	
+	private void insereProcessoInvalidoParaAgendamento(Agendamento agendamento, String motivo) {
+		processosInvalidos.add(getObjetoIncidenteDtoDoAgendamento(agendamento));
+		String identificacaoDoObjetoIncidente = this.getIdentificacaoObjetoIncidente(agendamento);
+		addError(String.format(MENSAGEM_ERRO_EXECUCAO_ACAO + ": %s ", identificacaoDoObjetoIncidente, motivo));
+	}
+
+	private void insereProcessoPendenteDeValidacao(Agendamento agendamento) {
+		processosPendentesDeConfirmacao.add(getObjetoIncidenteDtoDoAgendamento(agendamento));
+		adicionaMensagemProcessoPendente(agendamento);
+	}
+
+	protected void adicionaMensagemProcessoPendente(Agendamento agendamento) {
+		String identificacaoDoObjetoIncidente = this.getIdentificacaoObjetoIncidente(agendamento);
+		ListaJulgamento listaJulgamento       = objetoIncidenteService.processoEmListaJulgamento(agendamento);
+		String andamento = null;
+		if(listaJulgamento == null){
+			andamento = agendamento.getId().getCodigoMateria().equals(Agendamento.COD_MATERIA_AGENDAMENTO_PAUTA) ? MSG_RETIRADO_PAUTA : MSG_RETIRADO_MESA;
+		}else{
+			Long idTipoAndamentoListaJulgamento = objetoIncidenteService.getAndamentoProcessoCanceladoListaJulgamento(listaJulgamento,agendamento);
+			if(ListaJulgamentoUI.TIPO_ANDAMENTO_LIBERACAO_MESA.equals(idTipoAndamentoListaJulgamento)){
+				andamento = MSG_RETIRADO_MESA;
+			}else{
+				andamento = MSG_RETIRADO_PAUTA;
+			}
+		}
+		String mensgem = "["+identificacaoDoObjetoIncidente+"]: O andamento " + andamento + " será lançado automaticamente.";
+		this.addAviso(mensgem);
+	}
+
+	//Para facilitar testes com Junit
+	void addAviso(String mensgem) {
+		addWarning(mensgem);
+	}
+
+	//Para facilitar testes com Junit
+	String getIdentificacaoObjetoIncidente(Agendamento agendamento) {
+		String identificacaoDoObjetoIncidente = agendamento.getObjetoIncidente().getIdentificacao();
+		return identificacaoDoObjetoIncidente;
+	}
+
+	protected ObjetoIncidenteDto getObjetoIncidenteDtoDoAgendamento(Agendamento agendamento) {
+		ObjetoIncidente<?> objetoIncidente = objetoIncidenteService.recuperarObjetoIncidentePorId(agendamento.getObjetoIncidente().getId());
+		objetoIncidente = objetoIncidenteService.deproxy(objetoIncidente);
+		return ObjetoIncidenteDto.valueOf(objetoIncidente);
+	}
+
+	/**
+	 * Executa as regras para cancelar o agendamento de processos.
+	 */
+	public void execute() {
+		if (existeProcessoSelecionado()) {
+			// Limpa as mensagens mostradas anteriormente.
+			cleanMessages();
+			// Retira os processos inválidos dos
+			// recursos selecionados.
+			getResources().removeAll(processosInvalidos);
+			// Se os processos pendentes não forem confirmados, devem ser
+			// retirados
+			// do processamento
+			if (!getConfirmarAgendamentosPendentes()) {
+				getResources().removeAll(processosPendentesDeConfirmacao);
+			}
+			execute(new ActionCallback<ObjetoIncidenteDto>() {
+				public void doInAction(ObjetoIncidenteDto objetoIncidente) throws Exception {
+					cancelarLiberacao(objetoIncidente, null);
+				}
+			});
+		} else {
+			getDefinition().setFacet("nenhumProcessoSelecionado");
+		}
+	}
+	
+	void cancelarLiberacao(ObjetoIncidenteDto objetoIncidente, String tipoAmbiente) throws ProcessoPrecisaDeConfirmacaoException {		
+			Principal principal                       = getPrincipal();
+			String removerProcessosJulgamentoConjunto = getRemoverProcessosJulgamentoConjunto();
+			String removerProcessosListaJulgamento    = getRemoverProcessosListaJulgamento();
+			objetoIncidenteService.cancelarAgendamentoDoProcesso( objetoIncidente, principal, removerProcessosJulgamentoConjunto, removerProcessosListaJulgamento, tipoAmbiente );			
+	}
+
+	public String getMensagemDeAlertaDoCancelamento() {
+		try {
+			if (isUsuarioPertenceAosOrgaosColegiados()) {
+				return "Ao cancelar a liberação para julgamento, lembre-se de que você também deverá, se necessário, desfazer este lançamento no MAP.";
+			}
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+		return "";
+	}
+
+	private boolean isUsuarioPertenceAosOrgaosColegiados() throws ServiceException {
+		if (getMinistro() != null) {
+			Long id = getMinistro().getId();
+			Ministro ministro = ministroService.recuperarPorId(id);
+			Integer codigoCapitulo = ministro.getSetor().getCodigoCapitulo();
+			boolean contains = orgaosJulgadores.contains(codigoCapitulo);
+			return contains;
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * Verifica se os processos selecionados são maiores do que a quantidade de processos que será excluída pela validação.
+	 * @return True se houver algum recurso para ser processado. False caso contrário.
+	 */
+	private boolean existeProcessoSelecionado() {
+		int tamanhoDosRecursos = getResources().size();
+		int tamanhoDeExcluidos = processosInvalidos.size();
+		if (!getConfirmarAgendamentosPendentes()) {
+			// Caso não marque os agendamentos pendentes, eles serão retirados.
+			tamanhoDeExcluidos += processosPendentesDeConfirmacao.size();
+		}
+		return tamanhoDosRecursos > tamanhoDeExcluidos;
+	}
+
+	public void voltar() {
+		getDefinition().setFacet("principal");
+		getDefinition().setHeight(180);
+	}
+	
+	/** Verifica se o processo encontra-se em Lista de Julgamento **/
+	public Boolean getHaListaJulgamento() {
+		if ( haListaJulgamento == null){
+			if ( getAgendamentosSelecionados() != null && getAgendamentosSelecionados().size() > 0 ) {
+				for (Agendamento agendamento : getAgendamentosSelecionados()) {
+					List<ListaJulgamento> lista = carregarProcessosEmListaJulgamento( agendamento.getObjetoIncidente() ); 
+					if ( lista != null && lista.size() > 0  ) {
+						haListaJulgamento = Boolean.TRUE;
+						break;
+					}
+				}
+			}
+		}
+		return haListaJulgamento;
+	}
+
+	public void setHaListaJulgamento(Boolean haListaJulgamento) {
+		this.haListaJulgamento = haListaJulgamento;
+	}
+
+	public String getRemoverProcessosJulgamentoConjunto() {
+		/* Por default, será selecionado a opção Somente o Processo */
+		if ( removerProcessosJulgamentoConjunto == null ){
+			removerProcessosJulgamentoConjunto = REMOVER_SOMENTE_JULGAMENTO_CONJUNTO_DO_PROCESSO;
+		}
+		return removerProcessosJulgamentoConjunto;
+	}
+
+	public void setRemoverProcessosJulgamentoConjunto(String removerProcessosJulgamentoConjunto) {
+		this.removerProcessosJulgamentoConjunto = removerProcessosJulgamentoConjunto;
+	}
+	
+	public String getRemoverProcessosListaJulgamento() {
+		/* Por default, será selecionado a opção Somente o Processo */
+		if ( removerProcessosListaJulgamento == null ){
+			removerProcessosListaJulgamento = REMOVER_SOMENTE_O_PROCESSO_LISTA_JULGAMENTO;
+		}
+		return removerProcessosListaJulgamento;
+	}
+
+	public void setRemoverProcessosListaJulgamento(String removerProcessosListaJulgamento) {
+		this.removerProcessosListaJulgamento = removerProcessosListaJulgamento;
+	}
+
+	/* Verifica se o processo está associado a uma lista de Julgamento Conjunto */
+	public Boolean getHaJulgamentoConjunto() {
+		if ( haJulgamentoConjunto == null ){
+			if ( getAgendamentosSelecionados() != null && getAgendamentosSelecionados().size() > 0 ) {
+				for (Agendamento agendamento : getAgendamentosSelecionados()) {
+					if ( carregaProcessoJulgamentoConjuntoPorMinistro( agendamento.getObjetoIncidente(), agendamento.getMinistro(), true ).size() > 0  ) {
+						haJulgamentoConjunto = Boolean.TRUE;
+						break;
+					}
+				}
+			}
+		}
+		return haJulgamentoConjunto;
+	}
+
+	public void setHaJulgamentoConjunto(Boolean haJulgamentoConjunto) {
+		this.haJulgamentoConjunto = haJulgamentoConjunto;
+	}
+
+	/** Carrega as Listas de Julgamento no qual o processo encontra-se inserido **/
+	private List<ListaJulgamento> carregarProcessosEmListaJulgamento(ObjetoIncidente<?> objetoIncidente){
+		List<ListaJulgamento> retorno = new ArrayList<ListaJulgamento>();
+		try {
+			retorno = listaJulgamentoService.pesquisar( objetoIncidente, Boolean.TRUE );
+		} catch (ServiceException e) {
+			throw new NestedRuntimeException(e);
+		}
+		return retorno;		
+	}
+	
+	private boolean isProcessoLiberadoAutomaticamente(Agendamento agendamento) throws ServiceException{
+		return objetoIncidenteService.isProcessoLiberadoAutomaticamente(agendamento.getObjetoIncidente());
+	}
+
+}

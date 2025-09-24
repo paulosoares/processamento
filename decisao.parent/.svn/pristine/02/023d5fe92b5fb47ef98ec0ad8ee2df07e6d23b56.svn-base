@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:s="http://jboss.com/products/seam/taglib"
+    xmlns:ui="http://java.sun.com/jsf/facelets"
+    xmlns:f="http://java.sun.com/jsf/core"
+    xmlns:h="http://java.sun.com/jsf/html"
+    xmlns:rich="http://richfaces.org/rich"
+    xmlns:a="http://richfaces.org/a4j"
+    xmlns:c="http://java.sun.com/jstl/core"
+    xmlns:stf="http://www.stf.jus.br/custom-components">
+
+   	<s:decorate id="adicionarProcessosListaJulgamento" template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="principal"/>
+		<ui:define name="descricao" >Adicionar Processos à Lista para Julgamento</ui:define>		
+		<ui:define name="conteudo">
+			<s:decorate template="/common/decorators/edit.xhtml">
+	            <ui:define name="label">Lista para Julgamento: </ui:define>
+				<h:selectOneMenu style="width:230px" id="lista" value="#{actionFacesBean.idListaJulgamento}" required="true">
+					<f:selectItems value="#{actionFacesBean.listasDisponiveis}"/>
+					<a:support event="onchange" reRender="nomePanel" eventsQueue="ajaxQueue" ignoreDupResponses="true"/>
+				</h:selectOneMenu>
+			</s:decorate>
+        </ui:define>
+		<ui:define name="botoes">
+           	<a:commandButton 
+           	value="Adicionar" 
+           	action="#{actionFacesBean.validateAndExecute}" 
+           	reRender="actionModalPanel" 
+           	oncomplete="showActionPanel('panelItem', #{actionFacesBean.definition.width}, #{actionFacesBean.definition.height})" 
+           	eventsQueue="ajaxQueue"
+			ignoreDupResponses="true"/>
+		</ui:define>
+	</s:decorate>
+	
+	<s:decorate template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="warnings"/>
+		<ui:define name="descricao">Verifique as informações abaixo antes de prosseguir</ui:define>
+		<ui:define name="conteudo">
+			<c:if test="#{actionFacesBean.processosParaConfirmacao.size()>0}">
+				<div>Os seguintes processos precisam de confirmação para serem
+				liberados para julgamento:</div>
+				<div><stf:messages level="WARN"/></div>
+				<div><h:selectBooleanCheckbox styleClass="Checkbox"
+					value="#{actionFacesBean.confirmarProcessosPendentes}">
+					<a:support reRender="btnConfirmarPanel" event="onclick" eventsQueue="ajaxQueue" ignoreDupResponses="true" />
+				</h:selectBooleanCheckbox><span>Confirmar liberação para julgamento dos processos. </span></div>
+			</c:if>
+			<c:if test="#{actionFacesBean.processosInvalidos.size()>0}">
+				<div class="vermelho">Os processos abaixo não poderão ser
+				liberados para julgamento:</div>
+				<div><stf:messages level="ERROR"/></div>
+			</c:if>
+		</ui:define>
+		<ui:define name="botoes">
+			<a:outputPanel id="btnConfirmarPanel">
+				<a:commandButton value="Confirmar Liberação" rendered="#{actionFacesBean.processosParaConfirmacao.size() > 0 and actionFacesBean.processosInvalidos.size() == 0 and actionFacesBean.confirmarProcessosPendentes}"
+					action="#{actionFacesBean.execute}" reRender="actionModalPanel"
+					oncomplete="showActionPanel('panelItem', #{actionFacesBean.definition.width}, #{actionFacesBean.definition.height})" eventsQueue="ajaxQueue"
+								ignoreDupResponses="true"/>
+			</a:outputPanel>		
+           	<a:commandButton 
+           		value="Voltar" 
+           		action="#{actionFacesBean.voltar}" 
+           		reRender="actionModalPanel" 
+           		oncomplete="showActionPanel('panelItem', #{actionFacesBean.definition.width}, #{actionFacesBean.definition.height})" 
+           		eventsQueue="ajaxQueue"
+				ignoreDupResponses="true"/>
+		</ui:define>
+	</s:decorate>
+	
+		<s:decorate template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="nenhumProcessoSelecionado" />
+		<ui:define name="descricao">Nenhum processo foi selecionado para a execução da ação!</ui:define>
+		<ui:define name="botoes">
+			<a:commandButton value="Voltar"
+				action="#{actionFacesBean.voltar}" reRender="actionModalPanel"
+				oncomplete="showActionPanel('panelItem', #{actionFacesBean.definition.width}, #{actionFacesBean.definition.height})" eventsQueue="ajaxQueue"
+							ignoreDupResponses="true"/>
+		</ui:define>
+
+	</s:decorate>
+</ui:composition>

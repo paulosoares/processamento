@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:s="http://jboss.com/products/seam/taglib"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:rich="http://richfaces.org/rich"
+	xmlns:a="http://richfaces.org/a4j"
+	xmlns:c="http://java.sun.com/jstl/core"
+	xmlns:stf="http://www.stf.jus.br/custom-components">
+
+	<s:decorate id="configurarSistema"
+		template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="principal" />
+		<ui:define name="descricao">
+			<h:outputText value="Defina os servidores de conversão" />
+		</ui:define>
+		<ui:define name="conteudo">
+			<a:outputPanel id="panelMessage">
+				<stf:messages height="31px" styleClass="noBorder" />
+			</a:outputPanel>
+			<s:decorate template="/common/decorators/edit.xhtml" id="novoServidorDecorate">
+					<ui:define name="label">Nome/IP do servidor:</ui:define>
+					<h:inputText value="#{actionFacesBean.novoServidor}" />
+					<a:commandButton
+						value="Incluir"
+						action="#{actionFacesBean.incluirServidor}"
+						reRender="panelMessage, panelServidorIncluso, novoServidorDecorate"
+						eventsQueue="ajaxQueue" ignoreDupResponses="true"
+						/>
+			</s:decorate>
+			<a:outputPanel id="panelServidorIncluso" >
+				<div style="height: 200px; overflow: auto;">
+					<div style="border: 1px solid #006699; border-top: none;">
+						<rich:dataTable	
+							var="servidor"
+							value="#{actionFacesBean.servidoresConversao}"
+							rowClasses="dr-table-row-odd, dr-table-row-even"
+							styleClass="data-table">
+							<rich:column styleClass="dr-table-firstcol dr-table-col-center" headerClass="dr-table-firstcol dr-table-col-center largura20px">
+								<f:facet name="header">
+									<a:commandButton image="/common/images/setabaixo.gif"
+										action="#{actionFacesBean.selectAll}"
+										title="Página atual" eventsQueue="ajaxQueue"
+										ignoreDupResponses="true"
+										reRender="panelServidorIncluso" />
+								</f:facet>
+								<h:selectBooleanCheckbox styleClass="Checkbox"
+									value="#{servidor.selected}" />
+							</rich:column>
+							<rich:column styleClass="dr-table-lastcol" headerClass="dr-table-lastcol">
+								<f:facet name="header">
+									<h:outputText value="Servidor" />
+								</f:facet>
+								<h:outputText value="#{servidor.nome}" />
+							</rich:column>
+						</rich:dataTable>
+					</div>
+				</div>
+			</a:outputPanel>
+		</ui:define>
+		<ui:define name="botoes">
+			<a:commandButton value="Remover"
+				action="#{actionFacesBean.excluirServidoresSelecionados}"
+				reRender="panelMessage, panelServidorIncluso" eventsQueue="ajaxQueue"
+				ignoreDupResponses="true"
+				style="float: left;"/>
+			<a:commandButton value="Gravar"
+				action="#{actionFacesBean.execute}"
+				reRender="actionModalPanel, panelMessage"
+				oncomplete="showActionPanel('panelItem', #{actionFacesBean.definition.width}, #{actionFacesBean.definition.height})"
+				eventsQueue="ajaxQueue" ignoreDupResponses="true" />
+		</ui:define>
+	</s:decorate>
+
+</ui:composition>

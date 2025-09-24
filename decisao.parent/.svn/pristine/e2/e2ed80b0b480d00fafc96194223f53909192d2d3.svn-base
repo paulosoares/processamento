@@ -1,0 +1,89 @@
+<div class="row" id="selecao-documentos-assinatura">
+	<div class="col-md-12">
+		<div class="grid simple horizontal red">
+			<div class="grid-body">
+				<div id="painel-docs-pendentes" style="text-align:center; display: none;">
+					<p style="text-align:center"><span id="qtde-docs-liberados"></span> documentos liberados para assinatura</p>
+						<div class="btn-group" id="acoes-sem-selecao">
+							<button class="btn-assinar-todos btn btn-success btn-demo-space"></button>
+							<button class="btn btn-success dropdown-toggle btn-demo-space" data-toggle="dropdown"> <span class="caret"></span> </button>
+								<ul class="dropdown-menu">
+									<li><a class="link-assinar-expedientes" href="#"></a></li>
+									<li><a class="link-assinar-decisoes" href="#"></a></li>
+								</ul>
+						</div>
+						<div class="btn-group" id="acoes-com-selecao" style="display: none;">
+							<button class="btn btn-success btn-demo-space btn-assinar-selecionados"></button>
+							<button class="btn btn-success dropdown-toggle btn-demo-space" data-toggle="dropdown"> <span class="caret"></span> </button>
+								<ul class="dropdown-menu">
+									<li><a class="btn-assinar-todos" href="#"></a></li>
+									<li><a class="link-assinar-expedientes" href="#"></a></li>
+									<li><a class="link-assinar-decisoes" href="#"></a></li>
+								</ul>
+						</div>
+				</div>
+
+				<div id="painel-nenhum-doc" style="text-align:center; display: none;">
+					<button class="btn btn-default btn-demo-space disabled" >Nenhum documento liberado para assinatura</button>
+				</div>
+				<div id="painel-abas-e-conteudo">
+					<ul class="nav nav-tabs" id="abas-docs-assinar">
+						<li class="active"><a id="btn-tabela-textos" href="#div-tabela-textos">Textos</a></li>
+						<li><a id="btn-tabela-expedientes" href="#div-tabela-expedientes">Expedientes</a></li>
+					</ul>
+					
+					<div class="tab-content">
+						<div class="tab-pane active" id="div-tabela-textos">
+							<div class="row" id="painel-docs-para-assinar">
+								<div class="col-md-12">
+									<div class="row">
+										<div class="col-md-12">
+											<div class="grid simple">
+												<div class="grid-body no-border email-body">
+													<div class="row-fluid">
+														<div class="row-fluid dataTables_wrapper">
+															<table 
+																class="table table-striped table-fixed-layout table-hover noHeader display dt-responsive no-wrap"
+																id="tabela-textos"></table>
+															<div id="painel-nenhum-texto" style="text-align:center;">
+																<button class="btn btn-default btn-demo-space disabled">Nenhum texto liberado para assinatura</button>
+															</div>
+														</div>
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="tab-pane" id="div-tabela-expedientes">
+							<div class="row" id="#">
+								<div class="col-md-12">
+									<div class="row">
+										<div class="col-md-12">
+											<div class="grid simple">
+												<div class="grid-body no-border email-body">
+													<div class="row-fluid">
+														<div class="row-fluid dataTables_wrapper">
+															<table data-transition="pop"
+																class="table table-striped table-fixed-layout table-hover noHeader display dt-responsive no-wrap"
+																id="tabela-expedientes"></table>
+															<div id="painel-nenhum-expediente" style="text-align:center;">
+																<button class="btn btn-default btn-demo-space disabled">Nenhum expediente liberado para assinatura</button>
+															</div>
+														</div>
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

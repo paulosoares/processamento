@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<pages xmlns="http://jboss.com/products/seam/pages"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://jboss.com/products/seam/pages-2.1.xsd"
+	no-conversation-view-id="/principal.xhtml"
+	login-view-id="/login.xhtml">
+	
+	<page view-id="/principal.xhtml" action="#{principalFacesBean.visualizarIncidente}" >
+		<begin-conversation join="true"/>
+		
+		<param name="exibirPesquisaAvancada" value="#{principalFacesBean.exibirPesquisaAvancada}"/>
+		
+		<param name="seqObjetoIncidente" value="#{principalFacesBean.seqObjetoIncidente}"/>
+		
+		<param name="codSetor" value="#{principalFacesBean.codSetor}" />
+
+		<navigation from-action="limpar">
+			<end-conversation before-redirect="true" />
+			<redirect view-id="/principal.xhtml" />
+		</navigation>
+		
+	</page>
+	
+	<page view-id="/actionFrame.xhtml" action="#{principalFacesBean.visualizarFrameAcao}" >
+		<begin-conversation join="true"/>
+		
+		<param name="seqObjetoIncidente" value="#{principalFacesBean.seqObjetoIncidente}" required="true" />
+		
+		<param name="codSetor" value="#{principalFacesBean.codSetor}" />
+		
+		<param name="idActionFrame" value="#{principalFacesBean.idActionFrame}" required="true" />
+	</page>	
+	
+	<page view-id="/revisarListas.xhtml" action="#{revisarListasFacesBean.agruparObjetosIncidentes}">
+		<begin-conversation join="true"/>
+	</page>
+	
+    <exception class="javax.faces.application.ViewExpiredException">
+        <redirect view-id="/error.xhtml">
+            <message severity="warn">Sua página expirou, por favor, tente novamente.</message>
+        </redirect>
+    </exception>
+    
+    <exception class="org.jboss.seam.ConcurrentRequestTimeoutException" logLevel="trace">
+    	<http-error error-code="503" />
+    </exception>
+     
+    <exception class="java.sql.SQLException" logLevel="trace">  
+    	<redirect view-id="/errorSQL.xhtml">
+    	<message> </message>
+        </redirect>
+    </exception>
+     
+    <exception>
+        <redirect view-id="/error.xhtml">
+            <message severity="error">
+            	Ocorreu um erro inesperado durante o processamento de sua requisição. 
+            	Por favor, tente novamente ou procure o administrador do sistema.
+            </message>
+        </redirect>
+    </exception>
+    
+</pages>

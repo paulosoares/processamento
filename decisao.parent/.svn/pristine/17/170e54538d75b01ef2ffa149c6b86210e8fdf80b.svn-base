@@ -1,0 +1,5 @@
+openssl genrsa -out private\cakey.pem 4096
+
+openssl req -x509 -new -sha512 -nodes -key private\cakey.pem -days 365000 -extensions dev2_ca -set_serial 01 -out cacert.crt -config .\openssl.cnf
+
+openssl ca -keyfile private\cakey.pem -cert cacert.crt -gencrl -out crl.pem -config .\openssl.cnf

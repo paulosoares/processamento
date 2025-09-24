@@ -1,0 +1,104 @@
+#
+# OpenSSL configuration file.
+#
+ 
+# Establish working directory.
+ 
+dir					= .
+ 
+[ ca ]
+default_ca				= CA_default
+ 
+[ CA_default ]
+serial					= $dir/serial
+database				= $dir/certindex.txt
+new_certs_dir				= $dir/certs
+certificate				= $dir/cacert.pem
+private_key				= $dir/private/cakey.pem
+crl_dir		= $dir/crl
+default_days				= 365
+default_md				= md5
+default_crl_days = 365
+preserve				= no
+email_in_dn				= no
+nameopt					= default_ca
+certopt					= default_ca
+policy					= policy_match
+
+[ crl_ext ]
+authorityKeyIdentifier=keyid:always,issuer:always
+
+[ policy_match ]
+countryName				= match
+stateOrProvinceName			= optional
+organizationName			= match
+organizationalUnitName			= optional
+commonName				= supplied
+emailAddress				= optional
+ 
+[ req ]
+default_bits				= 1024			# Size of keys
+default_keyfile				= key.pem		# name of generated keys
+default_md				= md5				# message digest algorithm
+string_mask				= nombstr		# permitted characters
+distinguished_name			= req_distinguished_name
+req_extensions				= v3_req
+ 
+[ req_distinguished_name ]
+# Variable name				Prompt string
+#-------------------------	  ----------------------------------
+0.organizationName			= Organization Name (company)
+organizationalUnitName			= Organizational Unit Name (department, division)
+emailAddress				= Email Address
+emailAddress_max			= 40
+localityName				= Locality Name (city, district)
+stateOrProvinceName			= State or Province Name (full name)
+countryName				= Country Name (2 letter code)
+countryName_min				= 2
+countryName_max				= 2
+commonName				= Common Name (hostname, IP, or your name)
+commonName_max				= 64
+ 
+# Default values for the above, for consistency and less typing.
+# Variable name				Value
+#------------------------	  ------------------------------
+commonName_default              = AC Raiz da Dev2 Infi4UT v1
+0.organizationName_default		= ICP-Dev2-STF
+organizationalUnitName_default  = Secao de Desenvolvimento 2
+countryName_default			= BR
+ 
+[ v3_ca ]
+basicConstraints			= CA:TRUE
+subjectKeyIdentifier			= hash
+authorityKeyIdentifier			= keyid:always,issuer:always
+ 
+[ v3_req ]
+basicConstraints			= CA:FALSE
+subjectKeyIdentifier			= hash
+
+[ dev2_ca ]
+basicConstraints			= critical,CA:TRUE
+subjectKeyIdentifier			= hash
+authorityKeyIdentifier			= keyid:always,issuer
+keyUsage=critical,keyCertSign,cRLSign
+
+#extendedKeyUsage=critical,serverAuth,emailProtection,clientAuth,timeStamping,codeSigning
+
+crlDistributionPoints=URI:http://dev2.stf.jus.br/icp/icp-dev2-infi4ut-v1/LCRacraizv1.crl
+
+certificatePolicies=@polsect
+
+[polsect]
+
+policyIdentifier = 2.16.76.1.1.0
+CPS.1="http://dev2.stf.jus.br/icp/icp-dev2-infi4ut-v1/DPCacraiz.pdf"
+
+[ dev2_intca ]
+basicConstraints			= critical,CA:TRUE
+subjectKeyIdentifier			= hash
+authorityKeyIdentifier			= keyid:always,issuer
+keyUsage=critical,keyCertSign,cRLSign
+
+crlDistributionPoints=URI:http://dev2.stf.jus.br/icp/icp-dev2-infi4ut-v1/LCRacraizv1.crl
+
+certificatePolicies=2.16.76.1.1.19

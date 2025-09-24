@@ -1,0 +1,959 @@
+package br.jus.stf.estf.decisao.objetoincidente.web;
+
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import javax.faces.model.SelectItem;
+import javax.sql.DataSource;
+
+import org.hibernate.Hibernate;
+import org.jboss.seam.ScopeType;
+import org.jboss.seam.annotations.Out;
+import org.jboss.seam.annotations.Scope;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.jdbc.support.JdbcUtils;
+
+import br.gov.stf.estf.entidade.julgamento.Colegiado.TipoColegiadoConstante;
+import br.gov.stf.estf.entidade.julgamento.ListaJulgamento;
+import br.gov.stf.estf.entidade.julgamento.ProcessoListaJulgamento;
+import br.gov.stf.estf.entidade.julgamento.Sessao;
+import br.gov.stf.estf.entidade.julgamento.Sessao.TipoAmbienteConstante;
+import br.gov.stf.estf.entidade.julgamento.TipoListaJulgamento;
+import br.gov.stf.estf.entidade.julgamento.enuns.SituacaoListaJulgamento;
+import br.gov.stf.estf.entidade.processostf.ObjetoIncidente;
+import br.gov.stf.estf.entidade.processostf.PreListaJulgamento;
+import br.gov.stf.estf.julgamento.model.service.ListaJulgamentoService;
+import br.gov.stf.estf.julgamento.model.service.ProcessoListaJulgamentoService;
+import br.gov.stf.estf.julgamento.model.service.SessaoService;
+import br.gov.stf.estf.julgamento.model.service.TipoListaJulgamentoService;
+import br.gov.stf.estf.util.DataUtil;
+import br.gov.stf.estf.util.TipoAmbiente;
+import br.gov.stf.framework.model.service.ServiceException;
+import br.jus.stf.estf.decisao.objetoincidente.service.ObjetoIncidenteService;
+import br.jus.stf.estf.decisao.objetoincidente.support.Email;
+import br.jus.stf.estf.decisao.objetoincidente.support.PreListaJulgamentoReportSupport;
+import br.jus.stf.estf.decisao.objetoincidente.support.TipoColegiadoAgendamento;
+import br.jus.stf.estf.decisao.pesquisa.domain.ObjetoIncidenteDto;
+import br.jus.stf.estf.decisao.support.action.handlers.RequiresResources;
+import br.jus.stf.estf.decisao.support.action.handlers.RequiresResources.Mode;
+import br.jus.stf.estf.decisao.support.action.handlers.Restrict;
+import br.jus.stf.estf.decisao.support.action.support.Action;
+import br.jus.stf.estf.decisao.support.action.support.ActionIdentification;
+import br.jus.stf.estf.decisao.support.action.support.ActionSupport;
+import br.jus.stf.estf.decisao.support.service.UsuarioLogadoService;
+import br.jus.stf.estf.decisao.support.util.ListaJulgamentoUI;
+import edu.emory.mathcs.backport.java.util.Collections;
+
+/**
+ * @author Paulo.Estevao
+ * @since 17.10.2011
+ */
+@Action(id = "gerenciarListasLiberadasActionFacesBean", name = "Listas Liberadas", view = "/acoes/objetoincidente/gerenciarListasLiberadas.xhtml")
+@Restrict({ ActionIdentification.LIBERAR_PARA_JULGAMENTO })
+@RequiresResources(Mode.Many)
+@Scope(ScopeType.SESSION)
+public class GerenciarListasLiberadasActionFacesBean extends ActionSupport<ListaJulgamento> {
+	
+	@Out("tipoAmbiente")
+	private br.gov.stf.estf.util.TipoAmbiente tipoAmbiente;
+	
+	@Autowired
+	private DataSource dataSource;
+	
+	protected static final String MSG_MAIL_SUBJECT    = "Lista(s) de Julgamento: ";
+	protected static final String MAIL_LIST_PLENARIO  = "g-plenario@stf.jus.br";
+	protected static final String MAIL_LIST_TURMA01   = "g-primeira-turma@stf.jus.br";
+	protected static final String MAIL_LIST_TURMA02   = "g-segunda-turma@stf.jus.br";
+
+	static final String MSG_INFO_IMPRIMIR          = "Impressão realizada com sucesso";
+	static final String MSG_INFO_EMAIL             = "E-mail enviado com sucesso!";
+	static final String MSG_INFO_PROCESSO_EXCLUIDO = "Processo excluído com sucesso!";
+	static final String MSG_INFO_LISTA_EXCLUIDA    = "Lista excluída com sucesso!";
+	static final String MSG_INFO_LISTA_PROCESSOS   = "Para cadastrar um novo processo em uma lista já liberada, favor contactar a seção responsável.";
+	static final String MSG_INFO_CABECALHO         = "Cabeçalho salvo com sucesso!";
+	
+	protected static final String MSG_ERRO_IMPRIMIR   = "Erro: ao imprimir listas liberadas";
+	protected static final String MSG_ERRO_MAIL       = "Erro: ao enviar e-mail de listas liberadas";
+	protected static final String MSG_ERRO_CABECALHO  = "Erro: ao gravar cabeçalho";
+	
+	protected static final String MSG_WARN_GABINETE       = "Gabinete não selecionado!";
+	protected static final String MSG_WARN_SO_UMA_LISTA   = "Selecione apenas uma lista para impressão";
+	protected static final String MSG_WARN_UMA_DATA_LISTA = "Selecione apenas as listas da mesma data, colegiado e ambiente";
+	
+
+	@Qualifier("objetoIncidenteServiceLocal")
+	@Autowired
+	private ObjetoIncidenteService objetoIncidenteService;
+
+	@Autowired
+	private SessaoService sessaoService;
+	
+	@Autowired
+	private UsuarioLogadoService usuarioLogadoService;
+	
+	@Autowired
+	private ExportarPreListaJulgamentoActionFacesBean exportarPreListaJulgamentoActionFacesBean;
+	
+	@Autowired
+	private CancelarLiberacaoParaJulgamentoActionFacesBean cancelarLiberacaoParaJulgamentoActionFacesBean;
+	
+	@Autowired
+	private LiberarPreListaParaJulgamentoActionFacesBean liberarPreListaParaJulgamentoActionFacesBean;
+	
+	@Autowired
+	private ListaJulgamentoService listaJulgamentoService;
+	
+	@Autowired
+	private TipoListaJulgamentoService tipoListaJulgamentoService;
+	
+	@Autowired
+	private ProcessoListaJulgamentoService processoListaJulgamentoService;	
+
+	private TipoColegiadoConstante colegiadoMinistro;
+
+	private Date dataJulgamento;
+	private String idTipoColegiadoAgendamento;
+	private ListaJulgamento listaJulgamento;
+
+	private List<SelectItem>         sessoes;
+	private List<SelectItem> tipoListaJulgamento;
+	private Long idTipoListaJulgamento;
+	private List<ListaJulgamento>    listasListaJulgamento;
+	private List<ListaJulgamentoUI>  listasListaJulgamentoUI;
+	private List<ObjetoIncidenteDto> listaDeProcessos;
+	private String descricaoSessao;
+	
+	private Long idSessao;
+
+	private Boolean existeListaLiberada = false;
+	private Boolean existeListaNaoLiberada = false;
+	private Boolean sessaoMinistroDiferente = false;
+	private Boolean mostrarEmenta = false;
+	private Boolean mostrarObservacao = false;
+	private Boolean mostrarPartes = true;	
+	private Boolean mostrarVotoVista = false;
+	private Boolean arquivoPronto = false;
+	
+	
+	private ByteArrayOutputStream outputRelatorio;
+
+	private Set<PreListaJulgamento> listasInvalidas = new HashSet<PreListaJulgamento>();
+	
+	@Override
+	public void load() {
+		try {
+			cleanMessages();
+			this.gabineteSelecionado();			
+			List<ListaJulgamentoUI> listaJulgamentoUI = carregalistaJulgamentoUI();
+			this.setListasListaJulgamentoUI(listaJulgamentoUI);
+		}catch (ServiceException e) {
+			addWarning(e.getMessage());
+		}catch (Exception e) {
+			addError(e.getMessage());
+			logger.error(e);
+			e.printStackTrace();
+		}
+	}
+	
+	List<ListaJulgamentoUI> carregalistaJulgamentoUI() throws ServiceException {
+			List<ListaJulgamentoUI> listasListaJulgamentoUIRetorno = null;
+			long idMinistro = getIdMinistro();
+
+			List<ListaJulgamento> listasPlenario      = recuperaListasLiberadasColegiado(idMinistro,TipoColegiadoConstante.SESSAO_PLENARIA);
+			List<ListaJulgamento> listasPrimeiraTurma = recuperaListasLiberadasColegiado(idMinistro,TipoColegiadoConstante.PRIMEIRA_TURMA);
+			List<ListaJulgamento> listasSegundaTurma = recuperaListasLiberadasColegiado(idMinistro,TipoColegiadoConstante.SEGUNDA_TURMA);
+			
+			List<ListaJulgamento> listasLiberadas     = new ArrayList<ListaJulgamento>();
+			listasLiberadas.addAll(listasPlenario);
+			listasLiberadas.addAll(listasPrimeiraTurma);
+			listasLiberadas.addAll(listasSegundaTurma);
+			
+			listasListaJulgamentoUIRetorno = this.converteListasJulgamentoParaJulgamentoUI(listasLiberadas);
+			
+			if (listasListaJulgamentoUIRetorno != null)
+				Collections.sort(listasListaJulgamentoUIRetorno);
+			
+			return listasListaJulgamentoUIRetorno;
+	}
+
+	/**
+	 * Criado para facilitar os testes
+	 * @return
+	 */
+	Long getIdMinistro() {
+		return this.getMinistro().getId();
+	}
+
+	/**
+	 * Recupera um LIST de todas a listas de julgamento liberadas de um ministro das sessoes em aberto para determinado colegiado. 
+	 * @param idMinistro
+	 * @param colegiado
+	 * @return
+	 * @throws ServiceException
+	 */
+	List<ListaJulgamento> recuperaListasLiberadasColegiado(long idMinistro, TipoColegiadoConstante colegiado) throws ServiceException {
+		List<ListaJulgamento> listasDeListasLiberadasColegiado = new ArrayList<ListaJulgamento>();
+		
+		List<ListaJulgamento> listasDeListasLiberadasSessoesAbertasPresenciais = sessaoService.recuperaListasLiberadasColegiado(idMinistro, colegiado, TipoAmbienteConstante.PRESENCIAL);
+		List<ListaJulgamento> listasDeListasLiberadasSessoesAbertasVirtuais    = sessaoService.recuperaListasLiberadasColegiado(idMinistro, colegiado, TipoAmbienteConstante.VIRTUAL);
+		
+		listasDeListasLiberadasColegiado.addAll(listasDeListasLiberadasSessoesAbertasPresenciais);
+		listasDeListasLiberadasColegiado.addAll(listasDeListasLiberadasSessoesAbertasVirtuais);
+		return listasDeListasLiberadasColegiado;
+	}
+
+	TipoColegiadoConstante defineColegiado(String idTipoColegiadoAgendamento) {		
+		Integer codigoDaTurmaDoMinistro = objetoIncidenteService.defineCodigoDaTurmaDoMinistro(getMinistro(), null);
+		TipoColegiadoConstante colegiado = liberarPreListaParaJulgamentoActionFacesBean.getTipoColegiadoConstante(idTipoColegiadoAgendamento, codigoDaTurmaDoMinistro);
+		return colegiado;
+	}
+
+	List<ListaJulgamentoUI> converteListasJulgamentoParaJulgamentoUI(List<ListaJulgamento> listasListaJulgamento) {
+		List<ListaJulgamentoUI> listDelistaJulgamentoUI     = new ArrayList<ListaJulgamentoUI>();
+		for (ListaJulgamento listaJulgamento : listasListaJulgamento){
+			String idSessao = listaJulgamento.getSessao().getColegiado().getId();
+			String descricaoAmbiente = recuperaAmbienteDescricao(listaJulgamento);
+			String descricaoColegiado = TipoColegiadoConstante.valueOfSigla(idSessao).getDescricao();
+			Hibernate.initialize(listaJulgamento.getMinistroVistor());
+			ListaJulgamentoUI listaJulgamentoUI = new ListaJulgamentoUI(listaJulgamento,descricaoColegiado,descricaoAmbiente);
+			listDelistaJulgamentoUI.add(listaJulgamentoUI);
+		}
+		return listDelistaJulgamentoUI;
+	}
+
+	public String recuperaAmbienteDescricao(ListaJulgamento listaJulgamento) {
+		String ambienteDescricao = "Presencial";
+		String ambiente = listaJulgamento.getSessao().getTipoAmbiente();
+		if(TipoAmbienteConstante.VIRTUAL.getSigla().equals(ambiente)){
+			ambienteDescricao = "Virtual";
+		}
+		return ambienteDescricao;
+	}
+	
+	public void imprimir() throws ServiceException {
+		if(arquivoPronto){
+			String nomeArquivo = "Listas de Julgamento";
+			
+			if (getListasListaJulgamentoSelecinadas() != null && getListasListaJulgamentoSelecinadas().size() == 1)
+				nomeArquivo = getListasListaJulgamentoSelecinadas().get(0).getNome();
+			
+			exportarPreListaJulgamentoActionFacesBean.gerarRelatorioDOCParaUsuario(new ByteArrayInputStream(getOutputRelatorio().toByteArray()), nomeArquivo);
+			arquivoPronto = false;
+			return;
+		}
+		try {
+			cleanMessages();
+			List<ListaJulgamento>   listasListaJulgamento = this.getListasListaJulgamentoSelecinadas();
+			if(listasListaJulgamento.size()>1){
+				throw new ServiceException(MSG_WARN_SO_UMA_LISTA);
+			}else{
+				ListaJulgamento listaJulgamento = listasListaJulgamento.get(0);
+				ByteArrayInputStream relatorioHtmlInputStream = this.recuperaRelatorioHtmlInputStream(listaJulgamento);
+				outputRelatorio = new ByteArrayOutputStream();
+				outputRelatorio = exportarPreListaJulgamentoActionFacesBean.gerarArquivoSaida(ExportarPreListaJulgamentoActionFacesBean.FORMATO_RELATORIO_PADRAO, relatorioHtmlInputStream, outputRelatorio);
+				addInformation(MSG_INFO_IMPRIMIR);
+				arquivoPronto = true;
+			}
+		}catch (ServiceException e) {
+			addWarning(e.getMessage());
+		}catch (Exception e) {
+			addError(MSG_ERRO_IMPRIMIR +ExportarPreListaJulgamentoActionFacesBean.ESPACO_BRANCO+ e.getMessage());
+			logger.error(MSG_ERRO_IMPRIMIR, e);
+			e.printStackTrace();
+		}
+	}
+
+	public void mail() {
+		try {
+			cleanMessages();
+			List<ListaJulgamento>   listDeListaJulgamento = this.getListasListaJulgamentoSelecinadas();
+			
+			this.separaEmailPorColegiado(listDeListaJulgamento);
+			addInformation(MSG_INFO_EMAIL);			
+		}catch (ServiceException e) {
+			addWarning(e.getMessage());
+		}catch (Exception e) {
+			addError(MSG_ERRO_MAIL+ExportarPreListaJulgamentoActionFacesBean.ESPACO_BRANCO+ e.getMessage());
+			logger.error(MSG_ERRO_MAIL, e);
+			e.printStackTrace();
+		}
+	}
+	
+	void separaEmailPorColegiado(List<ListaJulgamento> listDeListaJulgamento) throws Exception {
+		List<ListaJulgamento> listDeListaJulgamentoDestinoPlenario = new ArrayList<ListaJulgamento>();
+		List<ListaJulgamento> listDeListaJulgamentoDestinoTurma01  = new ArrayList<ListaJulgamento>();
+		List<ListaJulgamento> listDeListaJulgamentoDestinoTurma02  = new ArrayList<ListaJulgamento>();
+		
+		for (ListaJulgamento listaJulgamento: listDeListaJulgamento){
+			String siglaColegiadoLista = listaJulgamento.getSessao().getColegiado().getId();			
+			if (siglaColegiadoLista.equals(TipoColegiadoConstante.SESSAO_PLENARIA.getSigla())) {
+				listDeListaJulgamentoDestinoPlenario.add(listaJulgamento);
+			} else if (siglaColegiadoLista.equals(TipoColegiadoConstante.PRIMEIRA_TURMA.getSigla())) {
+				listDeListaJulgamentoDestinoTurma01.add(listaJulgamento);
+			} else {
+				listDeListaJulgamentoDestinoTurma02.add(listaJulgamento);
+			}
+			int index = listDeListaJulgamento.indexOf(listaJulgamento);
+			this.validarListasMesmaData(listDeListaJulgamento,index);
+		}
+		if (listDeListaJulgamentoDestinoPlenario.size() > 0){
+			this.geraEmailColegiado(listDeListaJulgamentoDestinoPlenario,TipoColegiadoConstante.SESSAO_PLENARIA);
+		}
+		if (listDeListaJulgamentoDestinoTurma01.size() > 0){
+			this.geraEmailColegiado(listDeListaJulgamentoDestinoTurma01,TipoColegiadoConstante.PRIMEIRA_TURMA);
+		}
+		if (listDeListaJulgamentoDestinoTurma02.size() > 0){
+			this.geraEmailColegiado(listDeListaJulgamentoDestinoTurma02,TipoColegiadoConstante.SEGUNDA_TURMA);
+		}
+	}
+
+	void validarListasMesmaData(List<ListaJulgamento> listDeListaJulgamento,int index) throws ServiceException {		
+		if (index>0){
+			
+			Sessao sessaoAnterior = listDeListaJulgamento.get(index-1).getSessao();
+			Date dataAnterior     = DataUtil.getDataInicioSessao(sessaoAnterior);
+			
+			Sessao sessaoCorrente = listDeListaJulgamento.get(index).getSessao();
+			Date dataCorrente     = DataUtil.getDataInicioSessao(sessaoCorrente);
+			
+			boolean dataIguais = dataAnterior.equals(dataCorrente);
+			if(!dataIguais){
+				throw new ServiceException(MSG_WARN_UMA_DATA_LISTA);
+			}
+		}
+	}
+	
+	void geraEmailColegiado(List<ListaJulgamento> listDeListaJulgamento, TipoColegiadoConstante colegiadoDestino) throws Exception {
+		if (listDeListaJulgamento.size() > 0){
+			String remetente = getRemetente();
+			String[] destinatarios = new String[]{recuperaDestinatario(colegiadoDestino)};
+			String assunto = this.recuperaAssunto(listDeListaJulgamento.get(0).getSessao());
+			String corpoEmail = assunto;
+			File[] anexos = null;
+			try {
+				anexos = getAnexosListDeListaJulgamento(listDeListaJulgamento);
+				Email.enviar(remetente, destinatarios, null, new String[]{remetente}, assunto, corpoEmail, anexos);
+			} finally {
+				if (anexos != null)
+					deletaArquivosAnexos(anexos);
+			}
+		}
+	}
+
+	public File[] getAnexosListDeListaJulgamento(List<ListaJulgamento> listDeListaJulgamento) throws Exception, IOException {
+		List<ListaJulgamento>   listDeListaJulgamentoEnviada = new ArrayList<ListaJulgamento>();
+		
+		File[] anexos = new File[listDeListaJulgamento.size()];
+		
+		for (int i=0; i<listDeListaJulgamento.size(); i++){
+			String sequencia = String.format("%03d", i+1);
+			String siglaMinistro = usuarioLogadoService.getMinistro().getSigla();			
+			String nomeLista = listDeListaJulgamento.get(i).getNome();
+			String nomeArquivo = sequencia  + "_" + siglaMinistro + "_" + nomeLista;
+			
+			ByteArrayInputStream relatorioHtmlInputStream = this.recuperaRelatorioHtmlInputStream(listDeListaJulgamento.get(i));
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			exportarPreListaJulgamentoActionFacesBean.gerarArquivoSaida(ExportarPreListaJulgamentoActionFacesBean.FORMATO_RELATORIO_PADRAO, relatorioHtmlInputStream, out);
+			
+			File arquivo = getTempFileNomeado(out.toByteArray(), nomeArquivo, ".doc");		
+			anexos[i] = arquivo;
+			
+			listDeListaJulgamentoEnviada.add(listaJulgamento);
+		}
+		if(!listDeListaJulgamentoEnviada.isEmpty()){
+			marcarListasComoEnviada(listDeListaJulgamento);
+		}
+		return anexos;		
+	}
+
+	/**
+	 * Gera um arquivo com Nome desejado no dir temporario do SO. Não apaga o arquivo. 
+	 * @param conteudo interno do arquivo
+	 * @param nomeArquivoPrefixo Prefixo do nome do arquivo
+	 * @param arquivoNomeSufixo Sufixo do nome do arquivo
+	 * @return
+	 * @throws IOException
+	 */
+	private File getTempFileNomeado(byte[] conteudo, String nomeArquivoPrefixo, String arquivoNomeSufixo) throws IOException {
+		String dirTemp = System.getProperty("java.io.tmpdir");
+		String sep = File.separator;
+		File arquivo = new File(dirTemp + sep + nomeArquivoPrefixo + arquivoNomeSufixo);
+		arquivo.deleteOnExit();
+		FileOutputStream fos = new FileOutputStream(arquivo);
+		fos.write(conteudo);
+		fos.close();
+		return arquivo;
+	}
+	
+	private void deletaArquivosAnexos(File[] anexos) {
+		List<File> listAnexos = Arrays.asList(anexos);
+		for (File arquivo : listAnexos) {
+			arquivo.delete();
+		}		
+	}
+
+	public String getRemetente() {
+		return usuarioLogadoService.getUsuario().getId() + "@stf.jus.br";
+	}
+
+	String recuperaAssunto(Sessao sessao) {
+		String ministro = exportarPreListaJulgamentoActionFacesBean.recuperarMinistroDaLista();
+		String assunto = MSG_MAIL_SUBJECT 
+				        +ExportarPreListaJulgamentoActionFacesBean.ESPACO_BRANCO
+				        +ministro
+				        +". Sessão:"
+				        +ExportarPreListaJulgamentoActionFacesBean.ESPACO_BRANCO
+				        +liberarPreListaParaJulgamentoActionFacesBean.labelSessao(sessao);
+		return assunto;
+	}
+
+	void marcarListasComoEnviada(List<ListaJulgamento> listasListaJulgamentoSelecinadas) throws ServiceException {
+		for (ListaJulgamento listaJulgamento : listasListaJulgamentoSelecinadas) {
+			listaJulgamento = listaJulgamentoService.recuperarPorId(listaJulgamento.getId());
+			listaJulgamento.setSituacaoListaJulgamento(SituacaoListaJulgamento.EMAIL_ENVIADO);
+			listaJulgamentoService.salvar(listaJulgamento);
+		}
+	}
+
+	String recuperaDestinatario(TipoColegiadoConstante colegiadoDestino){
+		String eMailDestinatario = getRemetente();
+		
+		if (TipoAmbiente.PRODUCAO.equals(getTipoAmbiente())) {
+			if (colegiadoDestino.equals(TipoColegiadoConstante.SESSAO_PLENARIA)) {
+				eMailDestinatario = MAIL_LIST_PLENARIO;
+			} else if (colegiadoDestino.equals(TipoColegiadoConstante.PRIMEIRA_TURMA)) {
+				eMailDestinatario = MAIL_LIST_TURMA01;
+			} else {
+				eMailDestinatario = MAIL_LIST_TURMA02;
+			}
+		}
+		
+		return eMailDestinatario;
+	}
+	
+	String recuperarMensagem(List<ListaJulgamento> listDeListaJulgamento) throws Exception {
+		StringBuffer retorno = new StringBuffer();				
+		for (ListaJulgamento listaJulgamento: listDeListaJulgamento){			
+			ByteArrayInputStream relatorioHtmlInputStream = this.recuperaRelatorioHtmlInputStream(listaJulgamento);
+			String relatorioHtmlString = getStringFromInputStream(relatorioHtmlInputStream);
+			retorno.append(relatorioHtmlString+"<p><p><p><hr><p><p><p>");
+		}
+		return retorno.toString();
+	}
+	
+	ByteArrayInputStream recuperaRelatorioHtmlInputStream(ListaJulgamento listaJulgamento) throws Exception {
+			listaJulgamento = listaJulgamentoService.recuperarPorId(listaJulgamento.getId());
+			Hibernate.initialize(listaJulgamento.getElementos());
+			PreListaJulgamentoReportSupport preListaJulgamentoReportSupport = carregaPreListaJulgamentoReportSupport(listaJulgamento);			
+			ByteArrayInputStream relatorioHtmlInputStream = exportarPreListaJulgamentoActionFacesBean.gerarRelatorioEmHTML(preListaJulgamentoReportSupport);
+		return relatorioHtmlInputStream;
+	}	
+
+	PreListaJulgamentoReportSupport carregaPreListaJulgamentoReportSupport(ListaJulgamento listaJulgamento) throws ServiceException {
+		
+		String cabecalho = listaJulgamento.getCabecalho();
+		String cabecalhoVistor = listaJulgamento.getCabecalhoVistor();
+		List<ObjetoIncidente<?>> listaProcessos = this.convertTipoList(listaJulgamento);
+		String ministro = exportarPreListaJulgamentoActionFacesBean.recuperarMinistroDaLista();
+		String ministroVistor = exportarPreListaJulgamentoActionFacesBean.recuperarMinistroVistorDaLista(listaJulgamento);
+		String ministroRelator = exportarPreListaJulgamentoActionFacesBean.recuperarMinistroRelatorDaLista(listaJulgamento);
+		String numeroLista = this.getNomeListaComData(listaJulgamento);
+		String sessao = liberarPreListaParaJulgamentoActionFacesBean.labelSessao(listaJulgamento.getSessao());
+		
+		PreListaJulgamentoReportSupport preListaJulgamentoReportSupport= new PreListaJulgamentoReportSupport();
+		preListaJulgamentoReportSupport.setCabecalho(cabecalho);
+		preListaJulgamentoReportSupport.setCabecalhoVistor(cabecalhoVistor);
+		preListaJulgamentoReportSupport.setListaProcessos(listaProcessos);
+		//Para listas de devolução de vistas, o ministro da impressão deve ser o relator, nos outros casos, deve ser o ministro gabinete que está imprimindo.
+		preListaJulgamentoReportSupport.setMinistro(listaJulgamento.getTipoListaJulgamento().getId().equals(5L) ? ministroRelator : ministro);
+		preListaJulgamentoReportSupport.setMinistroVistor(ministroVistor);
+		preListaJulgamentoReportSupport.setIdMinistroVistor(listaJulgamento.getMinistroVistor()!=null ? listaJulgamento.getMinistroVistor().getId() : null);
+		preListaJulgamentoReportSupport.setMostrarEmenta(this.mostrarEmenta);
+		preListaJulgamentoReportSupport.setMostrarObservacao(this.mostrarObservacao);
+		preListaJulgamentoReportSupport.setMostrarPartes(this.mostrarPartes);
+		preListaJulgamentoReportSupport.setMostrarVotoVista(mostrarVotoVista);
+		preListaJulgamentoReportSupport.setNumeroLista(numeroLista);
+		preListaJulgamentoReportSupport.setIdListaJulgamento(listaJulgamento.getId());
+		preListaJulgamentoReportSupport.setSessao(sessao);
+		preListaJulgamentoReportSupport.setTipoLista(ExportarPreListaJulgamentoActionFacesBean.TIPO_LISTA);
+		if(listaJulgamento.getTipoListaJulgamento() != null) {
+			preListaJulgamentoReportSupport.setDescricaoTipoListaJulgamento(listaJulgamento.getTipoListaJulgamento().getDescricao());
+		}
+		
+		return preListaJulgamentoReportSupport;
+	}
+
+	public String getNomeListaComData(ListaJulgamento listaJulgamento) {
+		Sessao sessao = listaJulgamento.getSessao();
+		String dataSesso = liberarPreListaParaJulgamentoActionFacesBean.getDescricaoDataSessao(sessao);
+		String nomeLista = listaJulgamento.getNome()+" de "+dataSesso;
+		return nomeLista;
+	}
+	
+	private List<ObjetoIncidente<?>> convertTipoList(ListaJulgamento listaJulgamento) throws ServiceException {
+		List<ProcessoListaJulgamento> listDeProcessoListaJulgamento = processoListaJulgamentoService.listarProcessos(listaJulgamento);
+		List<ObjetoIncidente<?>> listaRetorno = new ArrayList<ObjetoIncidente<?>>();
+		for (ProcessoListaJulgamento processoListaJulgamento : listDeProcessoListaJulgamento) {
+			listaRetorno.add(processoListaJulgamento.getObjetoIncidente());
+		}
+		return listaRetorno;
+	}
+
+	/**
+	 * Converte InputStream de String modificada das funções
+	 * http://www.mkyong.com/java/how-to-convert-inputstream-to-string-in-java/
+	 * http://stackoverflow.com/questions/24059266/convert-contents-of-a-bytearrayinputstream-to-string
+	 * @param is
+	 * @return
+	 */
+	private static String getStringFromInputStream(InputStream is) {
+		BufferedReader br = null;
+		StringBuilder sb = new StringBuilder();
+		String line;
+		
+		try {
+			br = new BufferedReader(new InputStreamReader(is));
+			while ((line = br.readLine()) != null) {
+				sb.append(line);
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			if (br != null) {
+				try {
+					br.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		return sb.toString();
+	}
+	
+	void gabineteSelecionado()  throws ServiceException{
+		if( exportarPreListaJulgamentoActionFacesBean.recuperarMinistroDaLista() == null ){
+			throw new ServiceException(MSG_WARN_GABINETE);
+		}
+	}
+
+	public void voltar(RevisarListasFacesBean revisarListasFacesBean) {
+		revisarListasFacesBean.setReabrirModalListasLiberadas(true);
+		getDefinition().setFacet("success");
+	}
+	
+	public void fechar(RevisarListasFacesBean revisarListasFacesBean) {
+		revisarListasFacesBean.setReabrirModalListasLiberadas(false);
+		getDefinition().setFacet("success");
+	}
+
+	public void finalizar() {
+		getDefinition().setFacet("final");
+	}
+
+	public TipoColegiadoAgendamento[] getTiposColegiadoAgendamento() {
+		return TipoColegiadoAgendamento.values();
+	}
+
+	public Date getDataJulgamento() {
+		return dataJulgamento;
+	}
+
+	public void setDataJulgamento(Date dataJulgamento) {
+		this.dataJulgamento = dataJulgamento;
+	}
+
+	public String getIdTipoColegiadoAgendamento() {
+		return idTipoColegiadoAgendamento;
+	}
+
+	public void setIdTipoColegiadoAgendamento(String idTipoColegiadoAgendamento) {
+		this.idTipoColegiadoAgendamento = idTipoColegiadoAgendamento;
+	}
+	
+	public ListaJulgamento getListaJulgamento() {
+		return listaJulgamento;
+	}
+	
+	public void setListaJulgamento(ListaJulgamento listaJulgamento) {
+		this.listaJulgamento = listaJulgamento;
+	}	
+
+	public List<SelectItem> getSessoes() {
+		return sessoes;
+	}
+
+	public void setSessoes(List<SelectItem> sessoes) {
+		this.sessoes = sessoes;
+	}
+
+	public Long getIdSessao() {
+		return idSessao;
+	}
+
+	public void setIdSessao(Long idSessao) {
+		this.idSessao = idSessao;
+	}
+
+	public Set<PreListaJulgamento> getListasInvalidas() {
+		return listasInvalidas;
+	}
+
+	public void setListasInvalidas(Set<PreListaJulgamento> listasInvalidas) {
+		this.listasInvalidas = listasInvalidas;
+	}
+
+	public Boolean getExisteListaLiberada() {
+		return existeListaLiberada;
+	}
+
+	public void setExisteListaLiberada(Boolean existeListaLiberada) {
+		this.existeListaLiberada = existeListaLiberada;
+	}
+
+	public Boolean getExisteListaNaoLiberada() {
+		return existeListaNaoLiberada;
+	}
+
+	public void setExisteListaNaoLiberada(Boolean existeListaNaoLiberada) {
+		this.existeListaNaoLiberada = existeListaNaoLiberada;
+	}
+
+	public TipoColegiadoConstante getColegiadoMinistro() {
+		return colegiadoMinistro;
+	}
+
+	public void setColegiadoMinistro(TipoColegiadoConstante colegiadoMinistro) {
+		this.colegiadoMinistro = colegiadoMinistro;
+	}
+
+	public Boolean getSessaoMinistroDiferente() {
+		return sessaoMinistroDiferente;
+	}
+
+	public void setSessaoMinistroDiferente(Boolean sessaoMinistroDiferente) {
+		this.sessaoMinistroDiferente = sessaoMinistroDiferente;
+	}	
+	
+	public void selectAll() {
+		boolean check = !allChecked();
+		for (ListaJulgamentoUI listasJulgamentoUI : this.getListasListaJulgamentoUI()) {
+			listasJulgamentoUI.setSelected(check);
+		}		
+	}
+		
+	private boolean allChecked() {
+    	for (ListaJulgamentoUI listasJulgamentoUI : this.getListasListaJulgamentoUI()) {
+    		if (!listasJulgamentoUI.isSelected()) {
+    			return false;
+    		}
+    	}
+    	return true;
+    }
+
+	public List<ListaJulgamento> getListasListaJulgamento() {
+		return listasListaJulgamento;
+	}
+
+	public void setListasListaJulgamento(List<ListaJulgamento> listasListaJulgamento) {
+		this.listasListaJulgamento = listasListaJulgamento;
+	}
+
+	public List<ListaJulgamentoUI> getListasListaJulgamentoUI() {
+		return listasListaJulgamentoUI;
+	}
+
+	public void setListasListaJulgamentoUI(List<ListaJulgamentoUI> listasListaJulgamentoUI) {
+		this.listasListaJulgamentoUI = listasListaJulgamentoUI;
+	}
+	
+	public List<ListaJulgamento> getListasListaJulgamentoSelecinadas() throws ServiceException{
+		List<ListaJulgamento>   retorno                 = new ArrayList<ListaJulgamento>();
+		List<ListaJulgamentoUI> listDeListaJulgamentoUI = this.getListasListaJulgamentoUI();
+		 for (ListaJulgamentoUI listaJulgamentoUI : listDeListaJulgamentoUI) {
+			 if(listaJulgamentoUI.isSelected()){
+				 retorno.add(listaJulgamentoUI.getInstancia());
+			 }
+		}
+		if( retorno.isEmpty()){
+			throw new ServiceException(MSG_WARN_SO_UMA_LISTA);
+		}
+		return retorno;
+	}
+
+	public String getDescricaoSessao() {
+		return descricaoSessao;
+	}
+
+	public void setDescricaoSessao(String descricaoSessao) {
+		this.descricaoSessao = descricaoSessao;
+	}
+
+	public Boolean getMostrarEmenta() {
+		return mostrarEmenta;
+	}
+
+	public void setMostrarEmenta(Boolean mostrarEmenta) {
+		this.mostrarEmenta = mostrarEmenta;
+	}
+
+	public Boolean getMostrarObservacao() {
+		return mostrarObservacao;
+	}
+
+	public void setMostrarObservacao(Boolean mostrarObservacao) {
+		this.mostrarObservacao = mostrarObservacao;
+	}
+
+	public Boolean getMostrarPartes() {
+		return mostrarPartes;
+	}
+
+	public void setMostrarPartes(Boolean mostrarPartes) {
+		this.mostrarPartes = mostrarPartes;
+	}
+	
+	@SuppressWarnings("static-access")
+	public void excluirLista(ListaJulgamento listaJulgamento) {
+		cleanMessages();
+		ObjetoIncidenteDto oi = new ObjetoIncidenteDto();		
+		try {
+			listaJulgamento = listaJulgamentoService.recuperarPorId(listaJulgamento.getId());
+			
+			if (listaJulgamento.getElementos() == null || listaJulgamento.getElementos().size() == 0) {
+				listaJulgamentoService.excluir(listaJulgamento);
+			} else {			
+				Long id = listaJulgamento.getElementos().iterator().next().getId();
+				oi.setId(id);
+				HashSet<ObjetoIncidenteDto> resources = new HashSet<ObjetoIncidenteDto>(Arrays.asList(oi));
+				cancelarLiberacaoParaJulgamentoActionFacesBean.setResources(resources);
+				cancelarLiberacaoParaJulgamentoActionFacesBean.setRemoverProcessosListaJulgamento(cancelarLiberacaoParaJulgamentoActionFacesBean.REMOVER_TODOS_PROCESSOS_DA_LISTA_DE_JULGAMENTO);
+				cancelarLiberacaoParaJulgamentoActionFacesBean.setRemoverProcessosJulgamentoConjunto(cancelarLiberacaoParaJulgamentoActionFacesBean.REMOVER_TODOS_PROCESSOS_EM_JULGAMENTO_CONJUNTO);
+				//cancelarLiberacaoParaJulgamentoActionFacesBean.execute();
+				cancelarLiberacaoParaJulgamentoActionFacesBean.cancelarLiberacao(oi, null);
+			}
+			
+		}catch (ServiceException e) {
+			addWarning(e.getMessage());
+		}catch (Exception e) {
+			addError(e.getMessage());
+			logger.error(e);
+			e.printStackTrace();
+		}
+		
+		if (!hasErrors() && !hasWarnings())  {
+			addInformation(MSG_INFO_LISTA_EXCLUIDA);
+		}		
+		
+		load();
+		setRefresh(true);
+	}
+	
+	public void excluirProcesso(ObjetoIncidenteDto objetoIncidente) {
+		cleanMessages();
+		try {
+			HashSet<ObjetoIncidenteDto> resources = new HashSet<ObjetoIncidenteDto>(Arrays.asList(objetoIncidente));
+			cancelarLiberacaoParaJulgamentoActionFacesBean.setResources(resources);
+			String tipoAmbiente = (this.listaJulgamento!=null?
+									(this.listaJulgamento.getSessao()!=null?this.listaJulgamento.getSessao().getTipoAmbiente():null):null);
+			cancelarLiberacaoParaJulgamentoActionFacesBean.cancelarLiberacao(objetoIncidente, tipoAmbiente);
+			
+			listaDeProcessos.remove(objetoIncidente);
+		}catch (Exception e) {
+			addError(e.getMessage());
+		}
+		
+		if (!hasErrors())
+			addInformation(MSG_INFO_PROCESSO_EXCLUIDO);
+		
+	}
+
+	public void listarProcessos(ListaJulgamento listaJulgamento) {
+		cleanMessages();
+		List<ObjetoIncidenteDto> retorno = new ArrayList<ObjetoIncidenteDto>();
+		setListaJulgamento(listaJulgamento); // Pedido pelo Fabrício para recuperar essa informação na tela
+		
+		addInformation(MSG_INFO_LISTA_PROCESSOS);
+		try {
+			List<ProcessoListaJulgamento> listas = processoListaJulgamentoService.listarProcessos(listaJulgamento);
+			
+			if (listas != null ) {
+				for (ProcessoListaJulgamento lista : listas) {
+					ObjetoIncidenteDto dto = new ObjetoIncidenteDto();
+					dto.setId(lista.getObjetoIncidente().getId());
+					dto.setIdentificacaoLista(lista.getObjetoIncidente().getIdentificacao());
+					dto.setOrdemNaLista(lista.getOrdemNaLista());
+				
+					retorno.add(dto);
+				}
+			}
+		}catch (ServiceException e) {
+			addWarning(e.getMessage());
+		}catch (Exception e) {
+			addError(e.getMessage());
+			logger.error(e);
+			e.printStackTrace();
+		}		
+		listaDeProcessos = retorno;
+		finalizar();
+	}
+
+	public List<ObjetoIncidenteDto> getListaDeProcessos() {
+		return listaDeProcessos;
+	}
+
+	public void setListaDeProcessos(List<ObjetoIncidenteDto> listaDeProcessos) {
+		this.listaDeProcessos = listaDeProcessos;
+	}
+	
+	public void gravarCabecalho() {
+		try {
+			String cabecalhoRelator = listaJulgamento.getCabecalho();
+			String cabecalhoVistor = listaJulgamento.getCabecalhoVistor();
+			
+			listaJulgamento = listaJulgamentoService.recuperarPorId(listaJulgamento.getId());
+			Hibernate.initialize(listaJulgamento.getMinistro());
+			Hibernate.initialize(listaJulgamento.getMinistroVistor());
+			listaJulgamento.setCabecalhoVistor(cabecalhoVistor);
+			listaJulgamento.setCabecalho(cabecalhoRelator);
+				
+			if (idTipoListaJulgamento != null) {
+				listaJulgamento.setTipoListaJulgamento(getTipoLista());
+			}
+			this.listaJulgamento = listaJulgamentoService.salvar(listaJulgamento);
+			addInformation(MSG_INFO_CABECALHO);
+		} catch (ServiceException e) {
+			addError(MSG_ERRO_CABECALHO
+					+ ExportarPreListaJulgamentoActionFacesBean.ESPACO_BRANCO
+					+ e.getMessage());
+			logger.error(MSG_ERRO_CABECALHO, e);
+			e.printStackTrace();
+		}
+	}
+
+	public Boolean getArquivoPronto() {
+		return arquivoPronto;
+	}
+
+	public void setArquivoPronto(Boolean arquivoPronto) {
+		this.arquivoPronto = arquivoPronto;
+	}
+
+	public ByteArrayOutputStream getOutputRelatorio() {
+		return outputRelatorio;
+	}
+
+	public void setOutputRelatorio(ByteArrayOutputStream outputRelatorio) {
+		this.outputRelatorio = outputRelatorio;
+	}
+	
+	public TipoAmbiente getTipoAmbiente() {
+		if (tipoAmbiente == null) {
+			Connection connection = null;
+			try {
+				connection = dataSource.getConnection();
+				DatabaseMetaData dbmd = connection.getMetaData();
+				String url = dbmd.getURL();
+				
+				if (url != null) {
+					if (url.toUpperCase().contains("STFD")) {
+						tipoAmbiente = br.gov.stf.estf.util.TipoAmbiente.DESENVOLVIMENTO;
+					} else if (url.toUpperCase().contains("STFH")) {
+						tipoAmbiente = TipoAmbiente.HOMOLOGACAO;
+					} else if (url.toUpperCase().contains("STFP")) {
+						tipoAmbiente = TipoAmbiente.PRODUCAO;
+					} else if (url.toUpperCase().contains("PNOVO")) {
+						tipoAmbiente = TipoAmbiente.PNOVO;
+					} else if (url.toUpperCase().contains("STFQ")) {
+						tipoAmbiente = TipoAmbiente.TESTE;
+					}
+				}
+				
+				if (url == null || tipoAmbiente == null) {
+					tipoAmbiente = TipoAmbiente.INDETERMINADO;
+				}
+			} catch (SQLException e) {
+				logger.error("Erro ao tentar determinar base de dados alvo.", e);
+			} finally {
+				JdbcUtils.closeConnection(connection);
+			}
+		}
+
+		return tipoAmbiente;
+	}
+	private TipoListaJulgamento getTipoLista(){
+		TipoListaJulgamento tipoListaJulgamento = null;
+		try {
+				tipoListaJulgamento = tipoListaJulgamentoService.recuperarPorId(idTipoListaJulgamento);
+		} catch (ServiceException e) {
+			addError("Erro: ao recuperar o tipo de lista. "+ExportarPreListaJulgamentoActionFacesBean.ESPACO_BRANCO+e.getMessage());
+			logger.error("Erro: ao recuperar o tipo de lista. ", e);
+		}catch (Exception e) {
+			addError(e.getMessage()); 
+			logger.error(e);
+		}
+		return tipoListaJulgamento;
+	}
+	public void carregarTipoListaJulgamento() {
+		this.tipoListaJulgamento = new ArrayList<SelectItem>();
+		try {
+			List<TipoListaJulgamento> tipoListaJulgamentoAtivas = tipoListaJulgamentoService.recuperarTipoListaJulgamentoAtivas();
+			for (TipoListaJulgamento tipoListaJulgamentoItem : tipoListaJulgamentoAtivas) {
+				tipoListaJulgamento.add(new SelectItem(tipoListaJulgamentoItem.getId(), tipoListaJulgamentoItem.getDescricao()));
+			}
+		} catch (ServiceException e) {
+			addError("Erro: ao carregar tipos de lista. "+ExportarPreListaJulgamentoActionFacesBean.ESPACO_BRANCO+e.getMessage());
+			logger.error("Erro: ao carregar tipos de lista. ", e);
+		}catch (Exception e) {
+			addError(e.getMessage()); 
+			logger.error(e);
+			e.printStackTrace();
+		}
+	}
+
+	public Long getIdTipoListaJulgamento() {
+		return idTipoListaJulgamento;
+	}
+
+	public void setIdTipoListaJulgamento(Long idTipoListaJulgamento) {
+		this.idTipoListaJulgamento = idTipoListaJulgamento;
+	}
+
+	public List<SelectItem> getTipoListaJulgamento() {
+		carregarTipoListaJulgamento();
+		return tipoListaJulgamento;
+	}
+
+	public void setTipoListaJulgamento(List<SelectItem> tipoListaJulgamento) {
+		this.tipoListaJulgamento = tipoListaJulgamento;
+	}
+	
+	public boolean getApresentarCabecalhoDoVistor(){
+		return getListaJulgamento().getTipoListaJulgamento().getId().equals(5L) && getMinistro().equals(getListaJulgamento().getMinistroVistor());   
+	}
+
+	public Boolean getMostrarVotoVista() {
+		return mostrarVotoVista;
+	}
+
+	public void setMostrarVotoVista(Boolean mostrarVotoVista) {
+		this.mostrarVotoVista = mostrarVotoVista;
+	}
+	
+	
+}

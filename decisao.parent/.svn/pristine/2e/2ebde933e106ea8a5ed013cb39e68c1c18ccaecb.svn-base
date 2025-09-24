@@ -1,0 +1,87 @@
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <style type="text/css">
+    h2 {
+        text-align: center;
+    }
+    
+    span {
+        font-family: Arial;
+        text-align: justify;
+    }
+    
+    @page {                 
+        margin: 2cm;
+        padding: 0px;
+    }
+                   
+    tr {                 
+        page-break-inside:avoid;                 
+    }
+    </style>							
+</head>
+
+<body style="font-family: Arial; text-align: justify;">
+<center>
+        <span style="font-family: Arial; font-size: 18pt; font-weight: bold;">
+        $ministro
+        
+        #if ($ministroVistor)
+        <br />Ministro Vistor: $ministroVistor
+        #end
+        			
+        #if ($numeroLista)
+        <br />$numeroLista
+        #else
+        <br />Lista
+        #end
+        
+        #if ($sessao)
+        <br /><span style="font-size: 12pt; font-weight: normal;">$sessao</span>
+        #end
+        
+        #if ($descricaoTipo)
+        <br /><br />$descricaoTipo
+        #end
+    </span>
+</center>
+
+#if ($cabecalhoHtml)
+<br /><br />$cabecalhoHtml
+#end
+
+#if ($cabecalhoHtmlVistor)
+<br />$cabecalhoHtmlVistor
+#end
+			
+<br /><br /><center>Total de processos: $listaProcessos.size()</center><br />
+
+<table cellspacing="0" cellpadding="0" border="1" bordercolor="#000000" width="665px">
+	#foreach( $processo in $listaProcessos )
+		<tr style="display: inline-block;">
+			<td valign="middle" width="50px" align="center"><b>$processo.numItemLista</b></td>
+            <td>
+                <span style="text-align:left;"><b>$processo.identificacaoCompletaProcesso</b></span></span><br />
+                    #foreach ($item in $processo.informacoesProcesso)
+                    <br />
+                    <span style="text-align:left;"><b>$item.titulo:</b> </span>
+                    <span>$item.descricao</span>
+                    #end
+                #if ($processo.textoEmenta)
+                    <hr><span>$processo.textoEmenta</span>
+                #end
+                #if ($processo.textoObservacao)
+                    <hr><br><span><b>OBSERVAÇÃO:</b>$processo.textoObservacao</span>
+                #end
+                
+                #if ($processo.textoVotoVista)
+                    <hr><br><span>$processo.textoVotoVista</span>
+                #end
+            </td>
+        </tr>
+    #end
+</table>
+
+</body>
+</html>

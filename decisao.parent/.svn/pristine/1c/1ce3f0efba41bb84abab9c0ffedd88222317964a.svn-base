@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<carimbadores>
+	<servidor nome="BRY" url="tcp://201.49.148.134:318" />
+	<servidor nome="nCipher" url="tcp://201.49.148.131:318" />
+</carimbadores>

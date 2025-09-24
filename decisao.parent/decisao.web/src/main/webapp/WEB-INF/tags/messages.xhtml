@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:s="http://jboss.com/products/seam/taglib"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:rich="http://richfaces.org/rich"
+	xmlns:a="http://richfaces.org/a4j"
+	xmlns:c="http://java.sun.com/jstl/core">
+
+	<s:div styleClass="panel-inset #{styleClass}" style="height: #{height == null ? '76px' : height}" rendered="#{rendered == null ? facesContext.messages.hasNext() : rendered}">
+		<rich:messages globalOnly="true" layout="table" level="#{level == null ? 'ALL' : level}">
+			<f:facet name="infoMarker">
+				<h:graphicImage url="#{passed == null ? '/common/images/info.png' : '/common/images/accept.png'}" />
+			</f:facet>
+			<f:facet name="warnMarker">
+				<h:graphicImage url="/common/images/warning.png" />
+			</f:facet>
+			<f:facet name="errorMarker">
+				<h:graphicImage url="/common/images/iconeErro.gif" />
+			</f:facet>
+		</rich:messages>
+	</s:div>
+</ui:composition>

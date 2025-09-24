@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:s="http://jboss.com/products/seam/taglib"
+    xmlns:ui="http://java.sun.com/jsf/facelets"
+    xmlns:f="http://java.sun.com/jsf/core"
+    xmlns:h="http://java.sun.com/jsf/html"
+    xmlns:rich="http://richfaces.org/rich"
+    xmlns:p="http://primefaces.prime.com.tr/ui" 
+    xmlns:a="http://richfaces.org/a4j"
+    xmlns:c="http://java.sun.com/jstl/core">
+    
+    <c:choose>
+    	<c:when test="#{empty origem}">
+    		<c:set var="registros" value="#{principalFacesBean.currentContext.result}" />
+    		<c:set var="idTextos" value="resultTable" />
+    		<c:set var="headerIdCheck" value="resultPanel:resultTable:" />
+    	</c:when>
+    	<c:otherwise>
+    		<c:set var="registros" value="#{resultado}" />
+    		<c:set var="idTextos" value="resultTableTextos" />
+    		<c:set var="headerIdCheck" value="resultPanel:resultTable:#{principalFacesBean.currentContext.pageIndex - 1}:textosPage:resultTableTextos:" />
+    	</c:otherwise>
+    </c:choose>
+    
+    <a:outputPanel id="panelSelecionados">
+    	<input id="selecionados" type="hidden" value="#{registros.selectedsId}"/>
+    </a:outputPanel>
+    
+    <rich:dataTable id="#{idTextos}" var="_texto" value="#{registros}" rows="#{principalFacesBean.pageSize}" rowClasses="dr-table-row-odd, dr-table-row-even"
+    	styleClass="data-table">
+        <rich:column width="20px" styleClass="dr-table-firstcol dr-table-col-center" headerClass="dr-table-firstcol dr-table-col-center">
+            <f:facet name="header">
+				<a:commandButton image="/common/images/setabaixo.gif" action="#{registros.selectAll()}" oncomplete="checkAll(#{registros.selectedsId}, #{principalFacesBean.pageSize}, '#{headerIdCheck}', #{principalFacesBean.currentContext.pageIndex})" reRender="#{(empty origem) ? 'actionPanel':'textosActionPanel'}, panelSelecionados, panelMenuAssinar" ajaxSingle="true" eventsQueue="ajaxQueue" ignoreDupResponses="true"/>
+            </f:facet>
+            <h:selectBooleanCheckbox styleClass="#{_texto.id}" id="check" value="#{_texto.selected}" disabled="#{empty _texto.id or _texto.isCancelado()}" onclick="this.blur()">
+            	<a:support event="onchange" action="#{registros.changeSelection(_texto)}" reRender="#{(empty origem)? 'actionPanel':'textosActionPanel'}, panelMenuAssinar" ajaxSingle="true" eventsQueue="ajaxQueue" ignoreDupResponses="true"/>
+            </h:selectBooleanCheckbox>
+        </rich:column>
+        <rich:column width="20px">
+            <f:facet name="header">
+            	<s:span>
+            		<img src="#{facesContext.externalContext.requestContextPath}/common/images/star.png"/>
+            	</s:span>
+            </f:facet>
+            <s:decorate template="/common/decorators/favorito.xhtml">
+				<ui:param name="texto" value="#{_texto}" />
+			</s:decorate>
+        </rich:column>
+        <rich:column width="120px">
+            <f:facet name="header">Processo</f:facet>
+			<h:outputText rendered="#{_texto.eletronico}" value="e" styleClass="vermelho" />
+            <h:outputText value="#{_texto.processo}"/>
+            
+        </rich:column>
+        <rich:column headerClass="leftAlign" width="150px">
+            <f:facet name="header">Texto</f:facet>
+            <div class="tipoTexto">
+	            <a:commandLink action="#{principalFacesBean.visualizar(registros, _texto)}" reRender="resultPanel" ajaxSingle="true" immediate="true" eventsQueue="ajaxQueue" ignoreDupResponses="true" title="Visualizar Texto">
+		            <h:outputText value="#{_texto.tipoTexto.descricao}"/>
+	            </a:commandLink>
+	            <s:span rendered="#{_texto.assinado}">
+					<img src="#{facesContext.externalContext.requestContextPath}/common/images/text_signature.png" title="Texto Assinado"/>
+				</s:span>
+				<s:span rendered="#{_texto.cancelado}">
+					<img src="#{facesContext.externalContext.requestContextPath}/common/images/cross.png" title="Texto Cancelado"/>
+				</s:span>
+                <s:span rendered="#{_texto.origemDigital}">
+                    <img src="#{facesContext.externalContext.requestContextPath}/common/images/stfdigital.png" title="Texto criado no sistema STF-Digital" width="16"/>
+                </s:span>
+            </div>
+        </rich:column>
+        <rich:column>
+            <f:facet name="header">Observação</f:facet>
+            <h:outputText value="#{_texto.observacao}"/>
+        </rich:column>
+        <rich:column width="130px" headerClass="leftAlign">
+            <f:facet name="header">Fase</f:facet>
+            <h:outputText value="#{_texto.fase.descricao}"/>
+        </rich:column>
+
+        <rich:column width="50px" headerClass="leftAlign">
+            <f:facet name="header">Ministro</f:facet>
+            <h:outputText title="#{_texto.nomeMinistro}" value="#{_texto.ministro}"/>           
+        </rich:column>
+
+
+        <rich:column width="240px" headerClass="leftAlign">
+            <f:facet name="header">Responsável</f:facet>
+           	<h:outputText value="#{_texto.nomeGrupo}" rendered="#{_texto.idMinistro == userFacesBean.principal.ministro.id and _texto.nomeGrupo != null}"/>
+            <h:outputText value="#{_texto.responsavel}" rendered="#{_texto.idMinistro == userFacesBean.principal.ministro.id and _texto.nomeGrupo == null}"/>
+        </rich:column>
+        <rich:column width="80px">
+            <f:facet name="header">Data Início</f:facet>
+            <h:outputText value="#{_texto.dataInicio}"/>
+        </rich:column>
+        <rich:column width="80px">
+            <f:facet name="header">Controle voto</f:facet>
+            		<a:commandLink value="Sim" eventsQueue="ajaxQueue" ignoreDupResponses="true" rendered="#{_texto.existeControleVotos and _texto.exibirInfoControleVoto}"/>
+            		<rich:toolTip followMouse="true" direction="top-right"
+						showDelay="100" 
+						rendered="#{_texto.existeControleVotos and _texto.exibirInfoControleVoto}">
+						<h:panelGrid columns="2" style="font-weight: bold; color: #666666; ">
+							<span style="width:150px;" >Sequência:</span>
+							<h:outputText value="#{_texto.sequenciaVotos}" />
+							<span style="width:150px;">Dt. Sessão:</span>
+							<h:outputText  value=" #{_texto.descricaoDataSessao}" />
+							<span style="width:150px;">Colegiado:</span>
+							<h:outputText value=" #{_texto.tipoSessao}" />		
+						</h:panelGrid>
+					</rich:toolTip>
+					<h:outputText value="Sim" rendered="#{_texto.existeControleVotos and not _texto.exibirInfoControleVoto}" />
+            		<h:outputText value="Não" rendered="#{not _texto.existeControleVotos}"/>
+        </rich:column>
+        <rich:column width="80px" styleClass="dr-table-lastcol" headerClass="dr-table-lastcol" id="acoes">
+			<h:commandLink action="#{textoFacesBean.editar(_texto)}" rendered="#{(_texto.visivel or _texto.fake or (userFacesBean.principal.usuario.nome == _texto.responsavel)) and not _texto.cancelado and not _texto.deOutroSetor}" disabled="#{textoFacesBean.isTextoDoDigital(_texto)}" title="#{textoFacesBean.isTextoDoDigital(_texto)?'Não é permitido editar um texto do STF-Digital':'Editar Texto'}">
+				<h:graphicImage value="/common/images/page_white_edit.png" style="margin-right: 3px"/>
+			</h:commandLink>
+			
+			<h:commandLink action="#{textoFacesBean.print(_texto)}" rendered="#{not empty _texto.id and _texto.visivel and not _texto.cancelado}">
+				<h:graphicImage value="/common/images/printer.png" title="Imprimir Texto" style="margin-right: 3px"/>
+			</h:commandLink>
+			
+			<a:commandLink
+				action="#{textoFacesBean.carregarHistoricoFases(_texto)}"
+				oncomplete="#{rich:component('historicoFasesPanel')}.show()"
+				ajaxSingle="true" immediate="true" eventsQueue="ajaxQueue" ignoreDupResponses="true"
+				rendered="#{not _texto.cancelado}"
+				reRender="historicoFasesPanel, messageshistoricoFasesPanel">
+				<h:graphicImage value="/common/images/historico_com_observacao.png" rendered="#{_texto.possuiObservacaoFase and not _texto.deOutroSetor}"
+					title="Histórico de Fases - Possui Observação" style="margin-right: 3px"/>
+				<h:graphicImage value="/common/images/historico_sem_observacao.png" rendered="#{not _texto.possuiObservacaoFase and not _texto.deOutroSetor}"
+					title="Histórico de Fases - Não Possui Observação" style="margin-right: 3px"/>
+			</a:commandLink>
+			
+			<a:commandLink rendered="#{_texto.textosIguais and _texto.visivel}"
+				action="#{textoFacesBean.carregarTextosIguais(_texto)}"
+				ajaxSingle="true"
+				oncomplete="#{rich:component('panelTextosIguais')}.show()"
+				immediate="true" eventsQueue="ajaxQueue" ignoreDupResponses="true" reRender="pnlTextosIguais">
+				<h:graphicImage value="/common/images/page_white_stack.png"
+					title="Textos iguais" style="margin-right: 3px"/>
+			</a:commandLink>
+			
+			<s:span rendered="#{_texto.restrito and not _texto.fake}">
+				<img src="#{facesContext.externalContext.requestContextPath}/common/images/locked.png" title="Texto Restrito" style="margin-right: 3px"/>
+			</s:span>
+			
+			<h:graphicImage value="/common/images/eye.png" title="Texto liberado para visualização por outros ministros" style="margin-right: 3px; height: 16px;" rendered="#{textoFacesBean.podeVisualizarTextoAntecipadamente(_texto)}"/>
+			
+			<h:graphicImage value="/common/images/like.png" title="Acompanha o relator" style="margin-right: 3px; height: 18px;" rendered="#{_texto.tipoVoto.id == 9}"/>
+			
+			<h:outputText value="D" title="Diverge do relator" style="vertical-align: top; font-size: 16px; color: black; font-weight: bold; " rendered="#{_texto.tipoVoto.id == 7}"/>
+			
+        </rich:column>
+    </rich:dataTable>
+    
+</ui:composition>

@@ -1,0 +1,31 @@
+<div id="login" style="display: none;">
+	<div class="container animated fadeIn">
+		<div class="row">
+			<div class="col-md-12 logo-black"></div>
+		</div>
+		<div class="row">
+			<div class="col-md-12 logo-assinador"></div>
+		</div>
+		<div class="row">
+			<div
+				class="col-xs-12 col-sm-8 col-sm-offset-2 col-md-4 col-md-offset-4 mensagem-erro-login alert alert-error"></div>
+		</div>
+		<div id="div-formulario-login" class="row form-row">
+			<div
+				class="col-xs-12 col-sm-8 col-sm-offset-2 col-md-4 col-md-offset-4 input-group">
+				<input id="usuario" class="form-control required" tabindex="2"
+					placeholder="Usuário" accesskey="u" type="text" value=""
+					autocomplete="false" tabindex="1" /><input id="senha"
+					class="form-control required" tabindex="3" placeholder="Senha"
+					accesskey="s" type="password" value="" autocomplete="off" /> <input
+					id="botaoLogin" type="button" class="form-control btn btn-success"
+					accesskey="l" value="Entrar">
+			</div>
+		</div>
+		<div id="div-loader-login" style="display: none;">
+			<div class="col-md-12 text-center">
+				<img src="assets_stf/img/loader/Preloader_3_64.gif" class="loader" />
+			</div>
+		</div>
+	</div>
+</div>

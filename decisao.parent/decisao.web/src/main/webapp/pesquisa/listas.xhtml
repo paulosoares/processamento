@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:s="http://jboss.com/products/seam/taglib"
+    xmlns:ui="http://java.sun.com/jsf/facelets"
+    xmlns:f="http://java.sun.com/jsf/core"
+    xmlns:h="http://java.sun.com/jsf/html"
+    xmlns:rich="http://richfaces.org/rich"
+    xmlns:p="http://primefaces.prime.com.tr/ui" 
+    xmlns:a="http://richfaces.org/a4j"
+    xmlns:c="http://java.sun.com/jstl/core">
+
+    <rich:dataTable id="resultTable"
+    				var="_lista"
+    				value="#{principalFacesBean.currentContext.result}"
+    				rendered="#{not empty principalFacesBean.currentContext.result}"
+    				rows="#{principalFacesBean.pageSize}"
+    				styleClass="data-table"
+    				rowClasses="dr-table-row-odd, dr-table-row-even">
+        <rich:column width="20px" styleClass="dr-table-firstcol dr-table-col-center" headerClass="dr-table-firstcol dr-table-col-center">
+            <f:facet name="header">
+				<a:commandButton image="/common/images/setabaixo.gif" action="#{principalFacesBean.currentContext.result.selectAll()}" reRender="actionPanel, resultTable" ajaxSingle="true" eventsQueue="ajaxQueue" ignoreDupResponses="true"/>
+            </f:facet>
+            <h:selectBooleanCheckbox value="#{_lista.selected}">
+            	<a:support event="onchange" action="#{principalFacesBean.currentContext.result.changeSelection(_lista)}" reRender="actionPanel" ajaxSingle="true" eventsQueue="ajaxQueue" ignoreDupResponses="true"/>
+            </h:selectBooleanCheckbox>
+        </rich:column>
+        <rich:column styleClass="dr-table-lastcol" headerClass="dr-table-lastcol">
+            <f:facet name="header">Nome</f:facet>
+            <h:outputText value="#{_lista.nome}"/>
+        </rich:column>
+    </rich:dataTable>
+
+</ui:composition>

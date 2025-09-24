@@ -1,0 +1,188 @@
+package br.jus.stf.estf.decisao.texto.support;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import br.gov.stf.estf.cabecalho.model.CabecalhosObjetoIncidente.CabecalhoObjetoIncidente;
+import br.gov.stf.estf.cabecalho.service.CabecalhoObjetoIncidenteService;
+import br.gov.stf.estf.documento.model.service.DocumentoEletronicoService;
+import br.gov.stf.estf.documento.model.service.impl.TextoServiceImpl;
+import br.gov.stf.estf.entidade.documento.ControleVoto;
+import br.gov.stf.estf.entidade.documento.DocumentoEletronico;
+import br.gov.stf.estf.entidade.documento.Texto;
+import br.gov.stf.estf.entidade.documento.tipofase.FaseTexto;
+import br.gov.stf.estf.entidade.processostf.ObjetoIncidente;
+import br.gov.stf.estf.julgamento.model.service.SessaoService;
+import br.gov.stf.framework.model.service.ServiceException;
+import br.jus.stf.estf.montadortexto.DadosMontagemTexto;
+import br.jus.stf.estf.montadortexto.SpecCabecalho;
+import br.jus.stf.estf.montadortexto.SpecDadosTexto;
+import br.jus.stf.estf.montadortexto.SpecMarcaDagua;
+import br.jus.stf.estf.montadortexto.tools.ByteArrayTextoSource;
+
+@Component
+public class DadosMontagemTextoBuilder {
+
+	private final CabecalhoObjetoIncidenteService cabecalhoObjetoIncidenteService;
+	private final DocumentoEletronicoService documentoEletronicoService;
+	private final SessaoService sessaoService;
+
+	@Autowired
+	private DadosMontagemTextoBuilder(CabecalhoObjetoIncidenteService cabecalhoObjetoIncidenteService,
+			DocumentoEletronicoService documentoEletronicoService,
+			SessaoService sessaoService) {
+		this.cabecalhoObjetoIncidenteService = cabecalhoObjetoIncidenteService;
+		this.documentoEletronicoService = documentoEletronicoService;
+		this.sessaoService = sessaoService;
+	}
+
+	public DadosMontagemTexto<Long> montaDadosMontagemTexto(ObjetoIncidente objetoIncidente) throws ServiceException {
+		DadosMontagemTexto<Long> dados = criaDadosMontagemTexto();
+		SpecDadosTexto specDados = new SpecDadosTexto();
+		carregarDescricaoCurtaProcesso(objetoIncidente, specDados);
+		dados.setSpecDados(specDados);
+		return dados;
+	}
+
+	public DadosMontagemTexto<Long> montaDadosMontagemTexto(Texto texto) throws ServiceException {
+		return montaDadosMontagemTexto(texto, true);
+	}
+
+	public DadosMontagemTexto<Long> montaDadosMontagemTexto(Texto texto, boolean inserirMarcaDagua)
+			throws ServiceException {
+		return montaDadosMontagemTexto(texto, inserirMarcaDagua, null, null, true);
+	}
+	
+	public DadosMontagemTexto<Long> montaDadosMontagemTexto(Texto texto, boolean inserirMarcaDagua,
+			String textoMarcaDagua) throws ServiceException {
+		return montaDadosMontagemTexto(texto, inserirMarcaDagua, null, textoMarcaDagua, true);
+	}
+
+	public DadosMontagemTexto<Long> montaDadosMontagemTexto(Texto texto, boolean inserirMarcaDagua, byte[] conteudo)
+			throws ServiceException {
+		return montaDadosMontagemTexto(texto, inserirMarcaDagua, conteudo, null, true);
+	}
+
+	public DadosMontagemTexto<Long> montaDadosMontagemTexto(Texto texto, boolean inserirMarcaDagua, byte[] conteudo,
+			String textoMarcaDagua, boolean usarPdfAssinado) throws ServiceException {
+		DadosMontagemTexto<Long> dadosMontagem = criaDadosMontagemTexto();
+		dadosMontagem.setSpecDados(montaDadosDeInformacaoDoTexto(texto));
+		defineConteudoTexto(texto, conteudo, dadosMontagem, usarPdfAssinado);
+		insereCabecalho(texto, dadosMontagem);
+		verificaMarcaDagua(texto, inserirMarcaDagua, textoMarcaDagua, dadosMontagem);
+		return dadosMontagem;
+	}
+
+	/**
+	 * Carrega no {@link DadosMontagemTexto} o conteúdo do documento. Caso o conteúdo tenha sido repassado para
+	 * o método, utiliza ele mesmo. Caso não tenha, monta dinamicamente
+	 * @param texto
+	 * @param conteudo
+	 * @param dadosMontagem
+	 * @param usarPdfAssinado Indica se o conteúdo que deve ser utilizado é o do PDF do texto assinado, se existir
+	 * @throws ServiceException
+	 */
+	private void defineConteudoTexto(Texto texto, byte[] conteudo, DadosMontagemTexto<Long> dadosMontagem,
+			boolean usarPdfAssinado) throws ServiceException {
+		dadosMontagem.setPdfGerado(false);
+		if (conteudo == null) {
+			conteudo = geraConteudoDoTexto(texto, conteudo, dadosMontagem, usarPdfAssinado);
+		}
+		insereTextoSource(conteudo, dadosMontagem);
+	}
+
+	/**
+	 * Gera o conteúdo do texto, obedecendo à seguinte regra:
+	 * 1) Se o texto já estiver assinado, e a variável usarTextoAssinado estiver como true, recupera o conteúdo do PDF
+	 * 2) Caso contrário, recupera o conteúdo do RTF original
+	 * @param texto
+	 * @param conteudo
+	 * @param dadosMontagem
+	 * @param usarPdfAssinado
+	 * @return
+	 * @throws ServiceException
+	 */
+	private byte[] geraConteudoDoTexto(Texto texto, byte[] conteudo, DadosMontagemTexto<Long> dadosMontagem,
+			boolean usarPdfAssinado) throws ServiceException {
+		if (usarPdfAssinado && FaseTexto.fasesComTextoAssinado.contains(texto.getTipoFaseTextoDocumento())) {
+			DocumentoEletronico documento = documentoEletronicoService
+					.recuperarUltimoDocumentoEletronicoAtivo(texto);
+			if (documento != null
+					&& DocumentoEletronico.SIGLA_DESCRICAO_STATUS_ASSINADO.equals(documento
+							.getDescricaoStatusDocumento())) {
+				dadosMontagem.setPdfGerado(true);
+				conteudo = documento.getArquivo();
+			} else {
+				conteudo = texto.getArquivoEletronico().getConteudo();
+			}
+		} else {
+			conteudo = texto.getArquivoEletronico().getConteudo();
+		}
+		return conteudo;
+	}
+
+	private void verificaMarcaDagua(Texto texto, boolean inserirMarcaDagua, String textoMarcaDagua,
+			DadosMontagemTexto<Long> dadosMontagem) {
+		if (textoMarcaDagua == null) {
+			insereDadosMarcaDagua(texto, inserirMarcaDagua, dadosMontagem);
+		} else {
+			insereDadosMarcaDagua(dadosMontagem, textoMarcaDagua);
+		}
+	}
+	
+	private DadosMontagemTexto<Long> criaDadosMontagemTexto() {
+		return new DadosMontagemTexto<Long>();
+	}
+
+	private void insereDadosMarcaDagua(Texto texto, boolean inserirMarcaDagua, DadosMontagemTexto<Long> dadosMontagem) {
+		if (inserirMarcaDagua && texto.getTipoFaseTextoDocumento() != null
+				&& !FaseTexto.fasesComTextoAssinado.contains(texto.getTipoFaseTextoDocumento())) {
+			insereDadosMarcaDagua(dadosMontagem, texto.getTipoFaseTextoDocumento().getDescricao());
+		} else {
+			insereDadosMarcaDagua(dadosMontagem, "");
+		}
+	}
+
+	private void insereDadosMarcaDagua(DadosMontagemTexto<Long> dadosMontagem, String textoMarcaDagua) {
+		SpecMarcaDagua specMarcaDagua = new SpecMarcaDagua(textoMarcaDagua);
+		dadosMontagem.setSpecMarcaDagua(specMarcaDagua);
+	}
+
+	private void insereCabecalho(Texto texto, DadosMontagemTexto<Long> dadosMontagem) throws ServiceException {
+		CabecalhoObjetoIncidente cabecalho = cabecalhoObjetoIncidenteService.recuperarCabecalho(texto
+				.getObjetoIncidente().getId());
+		cabecalho.setSequencialTexto(texto.getId());
+		SpecCabecalho<Long> specCabecalho = cabecalhoObjetoIncidenteService.getSpecCabecalho(cabecalho);
+		dadosMontagem.setSpecCabecalho(specCabecalho);
+	}
+
+	private void insereTextoSource(byte[] conteudo, DadosMontagemTexto<Long> dadosMontagem) {
+		ByteArrayTextoSource source = new ByteArrayTextoSource(conteudo);
+		dadosMontagem.setTextoSource(source);
+	}
+
+	private SpecDadosTexto montaDadosDeInformacaoDoTexto(Texto texto) {
+		SpecDadosTexto specDados = new SpecDadosTexto();
+		ControleVoto controleVoto = texto.getControleVoto();
+		long codigoTipoTexto = texto.getTipoTexto().getCodigo();
+		specDados.setMostrarDadosSessao(isMostrarDadosSessao(controleVoto, codigoTipoTexto));
+		if (controleVoto != null) {
+			specDados.setDataSessao(controleVoto.getDataSessao());
+			specDados.setColegiado(controleVoto.getSessao().getDescricao());
+		}
+		specDados.setVoto(TextoServiceImpl.isVoto(codigoTipoTexto));
+		carregarDescricaoCurtaProcesso(texto.getObjetoIncidente(), specDados);
+		return specDados;
+	}
+
+	private void carregarDescricaoCurtaProcesso(ObjetoIncidente<?> objetoIncidente, SpecDadosTexto specDados) {
+		specDados.setDescricaoCurtaProcesso(objetoIncidente.getIdentificacao());
+	}
+
+	private boolean isMostrarDadosSessao(ControleVoto controleVoto, long codigoTipoTexto) {
+		return (!TextoServiceImpl.isDespacho(codigoTipoTexto))
+				&& (!TextoServiceImpl.isDecisaoMonocratica(codigoTipoTexto))
+				&& (controleVoto != null)
+				&& (controleVoto.getDataSessao() != null);
+	}
+}

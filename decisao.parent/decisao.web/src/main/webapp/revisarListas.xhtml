@@ -1,0 +1,550 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:s="http://jboss.com/products/seam/taglib"
+    xmlns:ui="http://java.sun.com/jsf/facelets"
+    xmlns:f="http://java.sun.com/jsf/core"
+    xmlns:a="http://richfaces.org/a4j"
+    xmlns:h="http://java.sun.com/jsf/html"
+    xmlns:rich="http://richfaces.org/rich"
+    xmlns:c="http://java.sun.com/jstl/core"
+    xmlns:a4j="http://richfaces.org/a4j"
+    xmlns:stf="http://www.stf.jus.br/custom-components"
+    xmlns:p="http://java.sun.com/jsf/passthrough"
+    template="/common/decorators/template.xhtml">
+
+   	<ui:define name="body" styleClass="actionContainer">
+   		<rich:editor rendered="false"/>
+   		
+	   	<a4j:form>
+	   		<a4j:jsFunction name="processaRemocaoAjax" action="#{revisarListasFacesBean.processaRemocaoAjax}" reRender="categoriasContainer, errorMessage">
+	            <a4j:actionparam name="colId" assignTo="#{revisarListasFacesBean.remocaoAjaxId}"  />
+	            <a4j:actionparam name="objNome" assignTo="#{revisarListasFacesBean.remocaoAjaxNome}"  />                  
+	        </a4j:jsFunction>
+	        
+	        <a4j:jsFunction name="processarTodosComoRevisadosAjax" action="#{revisarListasFacesBean.processarTodosComoRevisadosAjax}" reRender="categoriasContainer, errorMessage">
+	            <a4j:actionparam name="colId" assignTo="#{revisarListasFacesBean.colunaMarcarTodosAjaxId}"  />                  
+	        </a4j:jsFunction>
+        </a4j:form>
+   		
+   		<script type="text/javascript">
+   			//<![CDATA[
+   				var irParaTipoTexto;
+				(function($) { $(function() {
+					$('body').delegate('.trash-icon', 'click', function() {
+						$semLista = $('.semLista .rich-panel-body');
+						$this = $(this);
+						$dnd = $this.parent();
+						
+						$destTop = 0;
+						$destLeft = 0;
+						
+						if ($semLista.length == 0) {
+							$destTop = $dnd.offset().top;
+							$destLeft = $dnd.offset().left;					
+						} else {
+							$destTop = $semLista.offset().top;
+							$destLeft = $semLista.offset().left;
+						}
+						
+						$dnd.css({
+							'position': 'absolute',
+							'top': $dnd.offset().top,
+							'left': $dnd.offset().left,
+							'width': $dnd.innerWidth(),
+							'height': $dnd.innerHeight(),
+							'z-index': 100,
+							'overflow': 'hidden',
+							'opacity': 1
+						}).animate({
+							'top': $destTop,
+							'left': $destLeft,
+							'width': 15,
+							'height': 15,
+							'opacity': 0.1
+						}, 750, 'swing', function() {
+							processaRemocaoAjax($this.attr('data-col-id'), $this.attr('data-obj-nome'));
+						});
+						
+					});
+					
+					$('body').delegate('.marcarTodosComoRevisados', 'click', function() {
+						marcado = !$(this).is(":checked");
+						msg = 'Deseja marcar todos os processos como' + (marcado ? ' NÃO' : ' ') + ' revisados?'; 
+						
+						if (confirm(msg)) {
+							columnId = $(this).parent().attr('data-col-id');
+							processarTodosComoRevisadosAjax(columnId); 
+						}
+					})
+					
+					limparIdentificacaoProcesso = function() {
+						$('.identificacaoProcessoIT').val('');
+					}
+					
+					irParaTipoTexto = function(clazz) {
+						var textoContainerSelector = '#containerPrincipalAgrupar .conteudoTextos';
+						var getHeight = function(jqEl) {
+							if (jqEl.length == 0) {
+								return 0;
+							} else {
+								return jqEl.height() + 10;
+							}
+						};
+						switch (clazz) {
+							case 'textoEmenta':
+								$(textoContainerSelector).scrollTop(0);
+								break;
+							case 'textoRelatorio':
+								var scrollOffset = getHeight($('#containerPrincipalAgrupar .textoEmenta'));
+								$(textoContainerSelector).scrollTop(scrollOffset);
+								break;
+							case 'textoVoto':
+								var scrollOffset = getHeight($('#containerPrincipalAgrupar .textoEmenta'));
+								scrollOffset += getHeight($('#containerPrincipalAgrupar .textoRelatorio'));
+								$(textoContainerSelector).scrollTop(scrollOffset);
+								break;
+						};
+					};
+				})})(jQuery);
+			//]]> 	 			
+   		</script>
+		<script>
+		   	var isObservacaoEmEdicao = false;
+		   	var saveObservacao = true;
+		   	function verificarEdicaoObservacao(){
+		   		saveObservacao = false;
+		   		if(isObservacaoEmEdicao){
+		   			if(!confirm('Você ainda não salvou as alterações na observação do Incidente, deseja continuar?')){
+		   				saveObservacao = true;
+		   				return false;
+		   			}
+		   		}
+		   		return true;
+		   	}
+		</script>
+		<s:link value="« Voltar à página principal" action="#{principalFacesBean.limparAcaoAtual()}" view="/principal.xhtml" includePageParams="false" propagation="none" styleClass="goBack"/>
+   			
+   			<a:outputPanel id="errorMessage">
+		   		<c:if test="#{revisarListasFacesBean.hasError()}">
+		   			<stf:messages level="ERROR" height="auto" />
+		   		</c:if>
+	   		</a:outputPanel>
+			
+   		<a:outputPanel  id="containerPrincipalAgrupar" rendered="#{userFacesBean.principal.idSetor != null}">
+			<div class="actions">
+				<div class="inputGroup">
+					<div class="name" style="width: auto !important">Adicionar Processos</div>
+					<div class="value">
+						<h:form styleClass="edit">
+							<h:inputText id="identificacaoProcesso"
+								value="#{principalFacesBean.pesquisaPrincipal.parameters['identificacao']}"
+								onkeydown="return noCtrlJ(event);"
+								onkeypress="return noEnter(event);"
+								onclick="exibirSuggestionBoxPesquisaProcesso(this, #{rich:component('sgBoxProcessoPesquisaPrincipal')});"
+								style="width: 200px" 								
+								/>
+
+							<rich:suggestionbox
+								id="sgBoxProcessoPesquisaPrincipal"
+								suggestionAction="#{incidenteFacesBean.searchWithoutFake}"
+								for="identificacaoProcesso" var="result" minChars="1"
+								fetchValue="#{result.identificacao}"
+								nothingLabel="Nenhum registro encontrado." width="400"
+								eventsQueue="ajaxQueue"
+								ignoreDupResponses="true">
+								
+								<a:support action="#{revisarListasFacesBean.selecionarObjetoIncidente(result)}"
+									ajaxSingle="true" event="onselect" reRender="messagesPanel, categoriasContainer, errorMessage, outputPanelModalConfirmar, containerPrincipalAgrupar"
+									eventsQueue="ajaxQueue" ignoreDupResponses="true" oncomplete="if (#{revisarListasFacesBean.incidenteJulgado}) Richfaces.showModalPanel('confirmarIncidenteJulgado');" />
+			
+								<h:column>
+									<h:outputText rendered="#{result.eletronico}" value="e"
+										styleClass="vermelho" />
+									<h:outputText value="#{result.identificacao}"
+										styleClass="oiSuggestion" />
+									<h:outputText value=" » " />
+									<h:outputText value="#{result.nomeRelator}"
+										styleClass="#{(result.idRelator != userFacesBean.principal.ministro.id) ? 'oiSuggestion' : 'green'}" />
+								</h:column>
+							</rich:suggestionbox>
+						</h:form>
+					</div>
+				</div>
+
+				<div class="inputGroup">
+					<div class="value">
+						<h:form id="categoriaAddForm" styleClass="edit">
+							<a:commandButton value="Gerenciar pré-listas"
+							action="#{actionHolder.setAction(revisarListasFacesBean.getAcaoCriarPreLista())}"
+							reRender="actionModalPanel" 
+							oncomplete="Richfaces.showModalPanel('panelItem');" 
+							styleClass="action-button action-button-160px" 
+							eventsQueue="ajaxQueue" 
+							ignoreDupResponses="true"/> 	
+						</h:form>
+					</div>
+					<div class="value">
+						<h:form id="gerenciarListasLiberada" styleClass="edit">
+							<a:commandButton value="Ver listas liberadas"
+							action="#{actionHolder.setAction(revisarListasFacesBean.getAcaoGerenciarListasLiberadas())}"
+							reRender="actionModalPanel" 
+							oncomplete="Richfaces.showModalPanel('panelItem');" 
+							styleClass="action-button action-button-160px button-listas-liberadas" 
+							eventsQueue="ajaxQueue" 
+							ignoreDupResponses="true"/> 	
+						</h:form>
+					</div>
+					<div class="value">
+						<h:form id="simularDataSessao" styleClass="edit">
+							<a:commandButton value="Simular data de sessão"
+							reRender="actionModalPanel" 
+							oncomplete="Richfaces.showModalPanel('dataSessaoModalPanel');" 
+							styleClass="action-button action-button-160px" 
+							eventsQueue="ajaxQueue" 
+							ignoreDupResponses="true"/> 	
+						</h:form>
+					</div>										
+				</div>
+			</div>				
+			<h:form>
+				<h:panelGrid columnClasses="panelc" columns="4" width="#{revisarListasFacesBean.objetoIncidenteParaVisualizar != null ? '50%' : '100%' }" id="categoriasContainer" styleClass="categoriasContainer">
+		            <c:forEach var="coluna" items="#{revisarListasFacesBean.colunas}">
+			            <rich:panel styleClass="dropTargetPanel #{(coluna.id == revisarListasFacesBean.idSemLista ? 'semLista' : '')}#{(coluna.id gt 0 and coluna.id le 40)  ? 'destaquesCancelados' : ''}" rendered="#{revisarListasFacesBean.exibirColuna(coluna.id)}">
+
+			                <div class="dr-pnl-h rich-panel-header">			                
+				                <div style="float:left">
+					                <s:span rendered="#{coluna.temObjetos}">
+					                	<span data-col-id="#{coluna.id}">
+						                	<h:selectBooleanCheckbox 
+						                		rendered="#{coluna.id != revisarListasFacesBean.idSemLista}" 
+						                		class="marcarTodosComoRevisados"
+						                		value="#{coluna.todosRevisados}"
+						                		/>
+				                		</span>
+				                	</s:span>
+					                <h:outputText value="#{coluna.nome}"/>
+				                </div>
+				                <div style="float:right; padding-right: 4px;">
+									<!-- Botão expandir -->
+					                <h:panelGroup layout="block" rendered="#{coluna.id != revisarListasFacesBean.idSemLista}">
+						                <h:commandLink action="#{revisarListasFacesBean.setIdColunaSelecionada(coluna.id)}" rendered="#{!revisarListasFacesBean.hasColunaSelecionada()}">				                					                					                    
+						       				<h:graphicImage styleClass="btnFecharTexto" url="/common/images/full_screen.png" title="#{objeto.motivo.descricao}" />
+						       			</h:commandLink>
+						                <h:commandLink action="#{revisarListasFacesBean.setIdColunaSelecionada(null)}" rendered="#{revisarListasFacesBean.hasColunaSelecionada()}">
+						       				<h:graphicImage styleClass="btnFecharTexto" url="/common/images/unfull_screen.png" title="#{objeto.motivo.descricao}"/>
+						       			</h:commandLink>
+					                </h:panelGroup>	
+					                
+					                 <!-- Botão Impressora -->
+				                	<c:if  test="#{coluna.id != revisarListasFacesBean.idSemLista}">
+					                	<a:commandButton styleClass="btnPrint" 
+					                	 				value=""
+					                	 				rendered="#{coluna.temObjetos}"
+														action="#{actionHolder.setAction(revisarListasFacesBean.getAcaoExportarPreListaJulgamento(coluna.id))}"
+														reRender="actionModalPanel" 
+														oncomplete="Richfaces.showModalPanel('panelItem');"  
+														eventsQueue="ajaxQueue" 
+														ignoreDupResponses="true"/>
+									</c:if>	
+								</div>
+								<div style="clear:both;"></div>	                
+			                </div>
+			                <rich:dropSupport rendered="#{coluna.id gt 40 or coluna.id lt 0}"
+			                	acceptedTypes="Draggable"
+			                	dropValue="#{coluna}"
+			                    dropListener="#{revisarListasFacesBean.processDrop}"
+			                    reRender="categoriasContainer,errorMessage">
+			                </rich:dropSupport>
+							
+							<c:choose>
+								<c:when test="#{((coluna.objetos.isEmpty()) and (coluna.id == revisarListasFacesBean.idSemLista))}">
+					                <span class="semListaMessage">Não há processos sem lista</span>
+				                </c:when>
+				                <c:otherwise>
+				                	<h:dataTable columns="1" value="#{coluna.objetos}" var="objeto">
+					                    <h:column>
+					                        <a4j:outputPanel styleClass="dnd-item #{objeto.revisado ? 'revisado' : ''}" layout="block">
+					                            <rich:dragSupport rendered="#{coluna.id gt 40 or coluna.id lt 0}"
+					                            	dragIndicator=":indicator"
+					                                dragType="Draggable"
+					                                dragValue="#{objeto}">
+					                                <rich:dndParam name="label" value="#{objeto.nome}" />
+					                            </rich:dragSupport>
+					                            
+												<h:selectBooleanCheckbox id="checkbox" class="revisarCheckbox" value="#{objeto.revisado}" rendered="#{coluna.id != revisarListasFacesBean.idSemLista}" >
+					                            	<a4j:support event="onclick" action="#{revisarListasFacesBean.processaCheckboxRevisao(objeto, coluna)}" reRender="containerPrincipalAgrupar, hintRevisao" eventsQueue="ajaxQueue" ignoreDupResponses="true" />
+					                            </h:selectBooleanCheckbox>
+					                            <h:graphicImage styleClass="warning-icon" url="/common/images/warning.png" rendered="#{objeto.temAdvertencias}" title="#{objeto.motivo.descricao}"/>
+					                            <a:commandLink title="Visualizar Textos"  action="#{revisarListasFacesBean.selecionarObjetoIncidenteParaVisualizar(objeto.instancia,coluna)}" reRender="containerPrincipalAgrupar" onclick="if(!verificarEdicaoObservacao()) return false">					                            	
+					                            	<h:outputText styleClass="vermelho" rendered="#{objeto.instancia.eletronico}" value="e" />
+					                            	<h:outputText value="#{objeto.nome}" />						    
+					                            	<h:outputText  rendered="#{not empty objeto.observacao}" value=": #{objeto.observacao}" style="color:red"/>			                            
+					                            </a:commandLink>				                        
+					                            <h:outputText rendered="#{objeto.instancia.criminal}" styleClass="tag criminal" value="CRIMINAL" />
+					                            <s:span id="hintRevisao" styleClass="autorListaJulgamento" rendered="#{revisarListasFacesBean.idColunaSelecionada != null and objeto.revisado == true}"  style="padding-right: 20px">
+					                            	<h:outputText value="Revisado por #{objeto.revisor} em " />
+					                            	<h:outputText value="#{objeto.dataRevisao}" >
+ 										            	<f:convertDateTime pattern="dd/MM/yy"/>
+ 													</h:outputText>
+					                            </s:span>
+					                            <s:span rendered="#{coluna.id gt 40}">
+					                            	<span class="trash-icon" data-col-id="#{coluna.id}" data-obj-nome="#{objeto.nome}" title="Excluir" />
+					                            </s:span>
+					                        </a4j:outputPanel>
+					                    </h:column>
+					                </h:dataTable>
+				                </c:otherwise>
+			                </c:choose>
+			                <c:if test="#{coluna.id != revisarListasFacesBean.idSemLista}">
+				                <s:span rendered="#{coluna.temObjetos}">
+					                <div class="dr-pnl-h rich-panel rich-panel-footer" style="text-align:center">
+										<a:commandButton value="Liberar"
+														action="#{actionHolder.setAction(revisarListasFacesBean.getAcaoLiberarParaJulgamento(coluna.id))}"
+														reRender="actionModalPanel" 
+														oncomplete="Richfaces.showModalPanel('panelItem');" 
+														styleClass="action-button action-button-70px" 
+														eventsQueue="ajaxQueue" 
+														ignoreDupResponses="true"/> 
+					                </div>
+			                	</s:span>
+			                </c:if>
+			            </rich:panel>
+		            </c:forEach>
+		       	</h:panelGrid>
+		       	<a:outputPanel id="textosContainer">
+			       	<s:div rendered="#{revisarListasFacesBean.objetoIncidenteParaVisualizar != null}" styleClass="textosContainer">
+			       				       		
+						<h:outputText rendered="#{revisarListasFacesBean.objetoIncidenteParaVisualizar.eletronico}" value="e"
+										styleClass="tituloIncidenteTextos vermelho" />										
+						<h:outputText value="#{revisarListasFacesBean.objetoIncidenteParaVisualizar.identificacao}" styleClass="tituloIncidenteTextos" />
+						<h:outputText rendered="#{revisarListasFacesBean.objetoIncidenteParaVisualizar.criminal}" styleClass="tituloIncidenteTextos tag criminal" value="CRIMINAL" />
+			       		<a:commandLink id="btAbreUrlPecas" value=" (visualizar peças)"
+								onclick="abrirJanela('#{revisarListasFacesBean.recuperarUrlPecas(revisarListasFacesBean.objetoIncidenteParaVisualizar)}')"
+								eventsQueue="ajaxQueue" ignoreDupResponses="true" />
+			       		<h:graphicImage value="/common/images/close.png" title="Fechar textos" styleClass="btnFecharTexto">
+			       			<a4j:support action="#{revisarListasFacesBean.deselecionarObjetoIncidenteParaVisualizar}" event="onclick" reRender="containerPrincipalAgrupar"></a4j:support>
+			       		</h:graphicImage>
+			       		
+						<s:div style="clear: both;" />
+			       		<a:outputPanel styleClass="conteudoObservacao" rendered="#{revisarListasFacesBean.colunaObjetoIncidenteParaVisualizar.id != revisarListasFacesBean.idSemLista}">
+			       		<s:div styleClass="headerTextosListaJulgamento">
+			       				<s:span styleClass="labelTextosListaJulgamento" style="float:none">Observação</s:span>
+			       		</s:div>
+							<div style="width: 100%; zoom: 1; *display: inline; vertical-align: top; height: 20px;">
+									<s:decorate template="/common/decorators/observacaoIncidentePreLista.xhtml"></s:decorate>
+							</div>
+						</a:outputPanel>
+						<s:div style="clear: both;" />
+			       		<s:div rendered="#{not revisarListasFacesBean.possuiAlgumTexto}" styleClass="nenhumTexto">
+			       			Nenhum texto de ementa, relatório ou voto.
+			       		</s:div>
+			       		<s:div rendered="#{revisarListasFacesBean.possuiAlgumTexto}">
+			       			<a:commandLink rendered="#{not empty revisarListasFacesBean.textoEmenta}" value="Ementa" onclick="irParaTipoTexto('textoEmenta')"  />
+			       			<h:commandLink rendered="#{not empty revisarListasFacesBean.textoEmenta}" action="#{textoFacesBean.editar(revisarListasFacesBean.ementa)}" styleClass="linkAlternarTipoTexto #{(not empty revisarListasFacesBean.textoRelatorio) or (not empty revisarListasFacesBean.textoVoto) ? 'divisor' : ''}">
+			       				<h:graphicImage value="/common/images/page_white_edit.png" title="Editar Ementa" style="margin-right: 3px"/>
+			       			</h:commandLink>
+			    
+			       			<a:commandLink rendered="#{not empty revisarListasFacesBean.textoRelatorio}" value="Relatório" onclick="irParaTipoTexto('textoRelatorio')"   />
+			       			<h:commandLink rendered="#{not empty revisarListasFacesBean.textoRelatorio}" action="#{textoFacesBean.editar(revisarListasFacesBean.relatorio)}" styleClass="linkAlternarTipoTexto #{not empty revisarListasFacesBean.textoVoto ? 'divisor' : ''}">
+			       				<h:graphicImage value="/common/images/page_white_edit.png" title="Editar Relatório" style="margin-right: 3px"/>
+			       			</h:commandLink>
+			       			<a:commandLink rendered="#{not empty revisarListasFacesBean.textoVoto}" value="Voto" onclick="irParaTipoTexto('textoVoto')"  />
+			       			<h:commandLink rendered="#{not empty revisarListasFacesBean.textoVoto}" action="#{textoFacesBean.editar(revisarListasFacesBean.voto)}">
+			       				<h:graphicImage value="/common/images/page_white_edit.png" title="Editar Voto" style="margin-right: 3px"/>
+			       			</h:commandLink>
+				       		<a:outputPanel styleClass="conteudoTextos">
+				       			<s:div styleClass="headerTextosListaJulgamento" rendered="#{not empty revisarListasFacesBean.textoEmenta}">
+				       				<s:span styleClass="labelTextosListaJulgamento">Ementa</s:span>
+				       				<h:commandLink action="#{textoFacesBean.editar(revisarListasFacesBean.ementa)}" >
+					       				<h:graphicImage value="/common/images/page_white_edit.png" title="Editar Voto" style="margin-right: 3px"/>
+					       			</h:commandLink>
+				       				<s:span styleClass="autorListaJulgamento">Responsável: <h:outputText value="#{revisarListasFacesBean.ementa.usuarioResponsavel.nome}" /></s:span>
+				       			</s:div>
+				       			<rich:editor rendered="#{not empty revisarListasFacesBean.textoEmenta}" value="#{revisarListasFacesBean.textoEmenta}" readonly="true" styleClass="visualizadorTexto textoEmenta" autoResize="true" />					       		
+				       			<s:div styleClass="headerTextosListaJulgamento" rendered="#{not empty revisarListasFacesBean.textoRelatorio}">
+				       				<s:span styleClass="labelTextosListaJulgamento">Relatório</s:span>
+				       				<h:commandLink action="#{textoFacesBean.editar(revisarListasFacesBean.relatorio)}" >
+					       				<h:graphicImage value="/common/images/page_white_edit.png" title="Editar Voto" style="margin-right: 3px"/>
+					       			</h:commandLink>
+				       				<s:span styleClass="autorListaJulgamento">Responsável: <h:outputText value="#{revisarListasFacesBean.relatorio.usuarioResponsavel.nome}" /></s:span>
+				       			</s:div>
+				       			<rich:editor rendered="#{not empty revisarListasFacesBean.textoRelatorio}" value="#{revisarListasFacesBean.textoRelatorio}" readonly="true" styleClass="visualizadorTexto textoRelatorio" autoResize="true" />
+				       			<s:div styleClass="headerTextosListaJulgamento" rendered="#{not empty revisarListasFacesBean.textoVoto}">
+				       				<s:span styleClass="labelTextosListaJulgamento">Voto</s:span>
+				       				<h:commandLink action="#{textoFacesBean.editar(revisarListasFacesBean.voto)}" >
+					       				<h:graphicImage value="/common/images/page_white_edit.png" title="Editar Voto" style="margin-right: 3px"/>
+					       			</h:commandLink>
+				       				<s:span styleClass="autorListaJulgamento">Responsável: <h:outputText value="#{revisarListasFacesBean.voto.usuarioResponsavel.nome}" /></s:span>
+				       			</s:div>
+				       			<rich:editor rendered="#{not empty revisarListasFacesBean.textoVoto}" value="#{revisarListasFacesBean.textoVoto}" readonly="true"  styleClass="visualizadorTexto textoVoto" autoResize="true" />
+				       		</a:outputPanel>
+			       		</s:div>
+					</s:div>
+				</a:outputPanel>
+				<s:div style="clear: both;" />
+	       	</h:form>
+	       	
+		<a:outputPanel id="actionModalPanel">
+			<rich:modalPanel id="panelItem" autosized="true"
+				rendered="#{actionHolder.action != null}"
+				width="#{actionHolder.action.definition.width}"
+				height="#{actionHolder.action.definition.height}"
+				style="text-align: left; padding: 0px;">
+				<f:facet name="header">
+					<h:panelGroup>
+						<h:outputText value="#{actionHolder.action.definition.name}" />
+					</h:panelGroup>
+				</f:facet>
+				<f:facet name="controls">
+					<h:panelGroup>
+						<h:graphicImage value="/common/images/close.gif"
+							style="cursor:pointer" id="hidelink" />
+						<rich:componentControl for="panelItem" attachTo="hidelink"
+							operation="hide" event="onclick" />
+					</h:panelGroup>
+				</f:facet>
+
+				<h:form id="actionForm" styleClass="edit" prependId="false" enctype="multipart/form-data" >
+
+					<ui:include src="#{actionHolder.action.definition.view}">
+						<ui:param name="actionFacesBean" value="#{actionHolder.action}" />
+					</ui:include>
+
+					<c:if test="#{actionHolder.action.definition.facet == 'success'}">
+						<div>
+							<p class="result-info"><i>Operação realizada com sucesso.</i></p>
+
+							<div class="action-buttons">
+								<a:commandButton id="close"
+									value="Fechar" action="#{principalFacesBean.atualizarPagina()}"
+									reRender="actionModalPanel" immediate="true"
+									ajaxSingle="true" rendered="#{actionHolder.action.refresh}" >
+									<rich:componentControl for="panelItem" attachTo="close"
+										operation="hide" event="onclick" />
+								</a:commandButton>
+								<a:commandButton
+									value="Fechar"
+									reRender="actionModalPanel" immediate="true"
+									ajaxSingle="true" rendered="#{not actionHolder.action.refresh}" >
+									<rich:componentControl for="panelItem" attachTo="close"
+										operation="hide" event="onclick" />
+								</a:commandButton>
+							</div>
+						</div>
+					</c:if>
+
+					<s:decorate template="/acoes/support/action.template.xhtml">
+						<ui:param name="facetName" value="errors" />
+						<ui:define name="descricao">#{actionHolder.action.definition.errorTitle}</ui:define>
+						<ui:define name="conteudo">
+							<stf:messages  level="ERROR"/>
+						</ui:define>
+					</s:decorate>
+
+				</h:form>
+
+			</rich:modalPanel>
+		</a:outputPanel>	       	
+
+	       	<a:outputPanel id="dataSessaoPanel">
+		       	<rich:modalPanel id="dataSessaoModalPanel" width="350" height="200" autosized="true">
+						<f:facet name="header">
+							<label>Simular data de sessão</label>
+						</f:facet>
+						<a4j:form>
+							<s:decorate template="/common/decorators/display.xhtml" id="colegiadoDec">
+								<ui:define name="label">Colegiado</ui:define>
+								<h:selectOneMenu id="idColegiado" value="#{revisarListasFacesBean.idColegiado}" style="width: 120px">
+									<f:selectItem itemValue="TP" itemLabel="Plenário" />
+									<f:selectItem itemValue="1T" itemLabel="Primeira Turma" />
+									<f:selectItem itemValue="2T" itemLabel="Segunda Turma" />
+								</h:selectOneMenu>
+							</s:decorate>
+							<s:decorate template="/common/decorators/display.xhtml">
+								<ui:define name="label">Data da liberação:</ui:define>
+								<stf:calendar value="#{revisarListasFacesBean.dataLiberacao}" id="dataLiberacao"/>
+							</s:decorate>
+							<s:decorate template="/common/decorators/display.xhtml" id="dataInicioSessao">
+								<ui:define name="label">Início da sessão: </ui:define>
+								<h:inputText id="dataInicioSessaoInputText" value="#{revisarListasFacesBean.dataInicioJulgamento}" style="width: 120px" disabled="true" />
+							</s:decorate>
+                            <s:decorate template="/common/decorators/display.xhtml" id="dataFimSessao">
+                                <ui:define name="label">Fim da sessão: </ui:define>
+                                <h:inputText id="dataFimSessaoInputText" value="#{revisarListasFacesBean.dataFimJulgamento}" style="width: 120px" disabled="true" />
+                            </s:decorate>
+                            <s:decorate template="/common/decorators/display.xhtml" id="aviso">
+							     <span><i>Entre a data de liberação e a data de julgamento devem exitir, pelo menos, 6 dias úteis (1 dia de publicação e 5 dias de prazo pelo novo CPC). A sessão sempre deve iniciar na primeira sexta-feira (útil ou não) após esse prazo.</i></span>
+                            </s:decorate>
+                            <s:decorate template="/common/decorators/display.xhtml" id="pauta">
+                                 <h:outputText id="labelPautaFechada" rendered="#{revisarListasFacesBean.isPautaFechada()}"><span style="color: red;font-weight: bold;">Foi adicionado um dia útil na contagem do prazo para o início da sessão porque a pauta está fechada para a data de liberação informada.</span></h:outputText>
+                            </s:decorate>
+                            <s:decorate template="/common/decorators/display.xhtml" id="memoriaCalculo">
+                                <ui:define name="label">Memória de Cálculo: </ui:define>
+                                <h:inputTextarea id="memoriaCalculoinputTextarea" value="#{revisarListasFacesBean.memoriaCalculo}" style="width: 355px; height: 250px;" disabled="true" rows="10"/>
+                            </s:decorate>
+							<div class="action-buttons" style="padding: 20px">
+								<a4j:commandButton
+									value="Simular"
+									action="#{revisarListasFacesBean.simularDataJulgamento()}"
+									eventsQueue="ajaxQueue" ignoreDupResponses="true"
+									reRender="dataInicioSessaoInputText,dataFimSessaoInputText,pauta,labelPautaFechada, memoriaCalculo"/>
+								<a:commandButton
+									value="Fechar"
+									onclick="#{rich:component('dataSessaoModalPanel')}.hide()"
+									eventsQueue="ajaxQueue" ignoreDupResponses="true"/>
+							</div>
+						</a4j:form>
+				</rich:modalPanel>
+			</a:outputPanel>
+			       	
+	       	<a:outputPanel id="outputPanelModalConfirmar">
+		       	<rich:modalPanel id="confirmarIncidenteJulgado" width="400" height="140" autosized="false" rendered="#{not empty revisarListasFacesBean.objIncidenteSelecionado}">
+					<f:facet name="header">
+						<div >
+							<label>Confirmar inclusão de processo</label>
+						</div>
+					</f:facet>
+					<rich:panel style="height: 30px;">
+						O processo #{revisarListasFacesBean.objIncidenteSelecionado.identificacao} já foi julgado. Tem certeza que deseja adiconá-lo em lista? 
+					</rich:panel>
+					
+					<h:form>
+						<div class="action-buttons">
+							<a:commandButton
+								value="Confirmar"
+								onclick="#{rich:component('confirmarIncidenteJulgado')}.hide()"
+								action="#{revisarListasFacesBean.confirmarInclusaoSelecionado}"
+								eventsQueue="ajaxQueue" ignoreDupResponses="true"
+								reRender="categoriasContainer, errorMessage"/>
+							<a:commandButton
+								value="Cancelar"
+								onclick="#{rich:component('confirmarIncidenteJulgado')}.hide()"
+								eventsQueue="ajaxQueue" ignoreDupResponses="true"/>
+						</div>
+					</h:form>
+				</rich:modalPanel>
+			</a:outputPanel>
+       	</a:outputPanel>
+       	
+       	<c:if test="#{revisarListasFacesBean.reabrirModalListasLiberadas}">
+       		<script>
+       			jQuery(document).ready(function(){
+       				jQuery(".button-listas-liberadas").click();
+       			});
+       			
+       		
+       		</script>
+       	</c:if>
+       	<script>
+	    	//<![CDATA[
+				jQuery.ajax({
+				            url: "https://jira.stf.jus.br/jira/s/e643c0a9a29256210c8362803d9cf7fb-T/en_USoc4qdn/6329/126/1.4.13/_/download/batch/com.atlassian.jira.collector.plugin.jira-issue-collector-plugin:issuecollector-embededjs/com.atlassian.jira.collector.plugin.jira-issue-collector-plugin:issuecollector-embededjs.js?locale=en-US&collectorId=75ee4db9",
+				        type: "get",
+				    cache: true,
+				    dataType: "script"
+				});       
+	    	//]]>
+	    </script>
+   	</ui:define>
+</ui:composition>

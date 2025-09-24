@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:s="http://jboss.com/products/seam/taglib"
+    xmlns:ui="http://java.sun.com/jsf/facelets"
+    xmlns:f="http://java.sun.com/jsf/core"
+    xmlns:h="http://java.sun.com/jsf/html"
+    xmlns:rich="http://richfaces.org/rich"
+    xmlns:a="http://richfaces.org/a4j"
+    xmlns:c="http://java.sun.com/jstl/core">
+    <rich:datascroller id="#{id}" 
+    	for="#{for}" 
+    	fastControls="hide" 
+    	maxPages="5" 
+    	pageIndexVar="paginaAtual" 
+    	pagesVar="paginas" 
+    	style="#{style}" 
+    	eventsQueue="ajaxQueue" 
+    	ignoreDupResponses="true" 
+    	reRender="#{reRender}">
+		<f:facet name="pages">
+			<h:outputText value="#{pages}. Página #{paginaAtual} de #{paginas}." styleClass="dr-dscr-pages" style="font-style: italic" />
+		</f:facet>
+		<f:facet name="first">
+			<h:outputText value="Primeira" />
+		</f:facet>
+		<f:facet name="first_disabled">
+			<h:outputText value="Primeira" />
+		</f:facet>
+		<f:facet name="previous">
+			<h:outputText value="Anterior" />
+		</f:facet>
+		<f:facet name="previous_disabled">
+			<h:outputText value="Anterior" />
+		</f:facet>
+		<f:facet name="last">
+			<h:outputText value="Última" />
+		</f:facet>
+		<f:facet name="last_disabled">
+			<h:outputText value="Última" />
+		</f:facet>
+		<f:facet name="next">
+			<h:outputText value="Próxima" />
+		</f:facet>
+		<f:facet name="next_disabled">
+			<h:outputText value="Próxima" />
+		</f:facet>
+	</rich:datascroller>
+</ui:composition>

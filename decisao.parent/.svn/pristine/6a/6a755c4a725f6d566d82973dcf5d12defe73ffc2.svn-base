@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:s="http://jboss.com/products/seam/taglib"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:rich="http://richfaces.org/rich"
+	xmlns:a="http://richfaces.org/a4j"
+	xmlns:c="http://java.sun.com/jstl/core"
+	xmlns:a4j="http://richfaces.org/a4j"
+	xmlns:stf="http://www.stf.jus.br/custom-components">
+	
+
+	<s:decorate template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="principal" />
+		<ui:param name="esconderBotoes" value="true" />
+		
+		<ui:define name="descricao">
+			<h:outputText value="#{actionFacesBean.lista.id == null ? 'Nova' : 'Editar'} Pré-Lista #{actionFacesBean.lista.nome}" />			
+		</ui:define>
+		
+		<ui:define name="conteudo">
+		
+			<stf:messages level="ALL" height="auto"/>
+			<br />
+				<div class="clearfix">
+					<div class="name" style="width: auto !important">Nome da Pré-Lista:</div>
+					<div class="value">
+						<h:inputText id="nomeCategoria"
+							value="#{actionFacesBean.lista.nome}"
+							style="width: 200px" 
+							eventsQueue="ajaxQueue" ignoreDupResponses="true"/>
+					<a:commandButton value="Salvar" id="btnLiberar"
+						action="#{actionFacesBean.salvarPreLista}"
+						eventsQueue="ajaxQueue"
+						ignoreDupResponses="true"
+						oncomplete="showActionPanel('panelItem')"
+						reRender="actionModalPanel,panelItem,containerPrincipalAgrupar,categoriasContainer"  />						
+					</div>
+				</div>
+			<h:form id="categoriaAddForm" styleClass="edit">
+				
+				<hr/>
+			
+				<div class="data-table-outer data-table-outer__small">
+					<div>
+						<rich:dataTable	id="tbCategoriasLista"
+							var="categoriaSetor"
+							value="#{actionFacesBean.categorias}"
+							rowClasses="dr-table-row-odd, dr-table-row-even"
+							styleClass="data-table" >
+							
+							<rich:column styleClass="dr-table-firstcol dr-table-col-center" headerClass="dr-table-subheadercell-nobordertop dr-table-firstcol dr-table-col-center largura20px">
+								<h:selectBooleanCheckbox styleClass="Checkbox" value="#{categoriaSetor.selected}" disabled="#{categoriaSetor.listaAssociada}">
+									<a4j:support event="onclick" reRender="tbCategoriasLista"/>
+								</h:selectBooleanCheckbox>
+							</rich:column>
+							
+							<rich:column styleClass="dr-table-firstcol" headerClass="dr-table-subheadercell-nobordertop dr-table-firstcol">
+								<f:facet name="header">
+									<h:outputText value="Categoria" />
+								</f:facet>
+								<h:outputText value="#{categoriaSetor.agrupador.descricao}" style="#{categoriaSetor.listaAssociada ? 'opacity:0.5' : null}"/>
+							</rich:column>
+						</rich:dataTable>
+					</div>
+				</div>
+			</h:form>
+			<hr />
+			<div style="clear:both;">
+				<a:outputPanel id="panelListasJulgamento" >
+					<div class="data-table-outer data-table-outer__small">
+						<div>
+							<rich:dataTable	id="tbListasJulgamento"
+								var="preLista"
+								value="#{actionFacesBean.preListas}"
+								rowClasses="dr-table-row-odd, dr-table-row-even"
+								styleClass="data-table"
+								>
+								<rich:column styleClass="dr-table-firstcol" headerClass="dr-table-subheadercell-nobordertop dr-table-firstcol">
+									<f:facet name="header">
+										<h:outputText value="Nome" />
+									</f:facet>
+									<h:outputText value="#{preLista.nome}" />
+								</rich:column>
+								<rich:column  styleClass="dr-table-lastcol dr-table-col-center" headerClass="dr-table-subheadercell-nobordertop dr-table-lastcol dr-table-col-center largura35px">
+									<f:facet name="header">
+										<h:outputText value="Ação" />
+									</f:facet>
+									<a:commandButton image="/common/images/lapis2.png" rendered="#{(preLista.id gt 40)}"
+											action="#{actionFacesBean.alterarPreLista(preLista)}"
+											eventsQueue="ajaxQueue"
+											ignoreDupResponses="true"
+											oncomplete="showActionPanel('panelItem')"
+											reRender="actionModalPanel,panelItem,containerPrincipalAgrupar"  />
+									<rich:spacer width="2" title="Editar pré-lista" />
+									<a:commandButton image="/common/images/bullet_delete.png" rendered="#{(preLista.id gt 40)}"
+											action="#{actionFacesBean.excluirPrelista(preLista)}"
+											onclick="if(!confirm('Tem certeza que deseja excluir a pré-lista - #{preLista.nome}?')) return false;"
+											eventsQueue="ajaxQueue"
+											oncomplete="showActionPanel('panelItem')"
+											ignoreDupResponses="true"
+											reRender="actionModalPanel,panelItem,containerPrincipalAgrupar" title="Excluir pré-lista"/>
+								</rich:column>
+							</rich:dataTable>
+						</div>
+					</div>
+				</a:outputPanel>
+			</div>
+		</ui:define>
+		<ui:define name="botoes">
+			<a:commandButton id="close"
+				value="Fechar" 
+				eventsQueue="ajaxQueue"
+				oncomplete="Richfaces.hideModalPanel('panelItem')"
+				ignoreDupResponses="true">
+            </a:commandButton>				
+		</ui:define>
+	</s:decorate>
+</ui:composition>

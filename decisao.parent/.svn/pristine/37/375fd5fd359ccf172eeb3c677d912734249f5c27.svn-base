@@ -1,0 +1,414 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:s="http://jboss.com/products/seam/taglib"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:rich="http://richfaces.org/rich"
+	xmlns:p="http://primefaces.prime.com.tr/ui"
+	xmlns:a="http://richfaces.org/a4j"
+	xmlns:stf="http://www.stf.jus.br/custom-components"
+	xmlns:c="http://java.sun.com/jstl/core">
+
+	<rich:dataTable id="resultTable" var="_objetoIncidente" value="#{principalFacesBean.currentContext.result}" rows="1" style="border: none">
+		<rich:column style="border: none; padding: 0px">
+			<c:set var="objetoIncidenteParaVisualizar" value="#{incidenteFacesBean.objetoIncidente}" />
+
+			<s:div style="padding: 0px 7px;">
+				<div class="layout-2-3col view-info" id="infoProcesso1">
+					<h3>Informações</h3>
+					<div style="display: inline-block; width: 48%; zoom: 1; *display: inline; vertical-align: top;">
+						<s:decorate template="/common/decorators/display.xhtml">
+							<ui:define name="label">Processo:</ui:define>
+							<c:if test="#{objetoIncidenteParaVisualizar.principal.isEletronico}">
+								<h:outputText styleClass="vermelho" style="float: left;" value="e" />
+							</c:if>
+							<h:outputText value="#{_objetoIncidente.identificacao}" styleClass="destaque" />
+						</s:decorate>
+						<s:decorate id="ministroRelator" template="/common/decorators/display.xhtml" rendered="#{not empty incidenteFacesBean.ministroRelator}">
+							<ui:define name="label">Min. Relator:</ui:define>
+							<h:outputText value="#{incidenteFacesBean.ministroRelator}" />
+						</s:decorate>
+						<s:decorate id="ministraRelatora" template="/common/decorators/display.xhtml" rendered="#{not empty incidenteFacesBean.ministraRelatora}">
+							<ui:define name="label">Min. Relatora:</ui:define>
+							<h:outputText value="#{incidenteFacesBean.ministraRelatora}" />
+						</s:decorate>
+						<s:decorate id="ministroRedatorAcordao" template="/common/decorators/display.xhtml" rendered="#{not empty incidenteFacesBean.ministroRedatorAcordao}">
+							<ui:define name="label">Min. Redator do Acórdão:</ui:define>
+							<h:outputText value="#{incidenteFacesBean.ministroRedatorAcordao}" />
+						</s:decorate>
+						<s:decorate id="ministraRedatoraAcordao" template="/common/decorators/display.xhtml" rendered="#{not empty incidenteFacesBean.ministraRedatoraAcordao}">
+							<ui:define name="label">Min. Redatora do Acórdão:</ui:define>
+							<h:outputText value="#{incidenteFacesBean.ministraRedatoraAcordao}" />
+						</s:decorate>
+						<s:decorate template="/common/decorators/display.xhtml">
+							<ui:define name="label">Protocolo:</ui:define>
+							<h:outputText value="#{objetoIncidenteParaVisualizar.anterior.identificacao}" styleClass="destaque" />
+						</s:decorate>
+							<div style="margin: 3px 0px; text-align: center;">
+							<c:if test="#{not empty incidenteFacesBean.retornaLocalizacaoAtual}">
+								<span class="vermelho">#{incidenteFacesBean.retornaLocalizacaoAtual} </span>
+							</c:if>
+						</div>
+						<div style="margin: 3px 0px; text-align: center;">
+							<c:if test="#{objetoIncidenteParaVisualizar.principal.quantidadeRepresentativoControversia > 0}">
+								<span class="vermelho">Representativo da Controvérsia - #{objetoIncidenteParaVisualizar.principal.quantidadeRepresentativoControversia} processo(s)</span>
+							</c:if>
+						</div>
+						<div style="margin: 3px 0px; text-align: center;">
+							<c:if test="#{objetoIncidenteParaVisualizar.principal.quantidadePreTema > 0}">
+								<span class="vermelho">Pré-Tema - #{objetoIncidenteParaVisualizar.principal.quantidadePreTema} processo(s)</span>
+							</c:if>
+						</div>
+						<s:decorate template="/common/decorators/display.xhtml">
+							<div style="margin: 3px 0px; text-align: left;">
+							<c:if test="#{objetoIncidenteParaVisualizar.principal.possuiTutelaProvisoria == true}">
+								<span class="vermelho">Tutela Provisória</span>
+							</c:if>
+						</div>
+						<div style="margin: 3px 0px; text-align: left;">
+							<c:if test="#{objetoIncidenteParaVisualizar.principal.possuiCovid == true}">
+								<span class="vermelho">COVID-19</span>
+							</c:if>
+						</div>
+						</s:decorate>
+						
+						<div style="margin: 3px 0px; text-align: center;">
+							<c:if test="#{objetoIncidenteParaVisualizar.principal.materiaConstitucional}">
+								<span class="vermelho">Recurso Especial com Matéria Constitucional</span>
+							</c:if>
+						</div>
+						<div style="margin: 3px 0px; text-align: center;">
+							<c:if test="#{objetoIncidenteParaVisualizar.principal.representativoControversiaIndicadoOrigem}">
+								<span class="vermelho">Controvérsia indicada pela Origem</span>
+							</c:if>
+						</div>
+						<s:div style="margin: 3px 0px; text-align: center;" rendered="#{not empty objetoIncidenteParaVisualizar.principal.tipoConfidencialidade}">
+							<span class="vermelhoConfidencialidade">#{objetoIncidenteParaVisualizar.principal.tipoConfidencialidade.descricao}</span>
+						</s:div>
+					</div>
+					<div style="display: inline-block; width: 48%; zoom: 1; *display: inline; vertical-align: top; min-height: 80px;">
+						<s:decorate template="/common/decorators/display.xhtml" id="decCategoria" style="margin-top: 5px">
+							<ui:define name="label">Categoria:</ui:define>
+							<h:inputText id="categoria"
+								value="#{incidenteFacesBean.categoria}"
+								onfocus="#{rich:component('suggestionBoxCategoria')}.callSuggestion(true)"
+								 />
+							<rich:suggestionbox
+								id="suggestionBoxCategoria"
+								suggestionAction="#{incidenteFacesBean.recuperarCategoriasDoSetor}"
+								for="categoria" var="result" minChars="3"
+								fetchValue="#{result.descricao}"
+								nothingLabel="Nenhum registro encontrado." width="300"
+								eventsQueue="ajaxQueue"								
+								ignoreDupResponses="true">
+			
+								<a:support action="#{incidenteFacesBean.categorizarIncidente(result)}"
+									ajaxSingle="true" event="onselect" reRender="messagesPanel, resultPanel, panelMenuAssinar"
+									eventsQueue="ajaxQueue" ignoreDupResponses="true" />
+			
+								<h:column>
+									<h:outputText value="#{result.descricao}" styleClass="oiSuggestion" />
+								</h:column>
+							</rich:suggestionbox>
+						</s:decorate>
+						<s:decorate template="/common/decorators/display.xhtml" rendered="#{objetoIncidenteParaVisualizar.principal.ministroRelatorAtual.id == userFacesBean.principal.ministro.id}">
+							<ui:define name="label">Distribuição Interna:</ui:define>
+							<h:outputText value="#{incidenteFacesBean.distribuicaoAtual.usuario.nome}" styleClass="destaque" />
+						</s:decorate>
+						<s:decorate template="/common/decorators/display.xhtml" rendered="#{not empty incidenteFacesBean.preferencias and incidenteFacesBean.preferencias.length() > 0}">
+							<ui:define name="label">Preferências:</ui:define>
+							<h:outputText value="#{incidenteFacesBean.preferencias}" styleClass="destaque" />
+						</s:decorate>
+						<s:decorate template="/common/decorators/display.xhtml" rendered="#{not empty incidenteFacesBean.rotulos}" style="line-height: 20px;">
+							<ui:define name="label">Rótulos:</ui:define>
+							<a:repeat value="#{incidenteFacesBean.rotulos}" var="rotulo">
+								<span class="tag" style="background-color: #{rotulo.cor}; color: #{incidenteFacesBean.checkBrightness(rotulo.cor)};">#{rotulo.nome}</span>
+							</a:repeat>
+						</s:decorate>
+						<s:div style="margin: 3px 0px; text-align: center;" rendered="#{not empty incidenteFacesBean.prescricaoReu}">
+							<a:commandLink 
+								value="Prescrição Calculada"
+								oncomplete="#{rich:component('panelPrescricao')}.show()"
+								eventsQueue="ajaxQueue" ignoreDupResponses="true"
+								reRender="panelPrescricao"
+								styleClass="linkVermelho" />
+						</s:div>
+						<s:decorate id="situacaoJulgamento" template="/common/decorators/display.xhtml" rendered="#{not empty incidenteFacesBean.situacaoJulgamento}">
+							<ui:define name="label">Situação Julgamento:</ui:define>
+							<h:outputText value="#{incidenteFacesBean.situacaoJulgamento}" />
+						</s:decorate>
+					</div>
+					<s:div rendered="#{userFacesBean.emAlgumGabinete}">
+						<div style="width: 100%; zoom: 1; *display: inline; vertical-align: top; height: 20px;">
+							<s:decorate template="/common/decorators/displayComBotao.xhtml">
+								<ui:define name="label">Observação:</ui:define>
+								<s:decorate template="/common/decorators/observacao.xhtml"></s:decorate>
+							</s:decorate>
+						</div>
+					</s:div>
+					<s:div rendered="#{userFacesBean.emAlgumGabinete}">
+						<div style="width: 100%; zoom: 1; *display: inline; vertical-align: top; height: 20px;">
+							<s:decorate template="/common/decorators/displayComBotao.xhtml">
+								<s:div style="margin: 3px 0px; font-size: 1.2em;" styleClass="vermelho" rendered="#{principalFacesBean.temImpedimento}">Anotação de Impedimento ou Suspeição</s:div>
+							</s:decorate>
+						</div>
+					</s:div>					
+				</div>
+				<div class="layout-3col view-info" id="infoProcesso2">
+					<h3>Mais Informações...</h3>
+					<div style="margin: 3px 0px; display: inline-block; width: 48%; zoom: 1; *display: inline;">
+						<a:commandLink id="btAbreUrlAcompanhamentoSTFDigital" value="Acompanhamento Processual (STF Digital)"
+							onclick="abrirJanela('#{principalFacesBean.recuperarUrlAcompanhamentoSTFDigital(objetoIncidenteParaVisualizar)}')"
+							eventsQueue="ajaxQueue" ignoreDupResponses="true" />
+					</div>
+					<div style="margin: 3px 0px; display: inline-block; width: 48%; zoom: 1; *display: inline;">
+							<a:commandLink id="btAbreUrlPecasStfDigital" value = "Peças Eletrônicas (STF Digital)" 
+									rendered="#{objetoIncidenteParaVisualizar != null}" 
+									onclick="ga('send', 'event', 'Visualizador de Peças (STF Digital)', '#{userFacesBean.principal.usuario.setor.sigla}', '#{userFacesBean.principal.usuario.nome}');abrirJanela('#{principalFacesBean.recuperarUrlPecasSTFDigital(objetoIncidenteParaVisualizar)}')"
+									target="_blank" />
+					</div>
+					<div style="margin: 3px 0px; display: inline-block; width: 48%; zoom: 1; *display: inline;">
+						<a:commandLink 
+							value="Informações Complementares"
+							oncomplete="#{rich:component('panelInformacoesComplementaresIncidente')}.show()"
+							eventsQueue="ajaxQueue" ignoreDupResponses="true"
+							reRender="panelInformacoesComplementaresIncidente" />
+					</div>
+					<s:div
+						style="margin: 3px 0px; display: inline-block; width: 48%; zoom: 1; *display: inline;"
+						rendered="#{not empty objetoIncidenteParaVisualizar and not empty incidenteFacesBean.informacaoPautaProcesso}">
+						<a:commandLink value="Informações de Pauta" action="#{incidenteFacesBean.carregarInformacaoPautaProcesso(_objetoIncidente)}"
+							oncomplete="#{rich:component('panelInformacaoPauta')}.show()"
+							eventsQueue="ajaxQueue" ignoreDupResponses="true"
+							reRender="panelInformacaoPauta" />
+					</s:div>
+					<s:div
+						style="margin: 3px 0px; display: inline-block; width: 48%; zoom: 1; *display: inline;"
+						rendered="#{not empty objetoIncidenteParaVisualizar and not empty objetoIncidenteParaVisualizar.listasProcessos}">
+						<a:commandLink value="Listas de Processos"
+							oncomplete="#{rich:component('panelListasDoProcesso')}.show()"
+							eventsQueue="ajaxQueue" ignoreDupResponses="true"
+							reRender="panelListasDoProcesso" />
+					</s:div>
+					<s:div style="margin: 3px 0px; display: inline-block; width: 48%; zoom: 1; *display: inline;" rendered="#{not empty objetoIncidenteParaVisualizar and not empty incidenteFacesBean.deslocamentoAtual}">
+						<a:commandLink 
+							value="Localização"
+							oncomplete="#{rich:component('panelLocalizacao')}.show()"
+							eventsQueue="ajaxQueue" ignoreDupResponses="true"
+							reRender="panelLocalizacao" />
+					</s:div>
+					<div style="margin: 3px 0px; display: inline-block; width: 48%; zoom: 1; *display: inline;">
+						<a:commandLink 
+							value="Partes"
+							action="#{incidenteFacesBean.carregarListaParte(_objetoIncidente)}"
+							oncomplete="#{rich:component('incidentePartesPanel')}.show()"
+							eventsQueue="ajaxQueue" ignoreDupResponses="true"
+							reRender="incidentePartesPanel" />
+							<h:outputText styleClass="vermelho" value=" Há representante(s) sem OAB" rendered="#{incidenteFacesBean.temOABParaTodosOsRepresentantes() == false}" />
+					</div>
+					<div style="margin: 3px 0px; display: inline-block; width: 48%; zoom: 1; *display: inline;">
+						<a:commandLink 
+							value="Arquivos de Julgamento"
+							action="#{incidenteFacesBean.carregarArquivosDeJulgamento()}"
+							oncomplete="#{rich:component('panelArquivosDeJulgamento')}.show()"
+							eventsQueue="ajaxQueue" ignoreDupResponses="true"
+							reRender="panelArquivosDeJulgamento" />
+					</div>					
+					<div style="margin: 3px 0px; display: inline-block; width: 48%; zoom: 1; *display: inline;">
+						<a:commandLink id="btAbreUrlAcompanhamentoPortal" value="Acompanhamento Processual (Portal)"
+							onclick="abrirJanela('#{principalFacesBean.recuperarUrlAcompanhamento(objetoIncidenteParaVisualizar)}')"
+							eventsQueue="ajaxQueue" ignoreDupResponses="true" />
+					</div>						
+														
+				</div>
+				<div class="clear"></div>
+				<div class="layout-1col view-info" style="margin-top: 10px; padding: 0px 20px 0px 0px;" id="infoProcesso3">
+					<c:if test="#{not empty objetoIncidenteParaVisualizar.principal.assuntos}">
+						<h3>Assunto</h3>
+						<div style="height: 50px; overflow: auto">
+							<h:dataTable id="tblAssuntoProcesso" var="assunto"
+								value="#{objetoIncidenteParaVisualizar.principal.assuntos}"
+								rendered="#{not empty objetoIncidenteParaVisualizar.principal.assuntos}" width="100%">
+								<h:column>
+									<h:outputText styleClass="Padrao" value="#{assunto.id}" />
+								</h:column>
+								<h:column>
+									<h:outputText styleClass="Padrao" value=" - #{assunto.descricaoCompleta}" />
+								</h:column>
+							</h:dataTable>
+						</div>
+					</c:if>
+				</div>
+			</s:div>
+
+			<c:set var="textoActionController"
+				value="#{principalFacesBean.getActionControllerInstance('br.jus.stf.estf.decisao.pesquisa.domain.TextoDto')}" />
+
+			<a:outputPanel id="textos" layout="block" style="margin-top: 20px">
+				<div style="margin-bottom: 5px; padding: 0px 7px">
+					<div style="float: left">
+						<h:selectOneMenu value="#{incidenteFacesBean.tipoDeListaParaExibicao}"
+							valueChangeListener="#{incidenteFacesBean.changeTipoDeLista}" style="font-size: 12px;">
+							<f:selectItem itemLabel="Textos do Ministro"
+								itemValue="TEXTOS_DO_MINISTRO" />
+							<f:selectItem itemLabel="Todos os Textos"
+								itemValue="TODOS_TEXTOS" />
+							<a:support event="onchange" reRender="textos"
+								eventsQueue="ajaxQueue" ignoreDupResponses="true" ajaxSingle="true"/>
+						</h:selectOneMenu>
+						<rich:dropDownMenu id="textosActionPanel" event="onmouseover" styleClass="inline-menu-label">
+							<f:facet name="label">
+								<h:outputText value="Mais Ações" />
+							</f:facet>
+							<c:forEach items="#{textoActionController.getActions(incidenteFacesBean.textos.selecteds)}"
+								var="action">
+								<rich:menuItem submitMode="none">
+									<c:choose>
+										<c:when test="#{not action.definition.report}">
+											<a:commandLink value="#{action.definition.name}"
+												action="#{actionHolder.setAction(action)}"
+												reRender="actionModalPanel"
+												onclick="ga('send', 'event', 'Monitoramento de Ações - #{userFacesBean.principal.usuario.setor.sigla}','Ação - ' + this.innerText, '#{userFacesBean.principal.usuario.nome}');"
+												oncomplete="Richfaces.showModalPanel('panelItem');" eventsQueue="ajaxQueue" ignoreDupResponses="true"/>
+										</c:when>
+										<c:otherwise>
+											<h:commandLink value="#{action.definition.name}" action="#{action.report}" 
+											onclick="ga('send', 'event', 'Monitoramento de Ações - #{userFacesBean.principal.usuario.setor.sigla}','Ação - ' + this.innerText, '#{userFacesBean.principal.usuario.nome}');"/>
+										</c:otherwise>
+									</c:choose>
+								</rich:menuItem>
+							</c:forEach>
+						</rich:dropDownMenu>
+					</div>
+					<s:div style="float: right;" rendered="#{incidenteFacesBean.textos.rowCount > 0}">
+						<div id="queryTime" style="float: left"></div>
+						<stf:datascrollerTextos id="datascrollerTextos" for="resultTableTextos" style="float:left; vertical-align: middle; margin-left: 5px"
+							pages="#{incidenteFacesBean.textos.rowCount} texto(s)" reRender="datascrollerTextos2"/>
+						<div class="clear"></div>
+					</s:div>
+					<div class="clear"></div>
+				</div>
+				<a:include viewId="textos.xhtml" id="textosPage">
+					<ui:param name="resultado" value="#{incidenteFacesBean.textos}" />
+					<ui:param name="currentActionController" value="#{textoActionController}" />
+					<ui:param name="origem" value="INCIDENTE" />
+				</a:include>
+				<div style="margin-bottom: 5px; padding: 7px 7px">
+					<s:div style="float: right;" rendered="#{incidenteFacesBean.textos.rowCount > 0}">
+						<div id="queryTime" style="float: left"></div>
+						<stf:datascrollerTextos id="datascrollerTextos2" for="resultTableTextos" style="float:left; vertical-align: middle; margin-left: 5px"
+							pages="#{incidenteFacesBean.textos.rowCount} texto(s)" reRender="datascrollerTextos"/>
+						<div class="clear"></div>
+					</s:div>
+				</div>
+			</a:outputPanel>
+		</rich:column>
+	</rich:dataTable>
+	
+	<rich:modalPanel id="panelInformacoesComplementaresIncidente" width="300" height="160">
+		<f:facet name="header">
+			<h:outputText value="Informações Complementares do Processo " />
+			<h:outputText value="#{incidenteFacesBean.objetoIncidente.identificacao}" />
+		</f:facet>
+		
+		<div>
+			<s:decorate template="/common/decorators/display.xhtml">
+				<ui:define name="label">Dt. Autuação:</ui:define>
+				<h:outputText styleClass="destaque"	value="#{incidenteFacesBean.objetoIncidente.principal.dataAutuacao}" />
+			</s:decorate>
+			<s:decorate template="/common/decorators/display.xhtml">
+				<ui:define name="label">Volumes:</ui:define>
+				<h:outputText styleClass="destaque" value="#{incidenteFacesBean.objetoIncidente.principal.quantidadeVolumes}" />
+			</s:decorate>
+			<s:decorate template="/common/decorators/display.xhtml">
+				<ui:define name="label">Páginas:</ui:define>
+				<h:outputText styleClass="destaque" value="#{incidenteFacesBean.objetoIncidente.principal.quantidadeFolhas}" />
+			</s:decorate>
+		</div>
+		
+		<div style="padding-top: 5px; text-align: right">
+			<a:commandButton value="Fechar" style="margin-right: 0px !important;"
+			onclick="#{rich:component('panelInformacoesComplementaresIncidente')}.hide()"
+			eventsQueue="ajaxQueue" ignoreDupResponses="true"/>
+		</div>
+
+	</rich:modalPanel>
+    
+    <rich:modalPanel id="panelArquivosDeJulgamento" width="1200" autosized="true" >
+		<f:facet name="header">
+			<div><label>Arquivos de Julgamento</label></div>
+		</f:facet>
+
+		<c:if test="#{empty incidenteFacesBean.arquivosDeJulgamento}">
+			<div style="text-align: center;">
+				<span>Não há arquivos a serem exibidos!</span>
+			</div>
+		</c:if>
+		<c:if test="#{not empty incidenteFacesBean.arquivosDeJulgamento}">
+			<div style="height: 210px; overflow: auto;">
+				<rich:dataTable id="dtManifestacao"
+					var="lista" value="#{incidenteFacesBean.arquivosDeJulgamento}"
+					rowClasses="dr-table-row-odd, dr-table-row-even"
+					styleClass="data-table" >
+					<rich:column styleClass="dr-table-lastcol">
+						<f:facet name="header">
+							<span style="font-weight: bold;">Enviado Por</span>
+						</f:facet>
+						<span>#{lista.enviadoPor.pessoa.nome}</span>
+					</rich:column>					
+					<rich:column styleClass="dr-table-firstcol">
+						<f:facet name="header">
+							<span style="font-weight: bold;">Advogado</span>
+						</f:facet>
+						<span>#{lista.representante.nome}</span>
+					</rich:column>
+					<rich:column styleClass="dr-table-lastcol">
+						<f:facet name="header">
+							<span style="font-weight: bold;">Parte</span>
+						</f:facet>
+						<span>#{lista.representado.nome}</span>
+					</rich:column>
+					<rich:column styleClass="dr-table-lastcol">
+						<f:facet name="header">
+							<span style="font-weight: bold;">Arquivo</span>
+						</f:facet>
+							<span>
+								<a:commandLink value="#{lista.tipoManifestacao.descricao}" 
+									onclick="abrirAnexo('#{principalFacesBean.recuperarUrlAnexos(lista.hashArquivo)}')"
+									actionListener="#{incidenteFacesBean.gravarLeituraSustentacaoOral(lista)}" reRender="dtManifestacao"
+									eventsQueue="ajaxQueue" ignoreDupResponses="true" />
+							</span>
+					</rich:column>
+					<rich:column styleClass="dr-table-lastcol">
+						<f:facet name="header">
+							<span style="font-weight: bold;">Lido?</span>
+						</f:facet>
+						<span><h:graphicImage value="/common/images/passed.gif" rendered="#{lista.getSustentacaoOralLidaPeloMinistro(incidenteFacesBean.getMinistroLeitor())}" /></span>
+					</rich:column>
+				</rich:dataTable>
+			</div>
+		</c:if>
+
+		<div class="action-buttons">
+			<a:commandButton
+				value="Fechar"
+				oncomplete="#{rich:component('panelArquivosDeJulgamento')}.hide()"
+				immediate="true" eventsQueue="ajaxQueue" ignoreDupResponses="true" ajaxSingle="true" />		
+		</div>
+	</rich:modalPanel>
+	
+    <ui:include src="/pesquisa/panelPartes.xhtml">
+		<ui:param name="origem" value="INCIDENTE" />
+	</ui:include>
+	
+	<ui:include src="/pesquisa/panelListasDoProcesso.xhtml" />
+	
+	<ui:include src="/pesquisa/panelLocalizacao.xhtml" />
+	
+	<ui:include src="/pesquisa/panelPrescricao.xhtml" />
+	
+	<ui:include src="/pesquisa/panelInformacaoPauta.xhtml" />
+	
+</ui:composition>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:s="http://jboss.com/products/seam/taglib"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:rich="http://richfaces.org/rich"
+	xmlns:p="http://primefaces.prime.com.tr/ui"
+	xmlns:a="http://richfaces.org/a4j"
+	xmlns:c="http://java.sun.com/jstl/core"
+	xmlns:stf="http://www.stf.jus.br/custom-components">
+
+	<rich:modalPanel id="panelListasDoProcesso" width="300" height="300">
+		<f:facet name="header">
+			<h:outputText value="Listas de Processos associadas ao processo " />
+			<h:outputText value="#{incidenteFacesBean.objetoIncidente.identificacao}" />
+		</f:facet>
+		
+		<div style="height: 200px; overflow: auto;">
+			<rich:dataTable 
+				id="tbListasProcesso" var="_listaProcesso" value="#{incidenteFacesBean.listasProcesso}"
+				rowClasses="dr-table-row-odd, dr-table-row-even"
+				styleClass="simple-data-table" >
+				<rich:column>
+					<f:facet name="header">
+						<h:outputText value="Lista de Processo" />
+					</f:facet>
+					<h:outputText value="#{_listaProcesso.nome}" />
+				</rich:column>
+			</rich:dataTable>
+		</div>
+		
+		<div>Total de registros: #{incidenteFacesBean.listasProcesso.size()}</div>
+		
+		<div style="padding-top: 5px; text-align: right">
+			<a:commandButton value="Fechar" style="margin-right: 0px !important;"
+			onclick="#{rich:component('panelListasDoProcesso')}.hide()"
+			eventsQueue="ajaxQueue" ignoreDupResponses="true"/>
+		</div>
+
+	</rich:modalPanel>
+</ui:composition>

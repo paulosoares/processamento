@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:s="http://jboss.com/products/seam/taglib"
+    xmlns:ui="http://java.sun.com/jsf/facelets"
+    xmlns:f="http://java.sun.com/jsf/core"
+    xmlns:h="http://java.sun.com/jsf/html"
+    xmlns:rich="http://richfaces.org/rich"
+    xmlns:a="http://richfaces.org/a4j"
+    xmlns:c="http://java.sun.com/jstl/core"
+    xmlns:stf="http://www.stf.jus.br/custom-components">
+
+
+   	<s:decorate id="gerenciarCategoria" template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="principal"/>
+		<ui:define name="descricao">
+			<h:outputText value="#{actionFacesBean.categoria.id == null ? 'Nova' : 'Editar'} Categoria #{actionFacesBean.categoria.descricao}" />			
+		</ui:define>		
+		
+		<ui:define name="conteudo">
+			<stf:messages level="ALL" height="auto"/>
+			<s:decorate template="/common/decorators/edit.xhtml" style="margin-top: 5px">
+					<ui:define name="label">Categoria:</ui:define>
+					<h:inputText id="nomeCategoria" value="#{actionFacesBean.categoria.descricao}" size="30" style="width: 200px"  onkeypress="return noEnter(event);" />
+			</s:decorate>
+			<div style="float:right; margin:10px 0;">
+				<a:commandButton value="Gravar"
+					action="#{actionFacesBean.execute}"
+					reRender="actionModalPanel"
+					oncomplete="showActionPanel('panelItem')"
+					eventsQueue="ajaxQueue" ignoreDupResponses="true" />
+			</div>
+			<div style="clear:both;">
+				<a:outputPanel id="panelListaCategorias" >
+					<div class="data-table-outer">
+						<div>
+							<rich:dataTable	id="tbCategoriasLista"
+								var="categoriaSetor"
+								value="#{actionFacesBean.categorias}"
+								rowClasses="dr-table-row-odd, dr-table-row-even"
+								styleClass="data-table"
+								rows="#{actionFacesBean.pageSize}">
+								<rich:column styleClass="dr-table-firstcol" headerClass="dr-table-firstcol dr-table-subheadercell-nobordertop">
+									<f:facet name="header">
+										<h:outputText value="Categoria" />
+									</f:facet>
+									<h:outputText value="#{categoriaSetor.descricao}" />
+								</rich:column>
+								<rich:column  styleClass="dr-table-lastcol dr-table-col-center" headerClass="dr-table-subheadercell-nobordertop dr-table-lastcol dr-table-col-center largura35px">
+									<f:facet name="header">
+										<h:outputText value="Ação" />
+									</f:facet>
+									<a:commandButton image="/common/images/lapis2.png"
+											action="#{actionFacesBean.editarCategoria(categoriaSetor)}"
+											eventsQueue="ajaxQueue"
+											ignoreDupResponses="true"
+											oncomplete="showActionPanel('panelItem')"
+											reRender="actionModalPanel"  />
+									<rich:spacer width="2" title="Editar Categoria" />
+									<a:commandButton image="/common/images/bullet_delete.png"
+											action="#{actionFacesBean.excluirCategoria(categoriaSetor)}"
+											eventsQueue="ajaxQueue"
+											oncomplete="showActionPanel('panelItem')"
+											ignoreDupResponses="true"
+											reRender="actionModalPanel" title="Excluir Categoria"/>
+								</rich:column>
+							</rich:dataTable>
+						</div>
+					</div>
+					<div style="margin-bottom: 5px; padding: 7px 7px">
+						<s:div style="float: right;" rendered="#{actionFacesBean.categorias.size() > 0}">
+							<stf:simpleDatascroller id="dataScroller" for="tbCategoriasLista"
+								reRender="dataScroller"
+								style="float:left; vertical-align: middle; margin-left: 5px"
+								pages="#{actionFacesBean.categorias.size()} categoria(s)"
+								page="#{actionFacesBean.pageIndex}" />
+							<div class="clear"></div>
+						</s:div>
+					</div>
+				</a:outputPanel>
+			</div>
+		</ui:define>
+			
+	</s:decorate>	
+</ui:composition>

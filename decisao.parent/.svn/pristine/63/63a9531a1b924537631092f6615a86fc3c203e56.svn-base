@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<fw-config log="true" >	
+
+	<security enabled="false" database="false">
+		<application-name>ESTFDECISAO</application-name>
+	</security>
+
+</fw-config>

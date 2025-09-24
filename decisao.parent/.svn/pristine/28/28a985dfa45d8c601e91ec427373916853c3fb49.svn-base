@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:s="http://jboss.com/products/seam/taglib"
+	xmlns:a="http://richfaces.org/a4j">
+
+	<s:div rendered="#{userFacesBean.usuarioPodeFavoritar and userFacesBean.isUsuarioNoGabinete(texto.idSetorMinistro)}">
+		<s:span rendered="#{texto.favoritoNoGabinete}">
+			<a:commandLink action="#{desfavoritarTextoActionFacesBean.desmarcarComoFavorito(texto)}"
+				reRender="resultPanel" immediate="true" eventsQueue="ajaxQueue" ignoreDupResponses="true" ajaxSingle="true"> 
+			    <h:graphicImage value="/common/images/star.png" title="Desmarcar como Favorito"/>
+			</a:commandLink>
+		</s:span>
+		<s:span rendered="#{!texto.favoritoNoGabinete}">
+			<a:commandLink action="#{favoritarTextoActionFacesBean.marcarComoFavorito(texto)}"
+				reRender="resultPanel" immediate="true" eventsQueue="ajaxQueue" ignoreDupResponses="true" ajaxSingle="true"> 
+		    	<h:graphicImage value="/common/images/star_empty.png" title="Marcar como Favorito"/>
+			</a:commandLink>
+		</s:span>
+	</s:div>
+	<s:div rendered="#{not userFacesBean.usuarioPodeFavoritar or not userFacesBean.isUsuarioNoGabinete(texto.idSetorMinistro)}">
+		<s:span rendered="#{texto.favoritoNoGabinete}">
+			<img src="#{facesContext.externalContext.requestContextPath}/common/images/star.png" title="Texto Favorito"/>
+		</s:span>
+		<s:span rendered="#{!texto.favoritoNoGabinete}">
+			<img src="#{facesContext.externalContext.requestContextPath}/common/images/star_empty.png" title="Texto não Favorito"/>
+		</s:span>
+	</s:div>
+
+</ui:composition>

@@ -1,0 +1,70 @@
+/**
+ * 
+ */
+package br.jus.stf.estf.decisao.texto.web;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+
+import br.gov.stf.estf.entidade.documento.TipoTexto;
+import br.gov.stf.estf.entidade.documento.tipofase.FaseTexto;
+import br.jus.stf.estf.decisao.pesquisa.domain.TextoDto;
+import br.jus.stf.estf.decisao.support.action.handlers.CheckIdTipoTexto;
+import br.jus.stf.estf.decisao.support.action.handlers.CheckMinisterId;
+import br.jus.stf.estf.decisao.support.action.handlers.CheckRestrictions;
+import br.jus.stf.estf.decisao.support.action.handlers.RequiresResources;
+import br.jus.stf.estf.decisao.support.action.handlers.RequiresResources.Mode;
+import br.jus.stf.estf.decisao.support.action.handlers.Restrict;
+import br.jus.stf.estf.decisao.support.action.handlers.States;
+import br.jus.stf.estf.decisao.support.action.support.Action;
+import br.jus.stf.estf.decisao.support.action.support.ActionCallback;
+import br.jus.stf.estf.decisao.support.action.support.ActionIdentification;
+import br.jus.stf.estf.decisao.support.action.support.ActionSupport;
+import br.jus.stf.estf.decisao.support.util.NestedRuntimeException;
+import br.jus.stf.estf.decisao.texto.service.TextoService;
+
+/**
+ * @author Paulo.Estevao
+ * @since 11.09.2011
+ */
+@Action(id = "republicarActionFacesBean", name = "Republicar")
+@Restrict({ActionIdentification.REPUBLICAR})
+@States({ FaseTexto.PUBLICADO })
+@RequiresResources(Mode.Many)
+@CheckMinisterId
+@CheckRestrictions
+@CheckIdTipoTexto({TipoTexto.CODIGO_ACORDAO, TipoTexto.CODIGO_EMENTA, TipoTexto.CODIGO_RELATORIO, TipoTexto.CODIGO_VOTO})
+public class RepublicarActionFacesBean extends ActionSupport<TextoDto> {
+
+	@Qualifier("textoServiceLocal")
+	@Autowired
+	protected TextoService textoService;
+	
+	@Override
+	public void load() {
+		execute();
+	}
+	
+	private void doExecute(TextoDto texto) throws Exception {
+		try {
+			textoService.republicarTexto(texto);
+		} catch (Exception e) {
+			throw new NestedRuntimeException(e);
+		}
+	}
+	
+	/**
+	 * Executa a ação de transição de textos, dentro de um contexto protegido
+	 * para execução de ações.
+	 * 
+	 * @see ActionSupport#execute(ActionCallback)
+	 */
+	public void execute() {
+		execute(new ActionCallback<TextoDto>() {
+			public void doInAction(TextoDto texto) throws Exception {
+				doExecute(texto);
+			}
+		});
+		setRefresh(true);
+	}
+}

@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:s="http://jboss.com/products/seam/taglib"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:rich="http://richfaces.org/rich"
+	xmlns:a="http://richfaces.org/a4j"
+	xmlns:c="http://java.sun.com/jstl/core"
+	xmlns:stf="http://www.stf.jus.br/custom-components">
+	
+
+	<s:decorate template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="principal" />
+		<ui:define name="descricao">Informe os dados abaixo para liberar para julgamento.</ui:define>
+		<ui:define name="conteudo">
+			<s:decorate template="/common/decorators/edit.xhtml">
+				<ui:define name="label">Colegiado:</ui:define>
+				<h:selectOneRadio id="rdTipoColegiadoAgendamento" value="#{actionFacesBean.idTipoColegiadoAgendamento}" required="true">
+					<s:selectItems var="tipoColegiadoAgendamento"
+						value="#{actionFacesBean.tiposColegiadoAgendamento}"
+						itemValue="#{tipoColegiadoAgendamento.id}"
+						label="#{tipoColegiadoAgendamento.descricao}" />
+					<a:support event="onclick" action="#{actionFacesBean.carregarSessoes}" reRender="panelMessage,panelSessoes,btnLiberar" ajaxSingle="true" />
+				</h:selectOneRadio>
+			</s:decorate>
+			<a:outputPanel id="panelSessoes">
+				<s:decorate template="/common/decorators/edit.xhtml" rendered="#{not empty actionFacesBean.idTipoColegiadoAgendamento}">
+					<ui:define name="label">Sessão:</ui:define>
+					<h:selectOneMenu value="#{actionFacesBean.idSessao}" style="width: 250px;" required="true">
+						<f:selectItem itemLabel="Selecione..." />
+						<f:selectItems value="#{actionFacesBean.sessoes}" />
+					</h:selectOneMenu>
+					
+				</s:decorate>
+			</a:outputPanel>
+		</ui:define>
+		<ui:define name="botoes">
+			<a:commandButton value="Liberar" id="btnLiberar"
+				action="#{actionFacesBean.validateAndExecute}"
+				reRender="actionModalPanel"
+				onclick="if (#{actionFacesBean.sessaoMinistroDiferente}) {if (!confirm('A turma para a qual está sendo liberado o processo para julgamento não é a mesma do #{actionFacesBean.ministro.nome}, deseja confirmar?')) {return;}}"
+				oncomplete="showActionPanel('panelItem', #{actionFacesBean.definition.width}, #{actionFacesBean.definition.height})" eventsQueue="ajaxQueue"
+							ignoreDupResponses="true"/>
+	
+		</ui:define>
+	</s:decorate>
+	
+	<s:decorate template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="warnings" />
+		<ui:define name="descricao">Verifique as informações abaixo antes de prosseguir</ui:define>
+		<ui:define name="conteudo">
+			<c:if test="#{actionFacesBean.listasParaConfirmacao.size()>0}">
+				<div>As seguintes listas precisam de confirmação para serem
+				liberadas para julgamento:</div>
+				<div><stf:messages level="WARN"/></div>
+				<div>
+					<a:outputPanel rendered="#{actionFacesBean.listasParaConfirmacao.size() > 0 and actionFacesBean.listasInvalidas.size() == 0}">
+						<h:selectBooleanCheckbox styleClass="Checkbox"
+							value="#{actionFacesBean.confirmarListasPendentes}">
+							<a:support reRender="btnConfirmarPanel" event="onclick" eventsQueue="ajaxQueue" ignoreDupResponses="true" />
+						</h:selectBooleanCheckbox><span>Confirmar liberação para julgamento das listas. </span>
+					</a:outputPanel>
+				</div>
+			</c:if>
+			<c:if test="#{actionFacesBean.listasInvalidas.size()>0}">
+				<div class="vermelho" style="margin-top: 5px;">As listas abaixo não poderão ser
+				liberadas para julgamento:</div>
+				<div><stf:messages level="ERROR"/></div>
+			</c:if>
+		</ui:define>
+		<ui:define name="botoes">
+			<a:outputPanel id="btnConfirmarPanel">
+				<a:commandButton value="Confirmar Liberação" rendered="#{actionFacesBean.listasParaConfirmacao.size() > 0 and actionFacesBean.listasInvalidas.size() == 0 and actionFacesBean.confirmarListasPendentes}"
+					action="#{actionFacesBean.execute}" reRender="actionModalPanel"
+					oncomplete="showActionPanel('panelItem', #{actionFacesBean.definition.width}, #{actionFacesBean.definition.height})" eventsQueue="ajaxQueue"
+								ignoreDupResponses="true"/>
+			</a:outputPanel>
+			<a:commandButton value="Voltar" action="#{actionFacesBean.voltar}"
+				reRender="actionModalPanel"
+				oncomplete="showActionPanel('panelItem', #{actionFacesBean.definition.width}, #{actionFacesBean.definition.height})" eventsQueue="ajaxQueue"
+							ignoreDupResponses="true"/>
+		</ui:define>
+	</s:decorate>
+	
+	<s:decorate template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="nenhumaListaSelecionada" />
+		<ui:define name="descricao">Nenhuma lista foi selecionada para a execução da ação!</ui:define>
+		<ui:define name="botoes">
+			<a:commandButton value="Voltar"
+				action="#{actionFacesBean.voltar}" reRender="actionModalPanel"
+				oncomplete="showActionPanel('panelItem', #{actionFacesBean.definition.width}, #{actionFacesBean.definition.height})" eventsQueue="ajaxQueue"
+							ignoreDupResponses="true"/>
+		</ui:define>
+
+	</s:decorate>
+
+	<s:decorate template="/acoes/support/action.template.xhtml">
+		<ui:param name="facetName" value="final" />
+		<ui:define name="descricao">Resultado da operação:</ui:define>
+		<ui:define name="conteudo">
+			<c:if test="#{actionFacesBean.existeListaLiberada}">
+				<div>
+				<div>Operação realizada com sucesso para as seguintes listas:</div>
+				<stf:messages level="INFO" passed="true"/></div>
+			</c:if>
+			<c:if test="#{actionFacesBean.existeListaNaoLiberada}">
+				<div>
+				<div class="vermelho">As seguintes listas não puderam ser
+				liberadas para julgamento!</div>
+				<stf:messages level="WARN,ERROR" /></div>
+			</c:if>
+		</ui:define>
+	</s:decorate>
+	
+
+</ui:composition>

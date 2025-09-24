@@ -1,0 +1,249 @@
+/*
+Estilos customizados par ao tema do STF
+Autor: leandro.rezende@stf.jus.br;
+Data: 20/03/2014;
+*/
+
+/*
+0. General Elements
+1. Header Elements
+
+100. Responsive Elements
+101. xs
+102. sm
+103. md
+104. lg
+*/
+
+/*0. General Elements*/
+.page-content .content {
+	padding-left: 0px;
+	padding-right: 0px;
+	padding-top: 60px;
+}
+
+.space-sm {
+	margin-bottom:0px;
+}
+.space-sm label {
+	font-weight:bold;
+}
+.container {
+	margin-top:20px;
+}
+
+/*1. Header Elements*/
+#profile-cover {
+	background: url(../img/stf/profiles-background/stf-fachada-bigger.jpg) no-repeat 100% 100% ; 
+	  -webkit-background-size: cover;
+	  -moz-background-size: cover;
+	  -o-background-size: cover;
+	  background-size: cover;				
+
+	height: 300px;	
+	padding-top:200px;
+}
+
+#usuario-resumo {
+	padding:17px 15px;
+	height:100px;
+	background: -moz-linear-gradient(left, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.44) 50%, rgba(0,0,0,0.7) 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, right top, color-stop(0%,rgba(0,0,0,0.7)), color-stop(50%,rgba(0,0,0,0.44)), color-stop(100%,rgba(0,0,0,0.7))); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(left, rgba(0,0,0,0.7) 0%,rgba(0,0,0,0.44) 50%,rgba(0,0,0,0.7) 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(left, rgba(0,0,0,0.7) 0%,rgba(0,0,0,0.44) 50%,rgba(0,0,0,0.7) 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(left, rgba(0,0,0,0.7) 0%,rgba(0,0,0,0.44) 50%,rgba(0,0,0,0.7) 100%); /* IE10+ */
+	background: linear-gradient(to right, rgba(0,0,0,0.7) 0%,rgba(0,0,0,0.44) 50%,rgba(0,0,0,0.7) 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#b3000000', endColorstr='#b3000000',GradientType=1 ); /* IE6-9 */
+}
+#usuario-imagem{
+	min-width:69px;
+	margin:0px;
+	bottom:0px;	
+	cursor:pointer;
+	}
+#usuario-resumo h4{
+	color:white;
+	margin:0px;
+	bottom:0px;
+	}
+#usuario-resumo h5{
+	color:white;
+	margin:0px;
+	padding-top:5px;
+}
+#usuario-acoes{
+	padding:20px 15px;
+	}
+#usuario-identificacao {
+	padding:10px 0px 0px 80px;
+}
+
+/*Grid elements*/
+
+.grid-passo-numero {
+	background:#E5E9EC;
+	font-weight:bold;
+	text-align:center;		
+ 	float:left; 
+	border:3px solid #0aa699; 
+	border-radius:100%; 
+	margin:-5px 10px 0px 0px; 
+	height:30px; 
+	width:30px; 	
+	padding-top:4px;
+}
+
+.passo-green {
+	color:#0aa699; 
+	border-color: #0aa699; 
+}
+
+.grid.simple.vertical.green{
+ border-left:4px solid #0aa699;
+ border-top:none !important;
+}
+
+.passo-purple {
+	color:#a272b2; 
+	border-color: #a272b2; 
+}
+
+.grid.simple.vertical.purple{
+ border-left:4px solid #a272b2;
+ border-top:none !important;
+}
+
+.passo-red {
+	color:#f35958; 
+	border-color: #f35958; 
+}
+
+.grid.simple.vertical.red{
+ border-left:4px solid #f35958;
+ border-top:none !important;
+}
+
+.passo-blue {
+	color:#14b9d6; 
+	border-color: #14b9d6; 
+}
+
+.grid.simple.vertical.blue{
+ border-left:4px solid #14b9d6;
+ border-top:none !important;
+}
+
+/*Estilos dos formulários*/
+
+.novoEnunciado {margin-top:20px;}
+
+.hidden-input { 
+	background:inherit !important;
+	border: inherit !important;
+	width:100%;
+}
+
+.resumo .select2-container .select2-choice {
+	border:0px !important;
+}
+
+.resumo .select2-container .select2-arrow {
+	color:white;
+}
+
+.resumo .select2-container:hover .select2-arrow, .resumo .select2-container:focus .select2-arrow {
+	color:#222;
+}
+
+
+.hidden-input:hover { 
+	background: #fff !important;
+	border: 1px solid #ccc !important;
+}
+.hidden-input:focus { 
+	background: #fff !important;
+	border: 1px solid #ccc !important;
+}
+
+/*Selecionar peticionador*/
+
+/*Número do Recibo*/
+#numero-recibo {
+	font-size:30px;
+	background: white;
+	padding:5px;
+	border:1px solid;
+	text-align: center
+}
+
+/*100. Responsive Elements*/
+
+/*101. xs*/
+@media (max-width: 767px) {	
+
+#profile-cover-xs {
+	background: url(../img/stf/profiles-background/stf-fachada-bigger.jpg) no-repeat 100% 100% ; 
+	  -webkit-background-size: cover;
+	  -moz-background-size: cover;
+	  -o-background-size: cover;
+	  background-size: cover;				
+
+	height: 200px;	
+}
+
+#usuario-identificacao-xs {
+	padding:0px 0px 0px 0px;
+}
+#usuario-resumo {
+	padding:17px 15px;
+	height:100px;
+	
+}
+#usuario-resumo-xs {
+	padding:20px;
+	text-align: center;
+	height: 200px;
+	background: -moz-linear-gradient(left, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.44) 50%, rgba(0,0,0,0.7) 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, right top, color-stop(0%,rgba(0,0,0,0.7)), color-stop(50%,rgba(0,0,0,0.44)), color-stop(100%,rgba(0,0,0,0.7))); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(left, rgba(0,0,0,0.7) 0%,rgba(0,0,0,0.44) 50%,rgba(0,0,0,0.7) 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(left, rgba(0,0,0,0.7) 0%,rgba(0,0,0,0.44) 50%,rgba(0,0,0,0.7) 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(left, rgba(0,0,0,0.7) 0%,rgba(0,0,0,0.44) 50%,rgba(0,0,0,0.7) 100%); /* IE10+ */
+	background: linear-gradient(to right, rgba(0,0,0,0.7) 0%,rgba(0,0,0,0.44) 50%,rgba(0,0,0,0.7) 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#b3000000', endColorstr='#b3000000',GradientType=1 ); /* IE6-9 */	
+}
+#usuario-imagem-xs{
+		cursor:pointer;
+	}
+#usuario-resumo-xs h4{
+	font-size:18px;
+	color:white;
+	margin:0px;
+	bottom:0px;
+	padding-top:10px;
+	}
+#usuario-resumo-xs h5{
+	font-size:12px;
+	color:white;
+	margin:0px;
+	padding-top:0px;
+}
+#profile-acao-nova-peticao-xs {
+	margin-top:10px;
+}
+#usuario-acoes-xs{
+	padding:0px;
+	}
+}
+
+/*102. sm*/
+@media (min-width: 768px) and (max-width: 991px) {
+
+}
+/*103. md*/
+@media (min-width: 992px) and (max-width: 1199px) {
+
+}
+/*104. lg*/
+@media (min-width: 1200px) {
+
+}

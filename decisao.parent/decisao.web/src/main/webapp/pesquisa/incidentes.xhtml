@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:s="http://jboss.com/products/seam/taglib"
+    xmlns:ui="http://java.sun.com/jsf/facelets"
+    xmlns:f="http://java.sun.com/jsf/core"
+    xmlns:h="http://java.sun.com/jsf/html"
+    xmlns:rich="http://richfaces.org/rich"
+    xmlns:p="http://primefaces.prime.com.tr/ui" 
+    xmlns:a="http://richfaces.org/a4j"
+    xmlns:c="http://java.sun.com/jstl/core">
+
+	<c:set var="registros" value="#{principalFacesBean.currentContext.result}" />
+	
+    <rich:dataTable id="resultTable"
+    				var="_incidente"
+    				value="#{principalFacesBean.currentContext.result}"
+    				rendered="#{not empty principalFacesBean.currentContext.result}"
+    				rows="#{principalFacesBean.pageSize}"
+    				styleClass="data-table"
+    				rowClasses="dr-table-row-odd, dr-table-row-even">
+        <rich:column width="20px" styleClass="dr-table-firstcol dr-table-col-center" headerClass="dr-table-firstcol dr-table-col-center">
+            <f:facet name="header">
+				<a:commandButton image="/common/images/setabaixo.gif" action="#{principalFacesBean.currentContext.result.selectAll()}" reRender="actionPanel, resultTable" ajaxSingle="true" eventsQueue="ajaxQueue" ignoreDupResponses="true"/>
+            </f:facet>
+            <h:selectBooleanCheckbox value="#{_incidente.selected}">
+            	<a:support event="onchange" action="#{principalFacesBean.currentContext.result.changeSelection(_incidente)}" reRender="actionPanel" ajaxSingle="true" eventsQueue="ajaxQueue" ignoreDupResponses="true"/>
+            </h:selectBooleanCheckbox>
+        </rich:column>
+        <rich:column width="30%">
+            <f:facet name="header">Processo</f:facet>
+            <a:commandLink action="#{principalFacesBean.visualizar(registros, _incidente)}" reRender="resultPanel" ajaxSingle="true" immediate="true" eventsQueue="ajaxQueue" ignoreDupResponses="true">
+            	<h:outputText rendered="#{_incidente.eletronico}" value="e" styleClass="vermelho" />
+            	<h:outputText value="#{_incidente.identificacao}"/>
+            </a:commandLink>
+        </rich:column>
+        <rich:column width="70%" styleClass="dr-table-lastcol" headerClass="dr-table-lastcol">
+            <f:facet name="header">Ministro</f:facet>
+            <h:outputText value="#{_incidente.nomeRelator}"/>
+        </rich:column>
+    </rich:dataTable>
+
+</ui:composition>
