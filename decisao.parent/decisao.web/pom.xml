@@ -13,7 +13,7 @@
 	
 	<properties>
 		<framework.version>2.0.8</framework.version>
-        <corporativo.version>4.2.53</corporativo.version>
+        <corporativo.version>4.2.62-SNAPSHOT</corporativo.version>
 		<servlet-api.version>2.5</servlet-api.version>
 		<jsf-api.version>1.2_12</jsf-api.version>
 		<jsf-facelets.version>1.1.15.B1</jsf-facelets.version>
